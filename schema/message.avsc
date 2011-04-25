@@ -1,0 +1,28 @@
+{
+    "type": "record",
+    "name": "Message",
+    "namespace": "org.rflow",
+    "aliases": [],
+    "fields": [
+        {"name": "type", "type": "string"},
+        {"name": "provenance", 
+         "type": {"type": "array", 
+                  "items": {"type": "record", 
+                            "name": "PerformedComputation", 
+                            "namespace": "org.rflow",
+                            "aliases": [],
+                            "fields": [
+                                {"name": "computation_id", "type": "string"},
+                                {"name": "started_at", "type": "string"},
+                                {"name": "completed_at", "type": "string"}
+                            ]
+                           }
+                 }
+        },
+        {"name": "context", "type": "bytes"},
+        {"name": "schema", "type": "string"},
+        {"name": "data", "type": "bytes"}
+    ]
+}
+    
+    

@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'rflow'
+
+options = {
+  :daemonize => true,
+}
+
+option_parser = OptionParser.new do |opts|
+  opts.banner <<EOB
+Usage: rflow [options] <config_database_file_path>
+EOB
+
+  opts.on("-f", "Run in the foreground") do |f|
+    options[:daemonize] = false
+  end
+
+  opts.on("-c", "--config CONFIG", "Config file path") do |config|
+    options[:config_file_path] = File.expand_path config
+  end
+end
+option_parser.parse!
+
+config_database_path = File.expand_path ARGV[0]
+
+
+if options[:config_file_path]
+  # If the config file was specified, load a new database with it.
+  unless File.exist? options[:config_file_path]
+    STDERR.puts "ERROR: config file not found"
+    STDERR.puts option_parser.help
+    exit 1
+  end
+
+  unless File.readable? options[:config_file_path]
+    STDERR.puts "ERROR: config file not reabable"
+    STDERR.puts option_parser.help
+    exit 1
+  end
+
+  if File.exist? config_database_path
+    STDERR.puts "ERROR: config database exists, exiting to prevent accidental overwrite"
+    exit 1
+  end
+  
+  RFlow.initialize_configuration_database(config_database_path, options[:config_file_path])
+end
+
+# Load the configuration database
+unless File.exist? config_database_path
+  STDERR.puts "ERROR: config database not found"
+  STDERR.puts option_parser.help
+  exit 1
+end
+
+unless File.readable? config_database_path
+  STDERR.puts "ERROR: config database not reabable"
+  STDERR.puts option_parser.help
+  exit 1
+end
+
+# Start teh flow
+RFlow.run config_database_path
+
+__END__
+
+rflow <config file>
+  figure out a work directory
+  make sure that it has the right subdirectories (can be overridden)
+    run tmp logs schemas components
+  Set up logging to logs/rflow.log
+  Load all schemas
+  Verify all component installation
+  Initialize components
+  Start components running and make sure that they "daemonize" correctly
+    - place pid files in deployment's run directory
+  Configure components via zmq
+  Daemonize self

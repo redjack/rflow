@@ -19,8 +19,14 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
+  s.add_dependency 'sqlite3', '= 1.3.3'
+  s.add_dependency 'activerecord', '= 3.0.7'
+  
   s.add_dependency 'avro', '>= 1.3.3'
   s.add_dependency 'zmq' , '>= 2.1.0.1'
-    
+  
+  s.add_dependency 'daemons', '= 1.1.3'
+  s.add_dependency 'daemon_controller'
+  
   s.add_development_dependency 'rspec', '>= 2.5.0'
 end

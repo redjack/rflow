@@ -1,6 +1,18 @@
 require "rubygems"
 require "bundler/setup"
 
-module RFlow
+require 'ostruct'
+
+class RFlow
   # Your code goes here...
-end
+  class << self
+    attr_accessor :config
+  end
+
+  self.config = OpenStruct.new
+
+  def self.configure
+    yield config
+  end
+
+end # class RFlow
