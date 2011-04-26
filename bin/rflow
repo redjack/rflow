@@ -8,8 +8,8 @@ options = {
 }
 
 option_parser = OptionParser.new do |opts|
-  opts.banner <<EOB
-Usage: rflow [options] <config_database_file_path>
+  opts.banner = <<EOB
+Usage: rflow [options]
 EOB
 
   opts.on("-f", "Run in the foreground") do |f|
@@ -17,63 +17,88 @@ EOB
   end
 
   opts.on("-c", "--config CONFIG", "Config file path") do |config|
-    options[:config_file_path] = File.expand_path config
+    options[:config_file_path] = config
   end
+
+  opts.on("-d", "--database DB", "Config database (sqlite) path") do |db|
+    options[:config_database_path] = db
+  end
+
+  opts.on("-l", "--log DB", "Initial startup log file, defaults to STDERR") do |log|
+    options[:startup_log_file_path] = log
+  end
+  
 end
 option_parser.parse!
 
-config_database_path = File.expand_path ARGV[0]
+# Set up the startup logging
+# TODO: clarify what happens to logs after reading config database
+log_pattern_formatter = PatternFormatter.new :pattern => '%l %d %M'
+RFlow.logger = Logger.new 'startup'
+RFlow.logger.add StderrOutputter.new('startup_stderr', :formatter => log_pattern_formatter)
 
+if options[:startup_log_file_path]
+  begin
+    RFlow.logger.add FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => log_pattern_formatter)
+  rescue Exception => e
+    RFlow.logger.fatal "Log file '#{options[:startup_log_file_path]}' problem: #{e.message}"
+    exit 1
+  end
+end
 
+unless options[:config_database_path]
+  RFlow.logger.warn "Config database not specified, using default config.sqlite"
+  options[:config_database_path] = 'config.sqlite'
+end
+
+# If the config file was specified, load a new database with it.
 if options[:config_file_path]
-  # If the config file was specified, load a new database with it.
   unless File.exist? options[:config_file_path]
-    STDERR.puts "ERROR: config file not found"
-    STDERR.puts option_parser.help
+    RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not found\n#{option_parser.help}"
     exit 1
   end
 
   unless File.readable? options[:config_file_path]
-    STDERR.puts "ERROR: config file not reabable"
-    STDERR.puts option_parser.help
+    RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not readable\n#{option_parser.help}"
     exit 1
   end
 
-  if File.exist? config_database_path
-    STDERR.puts "ERROR: config database exists, exiting to prevent accidental overwrite"
+  if File.exist? options[:config_database_path]
+    RFlow.logger.fatal "Config database '#{options[:config_database_path]}' exists, exiting to prevent accidental overwrite from config file '#{options[:config_file_path]}'"
     exit 1
   end
-  
-  RFlow.initialize_configuration_database(config_database_path, options[:config_file_path])
 end
 
-# Load the configuration database
-unless File.exist? config_database_path
-  STDERR.puts "ERROR: config database not found"
-  STDERR.puts option_parser.help
+# Initialize the configuration database, if needed
+unless File.exist? options[:config_database_path]
+  RFlow.logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
+  RFlow.initialize_config_database(options[:config_database_path], options[:config_file_path])
+end
+
+unless File.readable? options[:config_database_path]
+  RFlow.logger.fatal "Config database '#{options[:config_database_path]}' not reabable\n#{option_parser.help}"
   exit 1
 end
 
-unless File.readable? config_database_path
-  STDERR.puts "ERROR: config database not reabable"
-  STDERR.puts option_parser.help
-  exit 1
-end
-
-# Start teh flow
-RFlow.run config_database_path
+# Start the flow
+RFlow.run options[:config_database_path]
 
 __END__
 
-rflow <config file>
-  figure out a work directory
-  make sure that it has the right subdirectories (can be overridden)
-    run tmp logs schemas components
-  Set up logging to logs/rflow.log
-  Load all schemas
-  Verify all component installation
-  Initialize components
-  Start components running and make sure that they "daemonize" correctly
-    - place pid files in deployment's run directory
-  Configure components via zmq
-  Daemonize self
+# TODO: all the stuffs after here
+# rflow <config file>
+#   figure out a work directory
+#   make sure that it has the right subdirectories (can be overridden)
+#     run tmp logs schemas components
+#   Set up logging to logs/rflow.log
+#   Load all schemas
+#   Verify all component installation
+#   Initialize components
+#   Start components running and make sure that they "daemonize" correctly
+#     - place pid files in deployment's run directory
+#   Configure components via zmq
+#   Daemonize self
+# 
+# rflow init -- separate script
+#   sets up the following directories
+#     run/tmp/logs/schemas/components

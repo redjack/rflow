@@ -1,3 +1,13 @@
+RFlow Manager
+
+  Components
+    Input Ports
+    Output Ports
+
+  Connections
+    Input Ports
+    Output Ports
+
 rflow <config file>
   figure out a work directory
   make sure that it has the right subdirectories (can be overridden)
