@@ -5,6 +5,7 @@ require 'rflow'
 
 options = {
   :daemonize => true,
+  :startup_log_level => 'INFO',
 }
 
 option_parser = OptionParser.new do |opts|
@@ -27,61 +28,67 @@ EOB
   opts.on("-l", "--log DB", "Initial startup log file, defaults to STDERR") do |log|
     options[:startup_log_file_path] = log
   end
+
+  opts.on("-v", "--verbose [LEVEL]", ['DEBUG'], "Control the startup log (and stderr) verbosity") do |level|
+    options[:startup_log_level] = level || 'DEBUG'
+  end
   
 end
 option_parser.parse!
 
 # Set up the startup logging
-# TODO: clarify what happens to logs after reading config database
-log_pattern_formatter = PatternFormatter.new :pattern => '%l %d %M'
-RFlow.logger = Logger.new 'startup'
-RFlow.logger.add StderrOutputter.new('startup_stderr', :formatter => log_pattern_formatter)
+log_pattern_formatter = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT
+startup_logger = Logger.new 'startup'
+startup_logger.add StderrOutputter.new('startup_stderr', :formatter => log_pattern_formatter)
+startup_logger.level = LNAMES.index options[:startup_log_level]
 
 if options[:startup_log_file_path]
   begin
-    RFlow.logger.add FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => log_pattern_formatter)
+    startup_logger.add FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => log_pattern_formatter)
   rescue Exception => e
-    RFlow.logger.fatal "Log file '#{options[:startup_log_file_path]}' problem: #{e.message}"
+    startup_logger.fatal "Log file '#{options[:startup_log_file_path]}' problem: #{e.message}"
     exit 1
   end
 end
 
+RFlow.logger = startup_logger
+
 unless options[:config_database_path]
-  RFlow.logger.warn "Config database not specified, using default config.sqlite"
+  startup_logger.warn "Config database not specified, using default 'config.sqlite'"
   options[:config_database_path] = 'config.sqlite'
 end
 
 # If the config file was specified, load a new database with it.
 if options[:config_file_path]
   unless File.exist? options[:config_file_path]
-    RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not found\n#{option_parser.help}"
+    startup_logger.fatal "Config file '#{options[:config_file_path]}' not found\n#{option_parser.help}"
     exit 1
   end
 
   unless File.readable? options[:config_file_path]
-    RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not readable\n#{option_parser.help}"
+    startup_logger.fatal "Config file '#{options[:config_file_path]}' not readable\n#{option_parser.help}"
     exit 1
   end
 
   if File.exist? options[:config_database_path]
-    RFlow.logger.fatal "Config database '#{options[:config_database_path]}' exists, exiting to prevent accidental overwrite from config file '#{options[:config_file_path]}'"
+    startup_logger.fatal "Config database '#{options[:config_database_path]}' exists, exiting to prevent accidental overwrite from config file '#{options[:config_file_path]}'"
     exit 1
   end
 end
 
 # Initialize the configuration database, if needed
 unless File.exist? options[:config_database_path]
-  RFlow.logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
+  startup_logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
   RFlow.initialize_config_database(options[:config_database_path], options[:config_file_path])
 end
 
 unless File.readable? options[:config_database_path]
-  RFlow.logger.fatal "Config database '#{options[:config_database_path]}' not reabable\n#{option_parser.help}"
+  startup_logger.fatal "Config database '#{options[:config_database_path]}' not reabable\n#{option_parser.help}"
   exit 1
 end
 
 # Start the flow
-RFlow.run options[:config_database_path]
+RFlow.run options[:config_database_path], options[:daemonize]
 
 __END__
 

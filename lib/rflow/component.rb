@@ -1,4 +1,4 @@
 class RFlow
-  class Computation
-  end # class Computation
+  class Component
+  end # class Component
 end # class RFlow

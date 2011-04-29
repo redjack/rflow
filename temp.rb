@@ -226,12 +226,24 @@ class Component
 
 end
 
+class HTTPServer < RFlow::Component
+  input_port :responses
+  output_port :requests
+  
+  input_types "HTTP::Response"
+  output_types "HTTP::Request"
+
+  
+end
+
 class PassThrough < RFlow::Component
   input_port [:in]
   input_port :another_in
   output_port :out
   output_port :another_out
 
+  output_types 
+  
   def initialize(config, run_directory)
     # This will initialize the ports
     super
