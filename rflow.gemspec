@@ -6,6 +6,7 @@ Gem::Specification.new do |s|
   s.name        = "rflow"
   s.version     = RFlow::VERSION
   s.platform    = Gem::Platform::RUBY
+  s.required_ruby_version = '1.9.2'
   s.authors     = ["Michael L. Artz"]
   s.email       = ["michael.artz@redjack.com"]
   s.homepage    = ""
@@ -31,5 +32,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'avro', '>= 1.3.3'
   s.add_dependency 'zmq' , '>= 2.1.0.1'
   
-  s.add_development_dependency 'rspec', '>= 2.5.0'
+  s.add_development_dependency 'rspec', '= 2.5.0'
+  s.add_development_dependency 'rake', '= 0.8.7'
+  s.add_development_dependency 'rcov', '= 0.9.9'
 end
