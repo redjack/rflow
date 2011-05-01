@@ -5,7 +5,7 @@ class RFlow
     class Setting < ActiveRecord::Base
       include ActiveModel::Validations
       
-      class Invalid < StandardError; end
+      class SettingInvalid < StandardError; end
       
       DEFAULTS = {
         'rflow.application_name' => lambda {|config| 'rflow'},
@@ -17,7 +17,7 @@ class RFlow
         'rflow.log_file_path' => lambda {|config| File.join(config['rflow.log_directory_path'], config['rflow.application_name'] + '.log') rescue nil},
         'rflow.pid_file_path' => lambda {|config| File.join(config['rflow.pid_directory_path'], config['rflow.application_name'] + '.pid') rescue nil},
         
-        'log_level' => lambda {|config| 'INFO'}        
+        'rflow.log_level' => lambda {|config| 'INFO'}        
       }
 
       DIRECTORY_PATHS = [
@@ -26,12 +26,12 @@ class RFlow
                          'rflow.log_directory_path',
                         ]
       FILE_PATHS = [
-                    'log_file_path',
-                    'pid_file_path',
+                    'rflow.log_file_path',
+                    'rflow.pid_file_path',
                    ]
-      LOG_LEVELS = ['log_level']
 
       # Validations
+      validates_presence_of :name
       validates_uniqueness_of :name
 
       validate :valid_directory_path, :if => :directory_path?

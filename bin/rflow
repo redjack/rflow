@@ -10,7 +10,7 @@ options = {
 
 option_parser = OptionParser.new do |opts|
   opts.banner = <<EOB
-Usage: rflow [options]
+Usage: $0 [options] [start|stop|status]
 EOB
 
   opts.on("-f", "Run in the foreground") do |f|
@@ -18,18 +18,18 @@ EOB
   end
 
   opts.on("-c", "--config CONFIG", "Config file path") do |config|
-    options[:config_file_path] = config
+    options[:config_file_path] = File.expand_path(config)
   end
 
   opts.on("-d", "--database DB", "Config database (sqlite) path") do |db|
-    options[:config_database_path] = db
+    options[:config_database_path] = File.expand_path(db)
   end
 
-  opts.on("-l", "--log DB", "Initial startup log file, defaults to STDERR") do |log|
-    options[:startup_log_file_path] = log
+  opts.on("-l", "--log LOGFILE", "Initial startup log file, in addition to stdout") do |log|
+    options[:startup_log_file_path] = File.expand_path(log)
   end
 
-  opts.on("-v", "--verbose [LEVEL]", ['DEBUG'], "Control the startup log (and stderr) verbosity") do |level|
+  opts.on("-v", "--verbose [LEVEL]", ['DEBUG'], "Control the startup log (and stdout) verbosity") do |level|
     options[:startup_log_level] = level || 'DEBUG'
   end
   
@@ -39,7 +39,7 @@ option_parser.parse!
 # Set up the startup logging
 log_pattern_formatter = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT
 startup_logger = Logger.new 'startup'
-startup_logger.add StderrOutputter.new('startup_stderr', :formatter => log_pattern_formatter)
+startup_logger.add StdoutOutputter.new('startup_stdout', :formatter => log_pattern_formatter)
 startup_logger.level = LNAMES.index options[:startup_log_level]
 
 if options[:startup_log_file_path]
@@ -53,10 +53,34 @@ end
 
 RFlow.logger = startup_logger
 
+
 unless options[:config_database_path]
   startup_logger.warn "Config database not specified, using default 'config.sqlite'"
-  options[:config_database_path] = 'config.sqlite'
+  options[:config_database_path] = File.expand_path(File.join(Dir.getwd, 'config.sqlite'))
 end
+
+
+command = ARGV[0] || 'start'
+case command
+when 'start'
+  # Keep on going
+when 'stop'
+  config = RFlow::Configuration.new(options[:config_database_path])
+  pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
+  if pid
+    RFlow.logger.info "Terminating #{config['rflow.application_name']} process, pid #{pid}"
+    Process.kill 'INT', pid
+    exit 0
+  else
+    RFlow.logger.warn "#{config['rflow.application_name']} process not found in #{config['rflow.pid_file_path']}"
+    exit 1
+  end
+when 'status'
+else
+  RFlow.logger.error "Did not understand command '#{command}'"
+  exit 1
+end
+
 
 # If the config file was specified, load a new database with it.
 if options[:config_file_path]
@@ -79,11 +103,11 @@ end
 # Initialize the configuration database, if needed
 unless File.exist? options[:config_database_path]
   startup_logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
-  RFlow.initialize_config_database(options[:config_database_path], options[:config_file_path])
+  RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])
 end
 
 unless File.readable? options[:config_database_path]
-  startup_logger.fatal "Config database '#{options[:config_database_path]}' not reabable\n#{option_parser.help}"
+  startup_logger.fatal "Config database ('#{Dir.getwd}') '#{options[:config_database_path]}' not reabable\n#{option_parser.help}"
   exit 1
 end
 

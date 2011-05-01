@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'daemons', '= 1.1.3'
   s.add_dependency 'daemon_controller'
   
+  s.add_dependency 'uuidtools', '= 2.1.2'
   s.add_dependency 'log4r', '= 1.1.9'
   
   s.add_dependency 'sqlite3', '= 1.3.3'
@@ -34,5 +35,5 @@ Gem::Specification.new do |s|
   
   s.add_development_dependency 'rspec', '= 2.5.0'
   s.add_development_dependency 'rake', '= 0.8.7'
-  s.add_development_dependency 'rcov', '= 0.9.9'
+  #s.add_development_dependency 'rcov', '= 0.9.9' # Not 1.9.2 compatible
 end
