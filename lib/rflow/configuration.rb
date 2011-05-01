@@ -307,16 +307,21 @@ class RFlow
         connections.each do |connection|
           RFlow.logger.debug "Found connection from '#{connection[:output_string]}' to '#{connection[:input_string]}', creating"
 
+          
+          # an input port can be associated with multiple outputs, but
+          # an output port can only be associated with one input
           begin
             output_component = RFlow::Configuration::Component.find_by_uuid connection[:output_component_uuid]
             raise RFlow::Configuration::Component::ComponentNotFound, "#{connection[:output_component_name]}" unless output_component
+            # Do not allow an output to connect to multiple inputs, might throw a unique exception from ActiveRecord
             output_port = RFlow::Configuration::OutputPort.new :uuid => connection[:output_port_uuid], :name => connection[:output_port_name]
             output_component.output_ports << output_port
             output_port.save
             
             input_component = RFlow::Configuration::Component.find_by_uuid connection[:input_component_uuid]
             raise RFlow::Configuration::Component::ComponentNotFound, "#{connection[:input_component_name]}" unless input_component
-            input_port = RFlow::Configuration::InputPort.new :uuid => connection[:input_port_uuid], :name => connection[:input_port_name]
+            # Allow the same input to be connected to multiple outputs
+            input_port = RFlow::Configuration::InputPort.find_or_initialize_by_uuid :uuid => connection[:input_port_uuid], :name => connection[:input_port_name]
             input_component.input_ports << input_port
             input_port.save
 

@@ -10,6 +10,11 @@ class CreateConnections < ActiveRecord::Migration
  
       t.timestamps
     end
+
+    add_index :connections, :uuid, :unique => true
+    add_index :connections, [:output_port_uuid, :input_port_uuid], :unique => true
+    # An output port can only connect to a single input port
+    add_index :connections, :output_port_uuid, :unique => true
   end
  
   def self.down

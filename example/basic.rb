@@ -91,7 +91,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
 
   # Instantiate components
   config.component 'generate_ints', RFlow::Components::GenerateIntegerSequence, :start => 0, :finish => 10, :step => 2
-  config.component 'filter', RFlow::Components::ProcFilter, :filter => 'data.integer < 10'
+  config.component 'filter', RFlow::Components::ProcFilter, :filter => lambda {|data| data.integer < 10}
   config.component 'replicate', RFlow::Components::Replicate
   config.component 'simple', SimpleComponent
   config.component 'complex', Complex::ComplexComponent
@@ -99,7 +99,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
   
   # Hook components together
   config.connect 'generate_ints#out' => 'filter#in'
-  config.connect 'filter#out' => 'replicate#in'
+  config.connect 'filter#filtered' => 'replicate#in'
   config.connect 'replicate#out[0]' => 'simple#in'
   config.connect 'replicate#out[1]' => 'complex#in'
   config.connect 'simple#out' => 'output#in'

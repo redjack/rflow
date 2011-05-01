@@ -12,6 +12,8 @@ class CreatePorts < ActiveRecord::Migration
       
       t.timestamps
     end
+
+    add_index :ports, :uuid, :unique => true
   end
  
   def self.down
