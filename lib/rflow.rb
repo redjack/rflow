@@ -203,6 +203,19 @@ class RFlow
     logger.info "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
     logger.info "Available Data Schemas: #{RFlow::Configuration.available_data_schemas.inspect}"
     logger.info "Available Components: #{RFlow::Configuration.available_components.inspect}"
+
+    logger.info "Instantiating Components"
+
+    configuration.components.each do |component|
+      if component.managed?
+        logger.info "Instantiating component #{component.name} (#{component.uuid})"
+        component.specification
+      else
+        error_message = "Non-managed components not yet implemented"
+        logger.error error_message
+        raise NotImplementedError, error_message
+      end
+    end
     
     logger.info "sleeping because I can"
     sleep 200

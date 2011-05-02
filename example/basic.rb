@@ -44,7 +44,7 @@ class RFlow::Components::Replicate < RFlow::Component
   end
 end
 
-class RFlow::Components::ProcFilter < RFlow::Component
+class RFlow::Components::RubyProcFilter < RFlow::Component
   input_port :in
   output_port :filtered
   output_port :dropped
@@ -80,6 +80,10 @@ class Complex
   end
 end
 
+
+# TODO: figure out what to do with stuff above this line
+# Meat of the config file.  Stuff above this should probably be in
+# separate gems and/or files that are brought in at runtime.
 RFlow::Configuration::RubyDSL.configure do |config|
   # Configure the settings, which include paths for various files, log
   # levels, and component specific stuffs
@@ -91,7 +95,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
 
   # Instantiate components
   config.component 'generate_ints', RFlow::Components::GenerateIntegerSequence, :start => 0, :finish => 10, :step => 2
-  config.component 'filter', RFlow::Components::ProcFilter, :filter => lambda {|data| data.integer < 10}
+  config.component 'filter', RFlow::Components::RubyProcFilter, :filter => 'data.integer < 10'
   config.component 'replicate', RFlow::Components::Replicate
   config.component 'simple', SimpleComponent
   config.component 'complex', Complex::ComplexComponent
@@ -104,13 +108,6 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'replicate#out[1]' => 'complex#in'
   config.connect 'simple#out' => 'output#in'
   config.connect 'complex#out' => 'output#in'
-  
-  # Rather do the following, but that is for a future version
-  
 end
 
-  # TODO: Think about whether this should be in config or in separate,
-  # runtime config
-  #config.component
-  #config.connection
 

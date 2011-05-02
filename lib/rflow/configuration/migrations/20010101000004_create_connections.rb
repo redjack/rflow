@@ -4,10 +4,15 @@ class CreateConnections < ActiveRecord::Migration
       t.string :uuid
       t.string :name
 
+      # To allow for multiple types of connections
+      t.string :type
+
       # Data flows from an output port to an input port
       t.string :output_port_uuid
       t.string :input_port_uuid
- 
+
+      t.text :options
+      
       t.timestamps
     end
 
