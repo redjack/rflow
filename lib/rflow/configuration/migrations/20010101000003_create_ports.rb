@@ -3,7 +3,7 @@ class CreatePorts < ActiveRecord::Migration
     create_table :ports do |t|
       t.string :uuid
       t.string :name
-      
+      t.string :key
       # For STI
       t.text   :type
 

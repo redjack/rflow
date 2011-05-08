@@ -8,68 +8,138 @@ class RFlow
       RFlow::Configuration.add_available_component(subclass)
     end
 
-    class Port;
-      attr_reader :name, :incidence
-
-      def initialize(name, incidence)
-        @name = name
-        @incidence = incidence
-      end
-    end
-
-    class InputPort
-      def recv_message(message)
-        puts "receiving message"
-      end
-    end
-
-    class OutputPort
-      attr_accessor :incidence
+    class Port; end
+    
+    class HashPort < Port
+      attr_reader :name, :connections
       
-      def send_message(message)
-        puts "sending message"
+      def initialize(name)
+        @name = name
+        @connections = []
+      end
+
+      def [](key=:"0")
+        connections[key.to_s.to_sym || :"0"]
+      end
+
+      def each
+        # Use the delegate functionality
+      end
+      
+      def send_message(message, port_key=0)
+        error_message = "send_message not implemented for #{self.inspect}"
+        RFlow.logger.error error_message
+        raise NotImplementedError, error_message
+      end
+
+      def recv_message(message, port_key=0)
+        error_message = "recv_message not implemented for #{self.inspect}"
+        RFlow.logger.error error_message
+        raise NotImplementedError, error_message
+      end
+    end
+
+    class InputPort < HashPort
+      # TODO: Needs some poll/timeout love
+      def recv_message(message, port_key=0)
+        connections[port_key].recv_message(message)
+      end
+    end
+
+    class OutputPort < HashPort
+      def send_message(message, port_key=0)
+        connections[port_key].send_message(message)
       end
     end
     
-    
+        
     # The class methods used in the creation of a component
     class << self
-      attr_accessor :input_ports
-      attr_accessor :output_ports
+      def defined_input_ports
+        @defined_input_ports ||= Hash.new
+      end
 
-      attr_accessor :management_bus
-
-      # TODO: Update the class vs instance stuffs here to be correct
+      def defined_output_ports
+        @defined_output_ports ||= Hash.new
+      end
       
+      # TODO: Update the class vs instance stuffs here to be correct
+      # Port defintions only have names
+
+      # TODO: consider class-based UUIDs to identify component types
+      
+      # Define an input port with a given name
       def input_port(name)
-        port(input_ports, InputPort, name)
+        define_port(defined_input_ports, InputPort, name)
       end
 
+      # Define an output port with a given name
       def output_port(name)
-        port(output_ports, OutputPort, name)
+        define_port(defined_output_ports, OutputPort, name)
       end
 
-      def port(collection, klass, name)
-        collection ||= []
-        incidence = :single
+      # Helper method to keep things DRY for standard component
+      # definition methods input_port and output_port
+      def define_port(collection, klass, name)
+        name_sym = name.to_sym
+        collection[name_sym] = klass
 
-        if name.is_a? Array
-          incidence = :array
-          name = name.first
-        end
-        port = klass.new(name.to_sym, incidence)
-        collection << port
-
-        define_method name.to_sym do |args|
-          puts "#{name} called"
+        # Create the port accessor method based on the port name
+        define_method name_sym do |*args|
+          key = args.first.to_s.to_sym || 0.to_s.to_sym
+          puts "defining a port method #{name} at called"
+          self.ports[name]
         end
       end
     end
 
-    def configure
+    attr_reader :instance_uuid
+    attr_reader :config
+    attr_reader :ports
+    
+    def initialize(uuid, config)
+      @instance_uuid = uuid
+      @config = config
+      @ports = Hash.new
     end
 
 
+    # A connection_config should look shockingly similar to an
+    # RFlow::Configuration::Connection, i.e. what is stored in the
+    # configuration database.  Eventually, we'll make this taskable
+    # via the management interface, but right now it assumes single
+    # process.
+    def configure_connections(connection_configs)
+      connection_configs.each do |connection_config|
+        # Lookup the port by UUID for both input and output
+        # create the connection, either input or output
+        # install the connection for the given port and index
+      end
+    end
+
+      
+    def configure_component
+    end
+
+
+    # TODO: Fix this stuffs
+    def connect_input(port_name, port_key, connection)
+      connect(InputPort, port_name, port_key, connection)
+    end
+
+    def connect_output(port_name, port_key, connection)
+      connect(OutputPort, port_name, port_key, connection)
+    end
+    
+    def connect(port_class, port_name, port_key, connection)
+      port_sym = port_name.to_sym
+      unless ports[port_sym]
+        port = port_class.new(port_name)
+        port.connect(port_key, connection)
+        ports[port_sym] = port
+      end
+    end
+    
     # Do stuff related before the process_message subclass method is called
     def pre_process_message(input_port, message)
       # Start updating the provenance with the start time

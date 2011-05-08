@@ -8,8 +8,10 @@ class CreateConnections < ActiveRecord::Migration
       t.string :type
 
       # Data flows from an output port to an input port
-      t.string :output_port_uuid
-      t.string :input_port_uuid
+      t.string  :output_port_uuid
+      t.string  :output_port_key, :default => '0'
+      t.string  :input_port_uuid
+      t.string  :input_port_key, :default => '0'
 
       t.text :options
       
@@ -17,9 +19,9 @@ class CreateConnections < ActiveRecord::Migration
     end
 
     add_index :connections, :uuid, :unique => true
-    add_index :connections, [:output_port_uuid, :input_port_uuid], :unique => true
+    add_index :connections, [:output_port_uuid, :output_port_key, :input_port_uuid, :input_port_key], :unique => true, :name => 'index_connections_on_ports_uuid_and_keys'
     # An output port can only connect to a single input port
-    add_index :connections, :output_port_uuid, :unique => true
+    add_index :connections, [:output_port_uuid, :output_port_key], :unique => true
   end
  
   def self.down

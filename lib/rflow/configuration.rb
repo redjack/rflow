@@ -94,98 +94,50 @@ class RFlow
       @config_database_path = config_database_path
       self.class.initialize_database(@config_database_path)
 
-#      # Load any stored config into memory
-#      RFlow.logger.debug "Loading config database (#{Dir.getwd}) '#{self.config_database_path}'"
-#      reload!
-
       # Default/Clean-up the database configuration
       RFlow.logger.debug "Defaulting non-existing config values"
-      default! 
+      merge_defaults! 
 
-      #      # Perform some validations of the config
-#      RFlow.logger.debug "Validating config"
-#      validate! 
-#      # Store the in-memory configuration to the database
-#      RFlow.logger.debug "Storing config"
-#      store!
-#      # Reload the configuration from the database
-#      RFlow.logger.debug "Reloading config"
-#      reload!
-
-      RFlow.logger.info "Configuration:\n#{self.to_s}"
+      RFlow.logger.info self.to_s
     end
 
+    
     def to_s
       string = "Configuration:\n"
       Component.all.each do |component|
-        string << "Component '#{component.name}' (#{component.uuid}) "
+        string << "Component '#{component.name}' as #{component.specification} (#{component.uuid})\n"
         component.output_ports.each do |output_port|
           input_port = output_port.outgoing_connection.input_port
-          string << "OutputPort '#{output_port.name}' (#{output_port.uuid}) =>\n"
-          string << "\tConnection '#{output_port.outgoing_connection.name}' (#{output_port.outgoing_connection.uuid}) =>\n"
-          string << "\tInputPort '#{input_port.name}' (#{input_port.uuid}) Component '#{input_port.component.name}' (#{input_port.component.uuid})\n"
+          string << "\tOutputPort '#{output_port.name}' key '#{output_port.outgoing_connection.output_port_key}' (#{output_port.uuid}) =>\n"
+          string << "\t\tConnection '#{output_port.outgoing_connection.name}' as #{output_port.outgoing_connection.type} (#{output_port.outgoing_connection.uuid}) =>\n"
+          string << "\t\tInputPort '#{input_port.name}' key '#{input_port.incoming_connection.input_port_key}' (#{input_port.uuid}) Component '#{input_port.component.name}' (#{input_port.component.uuid})\n"
         end
       end
       string
     end
+
     
-    def parse_connection_string(connection_string)
-      connection_string.split '#'
-    end
-    
-    # Helper method to access settings
+    # Helper method to access settings with minimal syntax
     def [](setting_name)
       Setting.find_by_name(setting_name).value rescue nil
     end
 
     
-    def default!(relative_directory='.')
+    def merge_defaults!
       # Set the defaults
-      Setting::DEFAULTS.each do |name, default_value_proc|
-        Setting.find_or_create_by_name :name => name, :value => default_value_proc.call(self)
+      Setting::DEFAULTS.each do |name, default_value_or_proc|
+        Setting.find_or_create_by_name(:name => name,
+                                       :value => default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call(self) : default_value_or_proc)
       end
-
       # Do anything else necessary to clean-up/expand config
     end
 
-
-    # Probably need these later, but not now
-#    def validate!
-#      # Run the standard ActiveRecord validations
-#      cached_settings.each do |name, model|
-#        unless model.valid?
-#          error_message = "Invalid setting '#{name}' = (#{Dir.getwd}) '#{model.value}': #{model.errors.inspect}"
-#          RFlow.logger.error error_message
-#          raise Setting::SettingInvalid, error_message
-#        end
-#      end
-#    end
-#
-#    
-#    def store!
-#      [cached_settings.values, cached_components, cached_ports, cached_connections].each do |collection|
-#        collection.each do |model|
-#          model.save
-#        end
-#      end
-#    end
-#
-#    
-#    def reload!
-#      # TODO: Look at this for correctness
-#      cached_settings.clear
-#      Setting.all.each do |setting_model|
-#        RFlow.logger.debug "Loading '#{setting_model.name}' = (#{Dir.getwd}) '#{setting_model.value}'"
-#        cached_settings[setting_model.name] = setting_model
-#      end
-#
-#      # TODO: Load other configs
-#    end
 
     def components
       Component.all
     end
 
+    
     def settings
       Setting.all
     end

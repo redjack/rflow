@@ -4,9 +4,11 @@ require "bundler/setup"
 require 'log4r'
 require 'sqlite3'
 require 'active_record'
+require 'ffi-rzmq'
 
 require 'rflow/configuration'
 require 'rflow/component'
+require 'rflow/message'
 
 include Log4r
 
@@ -19,6 +21,7 @@ class RFlow
     attr_accessor :config_database_path
     attr_accessor :logger
     attr_accessor :configuration
+    attr_accessor :components
   end
   
 #   def self.initialize_config_database(config_database_path, config_file_path=nil)
@@ -204,18 +207,41 @@ class RFlow
     logger.info "Available Data Schemas: #{RFlow::Configuration.available_data_schemas.inspect}"
     logger.info "Available Components: #{RFlow::Configuration.available_components.inspect}"
 
-    logger.info "Instantiating Components"
 
-    configuration.components.each do |component|
-      if component.managed?
-        logger.info "Instantiating component #{component.name} (#{component.uuid})"
-        component.specification
+    # Start up RFlow as a component and connect it to the management
+    # interface on all the components
+
+    # Set up management interface
+    logger.info "Starting up management interface at "
+    
+    
+
+    
+    logger.info "Instantiating Components"
+    self.components = Hash.new
+    configuration.components.each do |component_config|
+      if component_config.managed?
+        logger.info "Instantiating component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
+        begin
+          instantiated_component = component_config.specification.constantize.new(component_config.uuid, configuration)
+          components[component_config.uuid] = instantiated_component
+        rescue Exception => e
+          error_message = "Could not instantiate component '#{component_config.name}' (#{component_config.uuid}): #{e.message}"
+          logger.error error_message
+          raise RuntimeError, error_message
+        end
       else
         error_message = "Non-managed components not yet implemented"
         logger.error error_message
         raise NotImplementedError, error_message
       end
     end
+
+
+    # Send the connection configuration to the component
+    # Send the component-specific configuration to the component
+
+    
     
     logger.info "sleeping because I can"
     sleep 200
@@ -248,5 +274,5 @@ class RFlow
     reload_log_file
     logger.info "#{configuration['rflow.application_name']} reloaded"
   end
-  
+
 end # class RFlow

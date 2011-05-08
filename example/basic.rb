@@ -30,7 +30,7 @@ end
 
 class RFlow::Components::Replicate < RFlow::Component
   input_port :in
-  output_port [:out]
+  output_port :out
   output_port :errored
   
   def process_message
@@ -68,20 +68,25 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
 end
 
 class RFlow::Components::FileOutput < RFlow::Component
+  input_port :in
+  output_port :out
 end
 
 class SimpleComponent < RFlow::Component
-  puts "-----------------SimpleComponent"
+  input_port :in
+  output_port :out
 end
 
 class Complex
   class ComplexComponent < RFlow::Component
-    puts "-----------------Complex::ComplexComponent"
+    input_port :in
+    output_port :out
   end
 end
 
 
 # TODO: figure out what to do with stuff above this line
+
 # Meat of the config file.  Stuff above this should probably be in
 # separate gems and/or files that are brought in at runtime.
 RFlow::Configuration::RubyDSL.configure do |config|
@@ -105,9 +110,13 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'generate_ints#out' => 'filter#in'
   config.connect 'filter#filtered' => 'replicate#in'
   config.connect 'replicate#out[0]' => 'simple#in'
-  config.connect 'replicate#out[1]' => 'complex#in'
+  config.connect 'replicate#out[one]' => 'complex#in'
   config.connect 'simple#out' => 'output#in'
   config.connect 'complex#out' => 'output#in'
+
+  # Some tests that should fail
+  # output should not have an 'out' ports
+  config.connect 'output#out' => 'simple#in'
 end
 
 
