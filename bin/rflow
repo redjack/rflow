@@ -37,14 +37,13 @@ end
 option_parser.parse!
 
 # Set up the startup logging
-log_pattern_formatter = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT
 startup_logger = Logger.new 'startup'
-startup_logger.add StdoutOutputter.new('startup_stdout', :formatter => log_pattern_formatter)
+startup_logger.add StdoutOutputter.new('startup_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
 startup_logger.level = LNAMES.index options[:startup_log_level]
 
 if options[:startup_log_file_path]
   begin
-    startup_logger.add FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => log_pattern_formatter)
+    startup_logger.add FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => RFlow::LOG_PATTERN_FORMATTER)
   rescue Exception => e
     startup_logger.fatal "Log file '#{options[:startup_log_file_path]}' problem: #{e.message}"
     exit 1

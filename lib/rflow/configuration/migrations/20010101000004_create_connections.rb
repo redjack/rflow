@@ -19,8 +19,7 @@ class CreateConnections < ActiveRecord::Migration
     end
 
     add_index :connections, :uuid, :unique => true
-    add_index :connections, [:output_port_uuid, :output_port_key, :input_port_uuid, :input_port_key], :unique => true, :name => 'index_connections_on_ports_uuid_and_keys'
-    # An output port can only connect to a single input port
+    # An output port can only connect to a single input port/key
     add_index :connections, [:output_port_uuid, :output_port_key], :unique => true
   end
  

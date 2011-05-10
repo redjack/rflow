@@ -1,5 +1,4 @@
-require 'uuidtools'
-
+require 'rflow/util'
 require 'rflow/configuration/setting'
 require 'rflow/configuration/component'
 require 'rflow/configuration/port'
@@ -107,16 +106,17 @@ class RFlow
       Component.all.each do |component|
         string << "Component '#{component.name}' as #{component.specification} (#{component.uuid})\n"
         component.output_ports.each do |output_port|
-          input_port = output_port.outgoing_connection.input_port
-          string << "\tOutputPort '#{output_port.name}' key '#{output_port.outgoing_connection.output_port_key}' (#{output_port.uuid}) =>\n"
-          string << "\t\tConnection '#{output_port.outgoing_connection.name}' as #{output_port.outgoing_connection.type} (#{output_port.outgoing_connection.uuid}) =>\n"
-          string << "\t\tInputPort '#{input_port.name}' key '#{input_port.incoming_connection.input_port_key}' (#{input_port.uuid}) Component '#{input_port.component.name}' (#{input_port.component.uuid})\n"
+          output_port.output_connections.each do |output_connection|
+            input_port = output_connection.input_port
+            string << "\tOutputPort '#{output_port.name}' key '#{output_connection.output_port_key}' (#{output_port.uuid}) =>\n"
+            string << "\t\tConnection '#{output_connection.name}' as #{output_connection.type} (#{output_connection.uuid}) =>\n"
+            string << "\t\tInputPort '#{input_port.name}' key '#{output_connection.input_port_key}' (#{input_port.uuid}) Component '#{input_port.component.name}' (#{input_port.component.uuid})\n"
+          end
         end
       end
       string
     end
-
-    
+      
     # Helper method to access settings with minimal syntax
     def [](setting_name)
       Setting.find_by_name(setting_name).value rescue nil
@@ -137,6 +137,11 @@ class RFlow
       Component.all
     end
 
+    
+    def component(component_instance_uuid)
+      Component.find_by_uuid component_instance_uuid
+    end
+    
     
     def settings
       Setting.all

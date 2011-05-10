@@ -14,18 +14,6 @@ class RFlow
         @connection_specs = []
       end
 
-      # Generate a UUID based on either the SHA1 of a seed string (v5) with a
-      # 'zero' UUID namespace, or using a purely random generation
-      # (v4) if no seed string is present
-      def generate_uuid_string(seed=nil)
-        uuid = if seed
-                 UUIDTools::UUID.sha1_create(UUIDTools::UUID.parse_int(0), seed)
-               else
-                 UUIDTools::UUID.random_create
-               end
-        uuid.to_s
-      end
-
       # Helper function to extract the line of the config that
       # specified the operation.  Useful in printing helpful error messages
       def get_config_line(call_history)
@@ -44,7 +32,7 @@ class RFlow
       # must be marshallable into the database (i.e. should all be strings)
       def component(component_name, component_specification, component_options={})
         component_specs << {
-          :uuid => generate_uuid_string(component_name), :name => component_name,
+          :uuid => RFlow::Util::generate_uuid_string(component_name), :name => component_name,
           :specification => component_specification.to_s, :options => component_options,
           :config_line => get_config_line(caller)
         }
@@ -69,11 +57,11 @@ class RFlow
           # TODO: break this out into individual methods for greater
           # maintainability and visibility
           # Generate the required UUIDs
-          output_component_uuid = generate_uuid_string(output_component_name)
-          output_port_uuid = generate_uuid_string(output_string)
-          input_component_uuid = generate_uuid_string(input_component_name)
-          input_port_uuid = generate_uuid_string(input_string)
-          connection_uuid = generate_uuid_string(output_string + '=>' + input_string)
+          output_component_uuid = RFlow::Util::generate_uuid_string(output_component_name)
+          output_port_uuid = RFlow::Util::generate_uuid_string("#{output_component_name}##{output_port_name}")
+          input_component_uuid = RFlow::Util::generate_uuid_string(input_component_name)
+          input_port_uuid = RFlow::Util::generate_uuid_string(input_string)
+          connection_uuid = RFlow::Util::generate_uuid_string(output_string + '=>' + input_string)
           
           connection_specs << {
             :uuid => connection_uuid, :name => output_string + '=>' + input_string, 
@@ -149,6 +137,8 @@ class RFlow
         raise RFlow::Configuration::Component::ComponentNotFound, "#{connection_spec[:output_component_name]}" unless output_component
         # Do not allow an output to connect to multiple inputs, might throw a unique exception from ActiveRecord
         output_port = RFlow::Configuration::OutputPort.new :uuid => connection_spec[:output_port_uuid], :name => connection_spec[:output_port_name]
+        p output_component
+        p output_port
         output_component.output_ports << output_port
         output_port.save!
         

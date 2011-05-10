@@ -3,7 +3,7 @@ class CreatePorts < ActiveRecord::Migration
     create_table :ports do |t|
       t.string :uuid
       t.string :name
-      t.string :key
+
       # For STI
       t.text   :type
 
@@ -14,6 +14,7 @@ class CreatePorts < ActiveRecord::Migration
     end
 
     add_index :ports, :uuid, :unique => true
+    add_index :ports, :component_uuid
   end
  
   def self.down

@@ -24,10 +24,12 @@ class SimpleDataExtension < RFlow::Message::Data
   puts "-----------------SimpleDataExtension"
 end
 
+puts "Before GenerateIntegerSequence"
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
 end
 
+puts "Before Replicate"
 class RFlow::Components::Replicate < RFlow::Component
   input_port :in
   output_port :out
@@ -44,6 +46,7 @@ class RFlow::Components::Replicate < RFlow::Component
   end
 end
 
+puts "Before RubyProcFilter"
 class RFlow::Components::RubyProcFilter < RFlow::Component
   input_port :in
   output_port :filtered
@@ -67,16 +70,19 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   end
 end
 
+puts "Before FileOutput"
 class RFlow::Components::FileOutput < RFlow::Component
   input_port :in
   output_port :out
 end
 
+puts "Before SimpleComponent"
 class SimpleComponent < RFlow::Component
   input_port :in
   output_port :out
 end
 
+puts "Before ComplexComponent"
 class Complex
   class ComplexComponent < RFlow::Component
     input_port :in

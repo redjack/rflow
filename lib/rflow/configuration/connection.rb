@@ -13,7 +13,7 @@ class RFlow
 
       after_initialize :merge_default_options!
       
-      validates_uniqueness_of :uuid, :output_port_uuid
+      validates_uniqueness_of :uuid
       validates_presence_of :output_port_uuid, :input_port_uuid
 
       validate :all_required_options_present

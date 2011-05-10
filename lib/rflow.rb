@@ -15,7 +15,9 @@ include Log4r
 class RFlow
   class Error < StandardError; end
 
-  LOG_PATTERN_FORMAT = '%l %d %c (%p) - %M'
+  LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %M'
+  DATE_PATTERN_FORMAT = '%Y-%m-%dT%H:%M:%S.%9N %z'
+  LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_pattern => DATE_PATTERN_FORMAT
   
   class << self
     attr_accessor :config_database_path
@@ -32,10 +34,9 @@ class RFlow
 #   end
 
   def self.initialize_logger(log_file_path, log_level='INFO')
-    log_pattern_formatter = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT
     rflow_logger = Logger.new 'rflow.log'
     begin
-      rflow_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => log_pattern_formatter)
+      rflow_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
     rescue Exception => e
       RFlow.logger.error "Log file '#{log_file_path}' problem: #{e.message}"
       raise Error, "Log file '#{log_file_path}' problem: #{e.message}"
@@ -208,14 +209,8 @@ class RFlow
     logger.info "Available Components: #{RFlow::Configuration.available_components.inspect}"
 
 
-    # Start up RFlow as a component and connect it to the management
-    # interface on all the components
-
-    # Set up management interface
-    logger.info "Starting up management interface at "
-    
-    
-
+    # TODO: Start up a FlowManager component and connect it to the
+    # management interface on all the components
     
     logger.info "Instantiating Components"
     self.components = Hash.new
@@ -223,7 +218,7 @@ class RFlow
       if component_config.managed?
         logger.info "Instantiating component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
         begin
-          instantiated_component = component_config.specification.constantize.new(component_config.uuid, configuration)
+          instantiated_component = component_config.specification.constantize.new(component_config.uuid, component_config.name)
           components[component_config.uuid] = instantiated_component
         rescue Exception => e
           error_message = "Could not instantiate component '#{component_config.name}' (#{component_config.uuid}): #{e.message}"
@@ -237,11 +232,61 @@ class RFlow
       end
     end
 
-
-    # Send the connection configuration to the component
-    # Send the component-specific configuration to the component
+    # Send the port configuration to each component
+    logger.info "Configuring component ports"
+    components.each do |component_instance_uuid, component|
+      component_config = configuration.component(component.instance_uuid)
+      component_config.input_ports.each do |input_port_config|
+        component.configure_input_port(input_port_config.uuid, input_port_config.name)
+      end
+    end    
 
     
+    # Send the connection configuration to the component
+    logger.info "Configuring component connections"
+    components.each do |component_instance_uuid, component|
+      component_config = configuration.component(component.instance_uuid)
+
+      logger.debug "Configuring input connections for '#{component.name}' (#{component.instance_uuid})"
+      component_config.input_ports.each do |input_port_config|
+        input_port_config.input_connections.each do |input_connection_config|
+          logger.debug "Configuring input port '#{input_port_config.name}' (#{input_port_config.uuid}) key '#{input_connection_config.input_port_key}' with connection '#{input_connection_config.name}' (#{input_connection_config.uuid})"
+          component.configure_input_connection(input_port_config.uuid, input_connection_config.input_port_key,
+                                               input_connection_config.uuid, input_connection_config.type, input_connection_config.options)
+        end
+      end
+
+      logger.debug "Configuring output connections for '#{component.name}' (#{component.instance_uuid})"
+      component_config.output_ports.each do |output_port_config|
+        puts '=============='
+        p output_port_config
+        puts '=============='
+        output_port_config.output_connections.each do |output_connection_config|
+          logger.debug "Configuring output port '#{output_port_config.name}' (#{output_port_config.uuid}) key '#{output_connection_config.output_port_key}' with connection '#{output_connection_config.name}' (#{output_connection_config.uuid})"
+          component.configure_output_connection(output_port_config.uuid, output_connection_config.output_port_key,
+                                                output_connection_config.uuid, output_connection_config.type, output_connection_config.options)
+        end
+      end
+      
+    end
+    
+    # Send the component-specific configuration to the component
+    logger.info "Configuring components with component-specific configurations"
+    components.each do |component_uuid, component|
+    end
+
+    # Send a command to each component to tell them to connect their
+    # ports via their connections 
+    logger.info "Connecting components"
+    components.each do |component_uuid, component|
+    end
+
+    # Start each component
+    logger.info "Running components"
+    components.each do |component_uuid, component|
+    end
+
+    # Sit back and relax
     
     logger.info "sleeping because I can"
     sleep 200

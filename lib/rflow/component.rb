@@ -94,12 +94,13 @@ class RFlow
     end
 
     attr_reader :instance_uuid
+    attr_reader :name
     attr_reader :config
     attr_reader :ports
     
-    def initialize(uuid, config)
+    def initialize(uuid, name=nil)
       @instance_uuid = uuid
-      @config = config
+      @name = name
       @ports = Hash.new
     end
 
@@ -121,24 +122,9 @@ class RFlow
     def configure_component
     end
 
-
-    # TODO: Fix this stuffs
-    def connect_input(port_name, port_key, connection)
-      connect(InputPort, port_name, port_key, connection)
-    end
-
-    def connect_output(port_name, port_key, connection)
-      connect(OutputPort, port_name, port_key, connection)
+    def configure_input_connection
     end
     
-    def connect(port_class, port_name, port_key, connection)
-      port_sym = port_name.to_sym
-      unless ports[port_sym]
-        port = port_class.new(port_name)
-        port.connect(port_key, connection)
-        ports[port_sym] = port
-      end
-    end
     
     # Do stuff related before the process_message subclass method is called
     def pre_process_message(input_port, message)
