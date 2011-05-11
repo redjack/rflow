@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.email       = ["michael.artz@redjack.com"]
   s.homepage    = ""
   s.summary     = %q{A Ruby-based workflow framework}
-  s.description = %q{A Ruby-based workflow framework that utilizes ZeroMQ for computation connections and Avro for serialization}
+  s.description = %q{A Ruby-based workflow framework that utilizes ZeroMQ for component connections and Avro for serialization}
 
   s.rubyforge_project = "rflow"
 
@@ -25,10 +25,14 @@ Gem::Specification.new do |s|
   
   s.add_dependency 'sqlite3', '= 1.3.3'
   s.add_dependency 'activerecord', '= 3.0.7'
-  
+
+    
   s.add_dependency 'avro', '>= 1.3.3'
   s.add_dependency 'ffi', '= 1.0.7'
   s.add_dependency 'ffi-rzmq' , '= 0.8.0'
+
+  s.add_dependency 'eventmachine', '>= 1.0.0.beta3'
+  s.add_dependency 'em-zeromq', '= 0.2.1'
   
   s.add_development_dependency 'rspec', '= 2.5.0'
   s.add_development_dependency 'rake', '= 0.8.7'

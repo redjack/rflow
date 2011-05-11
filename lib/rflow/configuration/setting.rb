@@ -1,11 +1,15 @@
 require 'active_record'
+require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
     class Setting < ActiveRecord::Base
-      include ActiveModel::Validations
-      
       class SettingInvalid < StandardError; end
+
+      include ActiveModel::Validations
+
+      set_primary_key :name
+      attr_accessible :name, :value
       
       DEFAULTS = {
         'rflow.application_name' => lambda {|config| 'rflow'},
@@ -30,9 +34,6 @@ class RFlow
                     'rflow.pid_file_path',
                    ]
 
-      # Validations
-      validates_presence_of :name
-      validates_uniqueness_of :name
 
       validate :valid_directory_path, :if => :directory_path?
       validate :valid_writable_path, :if => :directory_path?

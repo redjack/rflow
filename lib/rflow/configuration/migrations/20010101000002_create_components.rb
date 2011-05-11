@@ -1,7 +1,7 @@
 class CreateComponents < ActiveRecord::Migration
   def self.up
-    create_table :components do |t|
-      t.string :uuid
+    create_table(:components, :id => false) do |t|
+      t.string :uuid, :limit => 36, :primary => true
       t.string :name
       t.boolean :managed, :default => true
       t.text   :specification
@@ -10,7 +10,6 @@ class CreateComponents < ActiveRecord::Migration
       t.timestamps
     end
 
-    add_index :components, :name, :unique => true
     add_index :components, :uuid, :unique => true
   end
  

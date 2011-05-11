@@ -53,10 +53,6 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   output_port :dropped
   output_port :errored
 
-  def configure(config)
-    @filter_proc = config.filter
-  end
-
   def process_message(input_port, message)
     begin
       if @filter_proc.call(message.data)

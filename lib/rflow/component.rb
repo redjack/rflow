@@ -1,4 +1,5 @@
 require 'rflow/message'
+require 'rflow/component/port'
 
 class RFlow
   class Component
@@ -8,52 +9,8 @@ class RFlow
       RFlow::Configuration.add_available_component(subclass)
     end
 
-    class Port; end
-    
-    class HashPort < Port
-      attr_reader :name, :connections
-      
-      def initialize(name)
-        @name = name
-        @connections = []
-      end
-
-      def [](key=:"0")
-        connections[key.to_s.to_sym || :"0"]
-      end
-
-      def each
-        # Use the delegate functionality
-      end
-      
-      def send_message(message, port_key=0)
-        error_message = "send_message not implemented for #{self.inspect}"
-        RFlow.logger.error error_message
-        raise NotImplementedError, error_message
-      end
-
-      def recv_message(message, port_key=0)
-        error_message = "recv_message not implemented for #{self.inspect}"
-        RFlow.logger.error error_message
-        raise NotImplementedError, error_message
-      end
-    end
-
-    class InputPort < HashPort
-      # TODO: Needs some poll/timeout love
-      def recv_message(message, port_key=0)
-        connections[port_key].recv_message(message)
-      end
-    end
-
-    class OutputPort < HashPort
-      def send_message(message, port_key=0)
-        connections[port_key].send_message(message)
-      end
-    end
-    
         
-    # The class methods used in the creation of a component
+    # The Component class methods used in the creation of a component
     class << self
       def defined_input_ports
         @defined_input_ports ||= Hash.new
@@ -69,62 +26,102 @@ class RFlow
       # TODO: consider class-based UUIDs to identify component types
       
       # Define an input port with a given name
-      def input_port(name)
-        define_port(defined_input_ports, InputPort, name)
+      def input_port(port_name)
+        define_port(defined_input_ports, port_name)
       end
 
       # Define an output port with a given name
-      def output_port(name)
-        define_port(defined_output_ports, OutputPort, name)
+      def output_port(port_name)
+        define_port(defined_output_ports, port_name)
       end
 
       # Helper method to keep things DRY for standard component
       # definition methods input_port and output_port
-      def define_port(collection, klass, name)
-        name_sym = name.to_sym
-        collection[name_sym] = klass
+      def define_port(collection, port_name)
+        port_name_sym = port_name.to_sym
+        collection[port_name_sym] = true
 
         # Create the port accessor method based on the port name
-        define_method name_sym do |*args|
+        define_method port_name_sym do |*args|
           key = args.first.to_s.to_sym || 0.to_s.to_sym
-          puts "defining a port method #{name} at called"
-          self.ports[name]
+          puts "defining a port method #{port_name}[#{key}] called"
+          # HACK: (Slowly) lookup the port in the available UUID-keyed
+          # hash.  Think about keeping a name-keyed hash as well.
+          # Profile later.
+          port = self.ports.find do |port_instance_uuid, port|
+            port.name == port_name_sym
+          end
+          
+          raise ArgumentError, "Invalid port '#{port_name}' accessed" unless port
+          port[key]
         end
       end
     end
 
     attr_reader :instance_uuid
     attr_reader :name
-    attr_reader :config
+    attr_reader :configuration
     attr_reader :ports
     
-    def initialize(uuid, name=nil)
+    def initialize(uuid, name=nil, configuration=nil)
       @instance_uuid = uuid
       @name = name
       @ports = Hash.new
+      @configuration = configuration
     end
 
 
-    # A connection_config should look shockingly similar to an
-    # RFlow::Configuration::Connection, i.e. what is stored in the
-    # configuration database.  Eventually, we'll make this taskable
-    # via the management interface, but right now it assumes single
-    # process.
-    def configure_connections(connection_configs)
-      connection_configs.each do |connection_config|
-        # Lookup the port by UUID for both input and output
-        # create the connection, either input or output
-        # install the connection for the given port and index
+    def configure!(configuration)
+      @configuration = configuration
+    end
+    
+    # TODO: DRY up the following two methods by factoring out into a meta-method
+    
+    def configure_input_port!(port_name, port_instance_uuid, port_options={})
+      unless self.class.defined_input_ports.include? port_name.to_sym
+        raise ArgumentError, "Input port '#{port_name}' not defined on this component"
+      end
+      input_port = InputPort.new(port_name, port_instance_uuid, port_options)
+      ports[port_instance_uuid.to_sym] = input_port
+      input_port
+    end
+
+    
+    def configure_output_port!(port_name, port_instance_uuid, port_options={})
+      unless self.class.defined_output_ports.include? port_name.to_sym
+        raise ArgumentError, "Output port '#{port_name}' not defined on this component"
+      end
+      output_port = OutputPort.new(port_name, port_instance_uuid, port_options)
+      ports[port_instance_uuid.to_sym] = output_port
+      output_port
+    end
+
+
+    # Only supports Ruby types.
+    # TODO: figure out how to dynamically load the built-in
+    # connections, or require them at the top of the file and not rely
+    # on rflow.rb requiring 'rflow/connections'
+    def configure_connection!(port_instance_uuid, port_key, connection_type, connection_uuid, connection_options={})
+      case connection_type
+      when 'RFlow::Configuration::ZMQConnection'
+        connection = RFlow::Connections::ZMQConnection.new(connection_uuid, connection_options)
+      else
+        raise ArgumentError, "Only ZMQConnections currently supported"
+      end
+
+      ports[port_instance_uuid.to_sym][port_key] = connection
+      connection
+    end
+
+    
+    # Tell the component to establish its ports connections, i.e. make
+    # the connection.  Uses the underlying connection object
+    def connect!
+      ports.each do |port_instance_uuid, port|
+        port.connect!
       end
     end
 
-      
-    def configure_component
-    end
-
-    def configure_input_connection
-    end
-    
     
     # Do stuff related before the process_message subclass method is called
     def pre_process_message(input_port, message)
@@ -138,17 +135,16 @@ class RFlow
     def post_process_message(input_port, message); end
     
     # Main component running method.  Called 
-    def run
-      select(input_ports, output_ports) do |ready|
-        if ready.input?
-          message = read_message(ready)
-          pre_process_message(ready_message)
-          process_message(ready, message)
-          post_process_message(ready, message)
-        elsif ready.output?
-        end
-      end
-      
+    def run!
+#      select(input_ports, output_ports) do |ready|
+#        if ready.input?
+#          message = read_message(ready)
+#          pre_process_message(ready_message)
+#          process_message(ready, message)
+#          post_process_message(ready, message)
+#        elsif ready.output?
+#        end
+#      end
     end
     
   end # class Component

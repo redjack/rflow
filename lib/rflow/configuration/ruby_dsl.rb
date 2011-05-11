@@ -32,7 +32,7 @@ class RFlow
       # must be marshallable into the database (i.e. should all be strings)
       def component(component_name, component_specification, component_options={})
         component_specs << {
-          :uuid => RFlow::Util::generate_uuid_string(component_name), :name => component_name,
+          :name => component_name,
           :specification => component_specification.to_s, :options => component_options,
           :config_line => get_config_line(caller)
         }
@@ -47,29 +47,20 @@ class RFlow
       # Array ports are specified with an key suffix in standard
       # progamming syntax, i.e.
       #  connect 'componentA#arrayport[2]' => 'componentB#in[1]'
-      # Automatically generates component, port, and connection UUIDs.
+      # Uses the model to assign random UUIDs
       def connect(connection_hash)
         config_file_line = get_config_line(caller)
         connection_hash.each do |output_string, input_string|
           output_component_name, output_port_name, output_port_key = parse_connection_string(output_string)
           input_component_name, input_port_name, input_port_key = parse_connection_string(input_string)
 
-          # TODO: break this out into individual methods for greater
-          # maintainability and visibility
-          # Generate the required UUIDs
-          output_component_uuid = RFlow::Util::generate_uuid_string(output_component_name)
-          output_port_uuid = RFlow::Util::generate_uuid_string("#{output_component_name}##{output_port_name}")
-          input_component_uuid = RFlow::Util::generate_uuid_string(input_component_name)
-          input_port_uuid = RFlow::Util::generate_uuid_string(input_string)
-          connection_uuid = RFlow::Util::generate_uuid_string(output_string + '=>' + input_string)
-          
           connection_specs << {
-            :uuid => connection_uuid, :name => output_string + '=>' + input_string, 
-            :output_component_uuid => output_component_uuid, :output_component_name => output_component_name,
-            :output_port_uuid => output_port_uuid, :output_port_name => output_port_name, :output_port_key => output_port_key, 
+            :name => output_string + '=>' + input_string, 
+            :output_component_name => output_component_name,
+            :output_port_name => output_port_name, :output_port_key => output_port_key, 
             :output_string => output_string,
-            :input_component_uuid => input_component_uuid, :input_component_name => input_component_name,
-            :input_port_uuid => input_port_uuid, :input_port_name => input_port_name, :input_port_key => input_port_key,
+            :input_component_name => input_component_name,
+            :input_port_name => input_port_name, :input_port_key => input_port_key,
             :input_string => input_string,
             :config_line => config_file_line,
           }
@@ -110,7 +101,7 @@ class RFlow
       def process_component_specs
         component_specs.each do |component_spec|
           RFlow.logger.debug "Found component '#{component_spec[:name]}', creating"
-          RFlow::Configuration::Component.create :uuid => component_spec[:uuid], :name => component_spec[:name], :specification => component_spec[:specification], :options => component_spec[:options]
+          RFlow::Configuration::Component.create :name => component_spec[:name], :specification => component_spec[:specification], :options => component_spec[:options]
         end
       end
 
@@ -126,43 +117,38 @@ class RFlow
 
       # For the given connection, break up each input/output
       # component/port specification, ensure that the component
-      # already exists in the database (by uuid).  Also, only supports
+      # already exists in the database (by name).  Also, only supports
       # ZeroMQ ipc sockets
       def process_connection_spec(connection_spec)
         RFlow.logger.debug "Found connection from '#{connection_spec[:output_string]}' to '#{connection_spec[:input_string]}', creating"
         
         # an input port can be associated with multiple outputs, but
         # an output port can only be associated with one input
-        output_component = RFlow::Configuration::Component.find_by_uuid connection_spec[:output_component_uuid]
+        output_component = RFlow::Configuration::Component.find_by_name connection_spec[:output_component_name]
         raise RFlow::Configuration::Component::ComponentNotFound, "#{connection_spec[:output_component_name]}" unless output_component
-        # Do not allow an output to connect to multiple inputs, might throw a unique exception from ActiveRecord
-        output_port = RFlow::Configuration::OutputPort.new :uuid => connection_spec[:output_port_uuid], :name => connection_spec[:output_port_name]
+        output_port = output_component.output_ports.find_or_initialize_by_name :name => connection_spec[:output_port_name]
         p output_component
         p output_port
-        output_component.output_ports << output_port
         output_port.save!
         
-        input_component = RFlow::Configuration::Component.find_by_uuid connection_spec[:input_component_uuid]
+        input_component = RFlow::Configuration::Component.find_by_name connection_spec[:input_component_name]
         raise RFlow::Configuration::Component::ComponentNotFound, "#{connection_spec[:input_component_name]}" unless input_component
-        # Allow the same input to be connected to multiple outputs
-        input_port = RFlow::Configuration::InputPort.find_or_initialize_by_uuid :uuid => connection_spec[:input_port_uuid], :name => connection_spec[:input_port_name]
-        input_component.input_ports << input_port
+        input_port = input_component.input_ports.find_or_initialize_by_name :name => connection_spec[:input_port_name]
         input_port.save!
 
         # Generate a random port
         
         # Only support ZMQ ipc PUSH/PULL sockets at the moment.  Most
         # of the options are the defaults
-        connection = RFlow::Configuration::ZMQConnection.new(:uuid => connection_spec[:uuid],
-                                                             :name => connection_spec[:name],
+        connection = RFlow::Configuration::ZMQConnection.new(:name => connection_spec[:name],
                                                              :output_port_key => connection_spec[:output_port_key],
                                                              :input_port_key => connection_spec[:input_port_key],
                                                              :options => {
                                                                :output_socket_type => "PUSH",
-                                                               :output_address => "ipc://rflow.#{connection_spec[:uuid]}",
+                                                               :output_address => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
                                                                :output_responsibility => "bind",
                                                                :input_socket_type => "PULL",
-                                                               :input_address => "ipc://rflow.#{connection_spec[:uuid]}",
+                                                               :input_address => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
                                                                :input_responsibility => "connect",
                                                              })
 
@@ -171,14 +157,14 @@ class RFlow
         connection.save!
 
       rescue RFlow::Configuration::Component::ComponentNotFound => e
-        error_message = "Component '#{e.message}' not found at #{connection[:config_line]}"
+        error_message = "Component '#{e.message}' not found at #{connection_spec[:config_line]}"
         RFlow.logger.error error_message
         raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
 #      rescue Exception => e
 #        # TODO: Figure out why an ArgumentError doesn't put the
 #        # offending message into e.message, even though it is printed
 #        # out if not caught
-#        error_message = "Exception #{e.class} - '#{e.message}' at config '#{connection[:config_line]}'"
+#        error_message = "Exception #{e.class} - '#{e.message}' at config '#{connection_spec[:config_line]}'"
 #        RFlow.logger.error error_message
 #        raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
       end

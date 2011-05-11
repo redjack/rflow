@@ -1,8 +1,10 @@
 require 'active_record'
+require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
     class Component < ActiveRecord::Base
+      include UUIDKeyed
       include ActiveModel::Validations
       
       class ComponentInvalid < StandardError; end
@@ -17,9 +19,8 @@ class RFlow
       #has_many :input_connections, :through => :input_ports, :source => :input_connections
       #has_many :output_connections, :through => :output_ports, :source => :output_connection
 
-      # Racy, but with unique index to back it up
-      validates_presence_of :uuid
-      validates_uniqueness_of :uuid, :name
+      
+      validates_uniqueness_of :name
 
     end
   end

@@ -1,7 +1,7 @@
 class CreateSettings < ActiveRecord::Migration
   def self.up
-    create_table :settings do |t|
-      t.string :name
+    create_table(:settings, :id => false) do |t|
+      t.string :name, :primary => true
       t.text   :value
  
       t.timestamps

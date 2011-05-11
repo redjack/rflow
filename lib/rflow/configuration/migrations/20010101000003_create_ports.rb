@@ -1,7 +1,7 @@
 class CreatePorts < ActiveRecord::Migration
   def self.up
-    create_table :ports do |t|
-      t.string :uuid
+    create_table(:ports, :id => false) do |t|
+      t.string :uuid, :limit => 36, :primary => true
       t.string :name
 
       # For STI
@@ -15,6 +15,7 @@ class CreatePorts < ActiveRecord::Migration
 
     add_index :ports, :uuid, :unique => true
     add_index :ports, :component_uuid
+    add_index :ports, [:component_uuid, :name], :unique => true
   end
  
   def self.down

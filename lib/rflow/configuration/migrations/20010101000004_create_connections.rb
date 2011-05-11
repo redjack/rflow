@@ -1,7 +1,7 @@
 class CreateConnections < ActiveRecord::Migration
   def self.up
-    create_table :connections do |t|
-      t.string :uuid
+    create_table(:connections, :id => false) do |t|
+      t.string :uuid, :limit => 36, :primary => false
       t.string :name
 
       # To allow for multiple types of connections

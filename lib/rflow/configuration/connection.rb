@@ -1,9 +1,12 @@
 require 'active_record'
+require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
     class Connection < ActiveRecord::Base
       class ConnectionInvalid < StandardError; end
+
+      include UUIDKeyed
       include ActiveModel::Validations
 
       serialize :options, Hash
