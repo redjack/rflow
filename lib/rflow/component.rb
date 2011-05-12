@@ -43,16 +43,17 @@ class RFlow
 
         # Create the port accessor method based on the port name
         define_method port_name_sym do |*args|
-          key = args.first.to_s.to_sym || 0.to_s.to_sym
+          key = args.first ? args.first.to_s.to_sym : 0.to_s.to_sym
           puts "defining a port method #{port_name}[#{key}] called"
           # HACK: (Slowly) lookup the port in the available UUID-keyed
           # hash.  Think about keeping a name-keyed hash as well.
           # Profile later.
-          port = self.ports.find do |port_instance_uuid, port|
-            port.name == port_name_sym
+          port = self.ports.values.find do |port|
+            port.name.to_sym == port_name_sym
           end
-          
-          raise ArgumentError, "Invalid port '#{port_name}' accessed" unless port
+
+          raise ArgumentError, "#{self.class.to_s}: Invalid port '#{port_name}' accessed" unless port
+
           port[key]
         end
       end
@@ -65,7 +66,7 @@ class RFlow
     
     def initialize(uuid, name=nil, configuration=nil)
       @instance_uuid = uuid
-      @name = name
+      @name = name.to_sym
       @ports = Hash.new
       @configuration = configuration
     end

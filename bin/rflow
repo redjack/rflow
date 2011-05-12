@@ -102,7 +102,12 @@ end
 # Initialize the configuration database, if needed
 unless File.exist? options[:config_database_path]
   startup_logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
-  RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])
+  begin
+    RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])
+  rescue Exception => e
+    startup_logger.fatal "Error initializing configuration database: #{e.message}"
+    exit 1
+  end
 end
 
 unless File.readable? options[:config_database_path]

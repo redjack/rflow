@@ -27,6 +27,13 @@ end
 puts "Before GenerateIntegerSequence"
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
+
+  def run!
+    EM.add_periodic_timer(1) do
+      out.send_message 'MESSAGE IS HERE'
+    end
+  end
+  
 end
 
 puts "Before Replicate"
@@ -35,10 +42,10 @@ class RFlow::Components::Replicate < RFlow::Component
   output_port :out
   output_port :errored
   
-  def process_message
-    out.each do |out_n|
+  def process_message(input_port, message)
+    out.each do |output_port_key, output_port|
       begin
-        out_n.send message
+        output_port.send message
       rescue Exception => e
         error.send message
       end
@@ -61,7 +68,7 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
         dropped.send message
       end
     rescue Exception => e
-      error.send message
+      errored.send message
     end
   end
 end
@@ -69,7 +76,7 @@ end
 puts "Before FileOutput"
 class RFlow::Components::FileOutput < RFlow::Component
   input_port :in
-  output_port :out
+#  output_port :out
 end
 
 puts "Before SimpleComponent"
@@ -109,16 +116,18 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.component 'output', RFlow::Components::FileOutput, :file_path => '/crap/crap/crap'
   
   # Hook components together
-  config.connect 'generate_ints#out' => 'filter#in'
-  config.connect 'filter#filtered' => 'replicate#in'
-  config.connect 'replicate#out[0]' => 'simple#in'
-  config.connect 'replicate#out[one]' => 'complex#in'
-  config.connect 'simple#out' => 'output#in'
-  config.connect 'complex#out' => 'output#in'
+  # config.connect 'generate_ints#out' => 'filter#in'
+  # config.connect 'filter#filtered' => 'replicate#in'
+  # config.connect 'replicate#out[0]' => 'simple#in'
+  # config.connect 'replicate#out[one]' => 'complex#in'
+  # config.connect 'simple#out' => 'output#in'
+  # config.connect 'complex#out' => 'output#in'
 
+  config.connect 'generate_ints#out' => 'filter#in'
+  
   # Some tests that should fail
   # output should not have an 'out' ports
-  config.connect 'output#out' => 'simple#in'
+#  config.connect 'output#out' => 'simple#in'
 end
 
 

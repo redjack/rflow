@@ -127,8 +127,6 @@ class RFlow
         output_component = RFlow::Configuration::Component.find_by_name connection_spec[:output_component_name]
         raise RFlow::Configuration::Component::ComponentNotFound, "#{connection_spec[:output_component_name]}" unless output_component
         output_port = output_component.output_ports.find_or_initialize_by_name :name => connection_spec[:output_port_name]
-        p output_component
-        p output_port
         output_port.save!
         
         input_component = RFlow::Configuration::Component.find_by_name connection_spec[:input_component_name]
@@ -136,10 +134,6 @@ class RFlow
         input_port = input_component.input_ports.find_or_initialize_by_name :name => connection_spec[:input_port_name]
         input_port.save!
 
-        # Generate a random port
-        
-        # Only support ZMQ ipc PUSH/PULL sockets at the moment.  Most
-        # of the options are the defaults
         connection = RFlow::Configuration::ZMQConnection.new(:name => connection_spec[:name],
                                                              :output_port_key => connection_spec[:output_port_key],
                                                              :input_port_key => connection_spec[:input_port_key],
@@ -160,13 +154,14 @@ class RFlow
         error_message = "Component '#{e.message}' not found at #{connection_spec[:config_line]}"
         RFlow.logger.error error_message
         raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
-#      rescue Exception => e
-#        # TODO: Figure out why an ArgumentError doesn't put the
-#        # offending message into e.message, even though it is printed
-#        # out if not caught
-#        error_message = "Exception #{e.class} - '#{e.message}' at config '#{connection_spec[:config_line]}'"
-#        RFlow.logger.error error_message
-#        raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
+      rescue Exception => e
+        # TODO: Figure out why an ArgumentError doesn't put the
+        # offending message into e.message, even though it is printed
+        # out if not caught
+        error_message = "#{e.message} at config '#{connection_spec[:config_line]}'"
+        RFlow.logger.debug "Exceptions #{e.class} - " + error_message
+        RFlow.logger.error error_message
+        raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
       end
 
       

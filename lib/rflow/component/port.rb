@@ -19,6 +19,10 @@ class RFlow
         connections[key.to_s.to_sym] = connection
       end
 
+      def each
+        connections.each
+      end
+      
       # Should be overridden.  Called when it is time to actually
       # establish the connection
       def connect!; raise NotImplementedError, "Raw ports do not know which direction to connect"; end

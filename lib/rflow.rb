@@ -188,6 +188,14 @@ p  end
     $$
   end
 
+
+  # Iterate through each component config in the configuration
+  # database and attempt to instantiate each one, storing the
+  # resulting instantiated components in the 'components' class
+  # instance attribute.  This assumes that the specification of a
+  # component is a fully qualified Ruby class that has already been
+  # loaded.  Future releases will support external (i.e. non-managed
+  # components), but the current stuff only supports Ruby classes
   def self.instantiate_components!
     logger.info "Instantiating Components"
     self.components = Hash.new
@@ -198,18 +206,21 @@ p  end
           instantiated_component = component_config.specification.constantize.new(component_config.uuid, component_config.name)
           components[component_config.uuid] = instantiated_component
         rescue Exception => e
-          error_message = "Could not instantiate component '#{component_config.name}' (#{component_config.uuid}): #{e.message}"
+          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): #{e.message}"
           logger.error error_message
           raise RuntimeError, error_message
         end
       else
-        error_message = "Non-managed components not yet implemented"
+        error_message = "Non-managed components not yet implemented for component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
         logger.error error_message
         raise NotImplementedError, error_message
       end
     end
   end
 
+
+  # Iterate through the instantiated components and send each
+  # component its soon-to-be connected port names and UUIDs
   def self.configure_component_ports!
     # Send the port configuration to each component
     logger.info "Configuring component ports and assigning UUIDs to port names"
@@ -224,8 +235,12 @@ p  end
     end
   end
 
+
+  # Iterate through the instantiated components and send each
+  # component the information necessary to configure a connection on a
+  # specific port, specifically the port UUID, port key, type of connection, uuid
+  # of connection, and a configuration specific to the connection type
   def self.configure_component_connections!
-    # Send the connection configuration to the component
     logger.info "Configuring component connections"
     components.each do |component_instance_uuid, component|
       component_config = configuration.component(component.instance_uuid)
@@ -249,10 +264,10 @@ p  end
       end
     end
   end
-
-
+  
+  
+  # Send the component-specific configuration to the component
   def self.configure_components!
-    # Send the component-specific configuration to the component
     logger.info "Configuring components with component-specific configurations"
     components.each do |component_uuid, component|
       component_config = configuration.component(component.instance_uuid)
@@ -261,9 +276,9 @@ p  end
     end
   end
 
+  # Send a command to each component to tell them to connect their
+  # ports via their connections 
   def self.connect_components!
-    # Send a command to each component to tell them to connect their
-    # ports via their connections 
     logger.info "Connecting components"
     components.each do |component_uuid, component|
       logger.debug "Connecting component '#{component.name}' (#{component.instance_uuid})"
@@ -271,8 +286,8 @@ p  end
     end
   end
 
+  # Start each component running
   def self.run_components!
-    # Start each component
     logger.info "Running components"
     components.each do |component_uuid, component|
       logger.debug "Running component '#{component.name}' (#{component.instance_uuid})"
@@ -298,10 +313,10 @@ p  end
       write_pid_file configuration['rflow.pid_file_path']
     end
 
-    logger.info "#{application_name} configured and daemonized"
-    logger.info "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
-    logger.info "Available Data Schemas: #{RFlow::Configuration.available_data_schemas.inspect}"
-    logger.info "Available Components: #{RFlow::Configuration.available_components.inspect}"
+    logger.info "#{application_name} configured and daemonized, starting flow"
+    logger.debug "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
+    logger.debug "Available Data Schemas: #{RFlow::Configuration.available_data_schemas.inspect}"
+    logger.debug "Available Components: #{RFlow::Configuration.available_components.inspect}"
 
     # TODO: Start up a FlowManager component and connect it to the
     # management interface on all the components

@@ -8,6 +8,8 @@ require 'rflow/configuration/connection'
 
 class RFlow
   class Configuration
+    class ConfigurationInvalid < StandardError; end
+    
     class << self
       attr_accessor :config_file
 
