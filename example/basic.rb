@@ -28,9 +28,13 @@ puts "Before GenerateIntegerSequence"
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
 
+  attr_accessor :count
+  
   def run!
+    count = 0
     EM.add_periodic_timer(1) do
-      out.send_message 'MESSAGE IS HERE'
+      count += 1
+      out.send_message "#{self.class} '#{name}' (#{object_id}) sent #{count}"
     end
   end
   
@@ -42,12 +46,13 @@ class RFlow::Components::Replicate < RFlow::Component
   output_port :out
   output_port :errored
   
-  def process_message(input_port, message)
-    out.each do |output_port_key, output_port|
+  def process_message(input_port, input_port_key, connection, message)
+    out.each do |output_port|
       begin
-        output_port.send message
+        output_port.send_message message
       rescue Exception => e
-        error.send message
+        puts "Exception #{e.message}"
+        error.send_message message
       end
     end
   end
@@ -60,37 +65,62 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   output_port :dropped
   output_port :errored
 
-  def process_message(input_port, message)
+
+  def configure!(deserialized_configuration)
+    @filter_proc = eval(deserialized_configuration[:filter_proc_string])
+  end
+  
+  def process_message(input_port, input_port_key, connection, message)
+    puts "Processing message in RubyProcFilter"
     begin
-      if @filter_proc.call(message.data)
-        filtered.send message
+      if @filter_proc.call(message)
+        filtered.send_message message
       else
-        dropped.send message
+        dropped.send_message message
       end
     rescue Exception => e
-      errored.send message
+      puts "Attempting to send message to errored #{e.message}"
+      p errored
+      errored.send_message message
     end
   end
 end
 
 puts "Before FileOutput"
 class RFlow::Components::FileOutput < RFlow::Component
+  attr_accessor :output_file_path, :output_file
   input_port :in
-#  output_port :out
+
+  def configure!(deserialized_configuration)
+    self.output_file_path = deserialized_configuration[:output_file_path]
+    self.output_file = File.new output_file_path, 'w+'
+  end
+
+  #def run!; end
+  
+  def process_message(input_port, input_port_key, connection, message)
+    puts "About to output to a file #{output_file_path}"
+    output_file.puts message
+  end
+
+  
+  def cleanup
+    output_file.close
+  end
+  
 end
 
-puts "Before SimpleComponent"
+# TODO: Ensure that all the following methods work as they are
+# supposed to.  This is the interface that I'm adhering to
 class SimpleComponent < RFlow::Component
   input_port :in
   output_port :out
-end
 
-puts "Before ComplexComponent"
-class Complex
-  class ComplexComponent < RFlow::Component
-    input_port :in
-    output_port :out
-  end
+  def configure!(configuration); end
+  def run!; end
+  def process_message(input_port, input_port_key, connection, message); end
+  def shutdown!; end
+  def cleanup!; end
 end
 
 
@@ -108,12 +138,14 @@ RFlow::Configuration::RubyDSL.configure do |config|
 #  config.schema('schemaname', 'schematype', 'schemadata')
 
   # Instantiate components
-  config.component 'generate_ints', RFlow::Components::GenerateIntegerSequence, :start => 0, :finish => 10, :step => 2
-  config.component 'filter', RFlow::Components::RubyProcFilter, :filter => 'data.integer < 10'
+  config.component 'generate_ints1', RFlow::Components::GenerateIntegerSequence, :start => 0, :finish => 10, :step => 2
+  config.component 'generate_ints2', RFlow::Components::GenerateIntegerSequence, :start => 0, :finish => 10, :step => 2
+  config.component 'filter', RFlow::Components::RubyProcFilter, :filter_proc_string => 'lambda {|message| true}'
   config.component 'replicate', RFlow::Components::Replicate
-  config.component 'simple', SimpleComponent
-  config.component 'complex', Complex::ComplexComponent
-  config.component 'output', RFlow::Components::FileOutput, :file_path => '/crap/crap/crap'
+#  config.component 'simple', SimpleComponent
+#  config.component 'complex', Complex::ComplexComponent
+  config.component 'output1', RFlow::Components::FileOutput, :output_file_path => '/tmp/crap1'
+  config.component 'output2', RFlow::Components::FileOutput, :output_file_path => '/tmp/crap2'
   
   # Hook components together
   # config.connect 'generate_ints#out' => 'filter#in'
@@ -123,8 +155,11 @@ RFlow::Configuration::RubyDSL.configure do |config|
   # config.connect 'simple#out' => 'output#in'
   # config.connect 'complex#out' => 'output#in'
 
-  config.connect 'generate_ints#out' => 'filter#in'
-  
+  config.connect 'generate_ints1#out' => 'filter#in'
+#  config.connect 'generate_ints2#out' => 'filter#in'
+  config.connect 'filter#filtered' => 'replicate#in'
+  config.connect 'replicate#out[1]' => 'output1#in'
+  config.connect 'replicate#out[2]' => 'output2#in'
   # Some tests that should fail
   # output should not have an 'out' ports
 #  config.connect 'output#out' => 'simple#in'

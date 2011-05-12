@@ -250,7 +250,7 @@ p  end
         input_port_config.input_connections.each do |input_connection_config|
           logger.debug "Configuring input port '#{input_port_config.name}' (#{input_port_config.uuid}) key '#{input_connection_config.input_port_key}' with #{input_connection_config.type.to_s} connection '#{input_connection_config.name}' (#{input_connection_config.uuid})"
           component.configure_connection!(input_port_config.uuid, input_connection_config.input_port_key,
-                                          input_connection_config.type, input_connection_config.uuid, input_connection_config.options)
+                                          input_connection_config.type, input_connection_config.uuid, input_connection_config.name, input_connection_config.options)
         end
       end
 
@@ -259,7 +259,7 @@ p  end
         output_port_config.output_connections.each do |output_connection_config|
           logger.debug "Configuring output port '#{output_port_config.name}' (#{output_port_config.uuid}) key '#{output_connection_config.output_port_key}' with #{output_connection_config.type.to_s} connection '#{output_connection_config.name}' (#{output_connection_config.uuid})"
           component.configure_connection!(output_port_config.uuid, output_connection_config.output_port_key,
-                                          output_connection_config.type, output_connection_config.uuid, output_connection_config.options)
+                                          output_connection_config.type, output_connection_config.uuid, output_connection_config.name, output_connection_config.options)
         end
       end
     end
@@ -331,6 +331,11 @@ p  end
 
     EM.run do 
       connect_components!
+
+      components.each do |component_uuid, component|
+        puts component.to_s
+      end
+
       run_components!
       # Sit back and relax
     end

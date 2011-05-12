@@ -48,7 +48,7 @@ class RFlow
       end
 
       
-      def initialize(connection_instance_uuid, connection_configuration)
+      def initialize(connection_instance_uuid, connection_name, connection_configuration)
         configuration_errors = self.class.configuration_errors(connection_configuration)
         unless configuration_errors.empty?
           raise ArgumentError, "#{self.class.to_s}: configuration missing elements: #{configuration_errors.join ', '}"
@@ -60,13 +60,10 @@ class RFlow
       
       def connect_input!
         RFlow.logger.debug "Connecting input #{instance_uuid} with #{configuration.find_all {|k, v| k.to_s =~ /input/}}"
-
-        
         self.socket = self.class.zmq_context.send(configuration[:input_responsibility].to_sym,
                                                   ZMQ.const_get(configuration[:input_socket_type]),
                                                   configuration[:input_address],
                                                   self)
-
       end
 
 
@@ -80,17 +77,17 @@ class RFlow
 
 
       def on_readable(socket, message_parts)
-        puts "GOT MESSAGE PARTS!!!!!!!"
-        message_parts.each do |message_part|
-          p message_part.copy_out_string
-        end
+        puts "#{object_id} => #{instance_uuid}: Received Message Parts: ('#{message_parts.map(&:copy_out_string).join("', '")}')"
+        # TODO: Assemble the message into the Avro message structure
+        # that we expect
+        recv_callback.call("#{message_parts.map(&:copy_out_string).join("', '")}")
       end
 
-      
+
       def send_message(message)
+        puts "#{object_id} => #{instance_uuid}: Sending Message: '#{message}'"
         socket.send_msg(message)
       end
-
       
     end
   end

@@ -14,7 +14,7 @@ class RFlow
       belongs_to :input_port, :primary_key => 'uuid', :foreign_key => 'input_port_uuid'
       belongs_to :output_port,:primary_key => 'uuid', :foreign_key => 'output_port_uuid'
 
-      after_initialize :merge_default_options!
+      before_create :merge_default_options!
       
       validates_uniqueness_of :uuid
       validates_presence_of :output_port_uuid, :input_port_uuid
@@ -53,17 +53,17 @@ class RFlow
     # STI Subclass for ZMQ connections and their required options
     class ZMQConnection < Connection
       def self.required_options
-        [:output_socket_type, :output_endpoint, :output_responsibility,
-         :input_socket_type, :input_endpoint, :input_responsibility]
+        [:output_socket_type, :output_address, :output_responsibility,
+         :input_socket_type, :input_address, :input_responsibility]
       end
 
       def self.default_options
         {
           :output_socket_type    => :push,
-          :output_endpoint       => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
+          :output_address       => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
           :output_responsibility => :bind,
           :input_socket_type     => :pull,
-          :input_endpoint        => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
+          :input_address        => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
           :input_responsibility  => :connect,
         }
       end
