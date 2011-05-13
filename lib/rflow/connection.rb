@@ -37,7 +37,7 @@ class RFlow
 
   class Disconnection < Connection
     def send_message(message)
-      puts "Attempting to send without a connection"
+      RFlow.logger.debug "Attempting to send without a connection, doing nothing"
     end
   end
   

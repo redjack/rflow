@@ -77,7 +77,7 @@ class RFlow
 
 
       def on_readable(socket, message_parts)
-        puts "#{object_id} => #{instance_uuid}: Received Message Parts: ('#{message_parts.map(&:copy_out_string).join("', '")}')"
+        puts "#{name} (#{object_id} => #{instance_uuid}): Received Message Parts: ('#{message_parts.map(&:copy_out_string).join("', '")}')"
         # TODO: Assemble the message into the Avro message structure
         # that we expect
         recv_callback.call("#{message_parts.map(&:copy_out_string).join("', '")}")
@@ -85,7 +85,7 @@ class RFlow
 
 
       def send_message(message)
-        puts "#{object_id} => #{instance_uuid}: Sending Message: '#{message}'"
+        puts "#{name} (#{object_id} => #{instance_uuid}): Sending Message: '#{message}'"
         socket.send_msg(message)
       end
       

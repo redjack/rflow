@@ -12,16 +12,16 @@ class RFlow
       attr_accessible :name, :value
       
       DEFAULTS = {
-        'rflow.application_name' => lambda {|config| 'rflow'},
+        'rflow.application_name' => 'rflow',
         
-        'rflow.application_directory_path' => lambda {|config| '.'},
-        'rflow.pid_directory_path'         => lambda {|config| File.join(config['rflow.application_directory_path'], 'run')},
-        'rflow.log_directory_path'         => lambda {|config| File.join(config['rflow.application_directory_path'], 'log')},
+        'rflow.application_directory_path' => '.',
+        'rflow.pid_directory_path'         => lambda {File.join(Setting['rflow.application_directory_path'], 'run')},
+        'rflow.log_directory_path'         => lambda {File.join(Setting['rflow.application_directory_path'], 'log')},
 
-        'rflow.log_file_path' => lambda {|config| File.join(config['rflow.log_directory_path'], config['rflow.application_name'] + '.log') rescue nil},
-        'rflow.pid_file_path' => lambda {|config| File.join(config['rflow.pid_directory_path'], config['rflow.application_name'] + '.pid') rescue nil},
+        'rflow.log_file_path' => lambda {File.join(Setting['rflow.log_directory_path'], Setting['rflow.application_name'] + '.log')},
+        'rflow.pid_file_path' => lambda {File.join(Setting['rflow.pid_directory_path'], Setting['rflow.application_name'] + '.pid')},
         
-        'rflow.log_level' => lambda {|config| 'INFO'}        
+        'rflow.log_level' => 'INFO',
       }
 
       DIRECTORY_PATHS = [
@@ -56,6 +56,10 @@ class RFlow
         end
       end
 
+      def self.[](setting_name)
+        Setting.find(setting_name).value rescue nil
+      end
+      
     end
   end
 end

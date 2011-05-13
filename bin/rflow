@@ -1,11 +1,12 @@
 #!/usr/bin/env ruby
 
+# Will require rflow after option parsing to speed up a couple of
+# startup cases (version and help) that don't need it
 require 'optparse'
-require 'rflow'
 
 options = {
   :daemonize => true,
-  :startup_log_level => 'INFO',
+  :startup_log_level => :WARN,
 }
 
 option_parser = OptionParser.new do |opts|
@@ -13,56 +14,80 @@ option_parser = OptionParser.new do |opts|
 Usage: $0 [options] [start|stop|status]
 EOB
 
-  opts.on("-f", "Run in the foreground") do |f|
-    options[:daemonize] = false
+  opts.on("-d", "--database DB", "Config database (sqlite) path (GENERALLY REQUIRED)") do |db|
+    options[:config_database_path] = File.expand_path(db)
   end
 
   opts.on("-c", "--config CONFIG", "Config file path") do |config|
     options[:config_file_path] = File.expand_path(config)
   end
 
-  opts.on("-d", "--database DB", "Config database (sqlite) path") do |db|
-    options[:config_database_path] = File.expand_path(db)
+  opts.on("-e", "--extensions EXTENSIONS", "Extensions file path") do |extensions|
+    options[:extensions_file_path] = File.expand_path(extensions)
   end
-
-  opts.on("-l", "--log LOGFILE", "Initial startup log file, in addition to stdout") do |log|
+  
+  opts.on("-l", "--log LOGFILE", "Initial startup log file (in addition to stdout)") do |log|
     options[:startup_log_file_path] = File.expand_path(log)
   end
 
-  opts.on("-v", "--verbose [LEVEL]", ['DEBUG'], "Control the startup log (and stdout) verbosity") do |level|
-    options[:startup_log_level] = level || 'DEBUG'
+  opts.on("-v", "--verbose [LEVEL]", [:DEBUG, :INFO, :WARN], "Control the startup log (and stdout) verbosity (DEBUG, INFO, WARN) defaults to WARN") do |level|
+    options[:startup_log_level] = level || :DEBUG
+  end
+
+  opts.on("-f", "Run in the foreground") do |f|
+    options[:daemonize] = false
+  end
+
+  opts.on_tail("--version", "Show RFlow version and exit") do
+    require 'rflow/version'
+    puts RFlow::VERSION
+    exit 0
+  end
+  
+  opts.on_tail("-h", "--help", "Show this message and exit") do
+    puts opts
+    exit 0
   end
   
 end
 option_parser.parse!
 
-# Set up the startup logging
-startup_logger = Logger.new 'startup'
-startup_logger.add StdoutOutputter.new('startup_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
-startup_logger.level = LNAMES.index options[:startup_log_level]
+# Now require rflow because the following parts of the startup require
+# pieces (usually RFlow::Configuration)
+require 'rflow'
+
+# Set up the startup logging, which is distinct from the runtime
+# logging that is defined in the config database.  The startup logging
+# will always go to STDOUT, as well as to the 
+startup_logger = Log4r::Logger.new 'startup'
+startup_logger.add Log4r::StdoutOutputter.new('startup_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
+startup_logger.level = Log4r::LNAMES.index options[:startup_log_level].to_s
 
 if options[:startup_log_file_path]
   begin
-    startup_logger.add FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => RFlow::LOG_PATTERN_FORMATTER)
+    startup_logger.add Log4r::FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => RFlow::LOG_PATTERN_FORMATTER)
   rescue Exception => e
     startup_logger.fatal "Log file '#{options[:startup_log_file_path]}' problem: #{e.message}"
     exit 1
   end
 end
 
-RFlow.logger = startup_logger
-
-
 unless options[:config_database_path]
   startup_logger.warn "Config database not specified, using default 'config.sqlite'"
   options[:config_database_path] = File.expand_path(File.join(Dir.getwd, 'config.sqlite'))
 end
 
+# Set the standard logger to the startup one in the case that we need
+# to call into RFlow to check on or setup things, like the config
+# database.  We want those log messages to go to the startup log when
+# setting up.  The running log will transition to what is specified in
+# the config database
+RFlow.logger = startup_logger
 
 command = ARGV[0] || 'start'
 case command
 when 'start'
-  # Keep on going
+  # Keep on going, all other branches exit
 when 'stop'
   config = RFlow::Configuration.new(options[:config_database_path])
   pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
@@ -75,6 +100,15 @@ when 'stop'
     exit 1
   end
 when 'status'
+  config = RFlow::Configuration.new(options[:config_database_path])
+  pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
+  if pid
+    RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{config['rflow.pid_file_path']}"
+    exit 0
+  else
+    RFlow.logger.warn "#{config['rflow.application_name']} not running, process not found in #{config['rflow.pid_file_path']}"
+    exit 1
+  end
 else
   RFlow.logger.error "Did not understand command '#{command}'"
   exit 1
@@ -110,10 +144,24 @@ unless File.exist? options[:config_database_path]
   end
 end
 
+# Check to make sure config database exists and is readable
 unless File.readable? options[:config_database_path]
   startup_logger.fatal "Config database ('#{Dir.getwd}') '#{options[:config_database_path]}' not reabable\n#{option_parser.help}"
   exit 1
 end
+
+
+# Check to make sure the extensions file is readable, if it exists,
+# and load it.  
+if options[:extensions_file_path]
+  unless File.readable? options[:extensions_file_path]
+    startup_logger.fatal "Extensions file ('#{Dir.getwd}') '#{options[:extensions_file_path]}' not reabable\n#{option_parser.help}"
+    exit 1
+  end
+  # Load the extensions
+  load options[:extensions_file_path]
+end
+
 
 # Start the flow
 RFlow.run options[:config_database_path], options[:daemonize]

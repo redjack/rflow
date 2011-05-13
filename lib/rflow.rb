@@ -11,6 +11,7 @@ require 'rflow/configuration'
 require 'rflow/component'
 require 'rflow/message'
 
+require 'rflow/components'
 require 'rflow/connections'
 
 include Log4r
@@ -41,7 +42,7 @@ class RFlow
     begin
       rflow_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
     rescue Exception => e
-      RFlow.logger.error "Log file '#{log_file_path}' problem: #{e.message}"
+      RFlow.logger.error "Log file '#{File.expand_path log_file_path}' problem: #{e.message}"
       raise Error, "Log file '#{log_file_path}' problem: #{e.message}"
     end
 
@@ -194,8 +195,11 @@ p  end
   # resulting instantiated components in the 'components' class
   # instance attribute.  This assumes that the specification of a
   # component is a fully qualified Ruby class that has already been
-  # loaded.  Future releases will support external (i.e. non-managed
-  # components), but the current stuff only supports Ruby classes
+  # loaded.  It will first attempt to find subclasses of
+  # RFlow::Component (in the available_components hash) and then
+  # attempt to constantize the specification into a different class.  Future releases will
+  # support external (i.e. non-managed components), but the current
+  # stuff only supports Ruby classes
   def self.instantiate_components!
     logger.info "Instantiating Components"
     self.components = Hash.new
@@ -203,13 +207,30 @@ p  end
       if component_config.managed?
         logger.info "Instantiating component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
         begin
-          instantiated_component = component_config.specification.constantize.new(component_config.uuid, component_config.name)
+          logger.debug configuration.available_components.inspect
+          instantiated_component = if configuration.available_components.include? component_config.specification
+                                     puts "HERE11111111"
+                                     logger.debug "Component found in configuration.available_components['#{component_config.specification}']"
+                                     configuration.available_components[component_config.specification].new(component_config.uuid, component_config.name)
+                                   else
+                                     puts "HERE2222222"
+                                     logger.debug "Component not found in configuration.available_components, constantizing component '#{component_config.specification}'"
+                                     component_config.specification.constantize.new(component_config.uuid, component_config.name)
+                                   end
+
           components[component_config.uuid] = instantiated_component
-        rescue Exception => e
-          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): #{e.message}"
-          logger.error error_message
-          raise RuntimeError, error_message
+
+#        rescue NameError => e
+#          p e.backtrace
+#          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): the class '#{component_config.specification}' was not found"
+#          logger.error error_message
+#          raise RuntimeError, error_message
+#        rescue Exception => e
+#          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): #{e.class} #{e.message}"
+#          logger.error error_message
+#          raise RuntimeError, error_message
         end
+
       else
         error_message = "Non-managed components not yet implemented for component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
         logger.error error_message
@@ -297,12 +318,17 @@ p  end
   
   def self.run(config_database_path, daemonize=nil)
     self.configuration = Configuration.new(config_database_path)
+
+    # First change to the config database directory, which might hold
+    # relative paths for the other files/directories, such as the
+    # application_directory_path
+    Dir.chdir File.dirname(config_database_path)
+    Dir.chdir configuration['rflow.application_directory_path']
+
     initialize_logger(configuration['rflow.log_file_path'], configuration['rflow.log_level'])
 
     application_name = configuration['rflow.application_name']
     logger.info "#{application_name} starting"
-
-    Dir.chdir configuration['rflow.application_directory_path']
 
     trap_signals
 
@@ -313,7 +339,7 @@ p  end
       write_pid_file configuration['rflow.pid_file_path']
     end
 
-    logger.info "#{application_name} configured and daemonized, starting flow"
+    logger.info "#{application_name} configured, starting flow"
     logger.debug "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
     logger.debug "Available Data Schemas: #{RFlow::Configuration.available_data_schemas.inspect}"
     logger.debug "Available Components: #{RFlow::Configuration.available_components.inspect}"

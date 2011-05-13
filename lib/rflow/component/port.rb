@@ -3,14 +3,15 @@ class RFlow
 
     module ConnectionCollection
       def send_message(message)
+        puts "Sending message to connection collection"
         each do |connection|
           connection.send_message(message)
         end
       end
     end  
 
-    # To make it easier to index by both names and UUID.  Assuming
-    # that ta port will never be named a UUID
+    # Collection class to make it easier to index by both names,
+    # UUIDs, and types.
     class PortCollection
       attr_reader :ports, :by_uuid, :by_name, :by_type
 
@@ -28,8 +29,14 @@ class RFlow
         ports << port
       end
 
+
+      # Enumerate through each connected (or disconnected but
+      # referenced) port
+      # TODO: simplify with enumerators and procs
       def each
-        ports.each
+        ports.each do |port|
+          yield port
+        end
       end
     end
     
@@ -52,11 +59,29 @@ class RFlow
       end
 
 
+      # Return a list of connected keys
       def keys
         connections_for.keys
       end
 
+
+      # Enumerate through all the ConnectionCollections
+      # TODO: simplify with enumerators and procs
+      def each
+        connections_for.values.each do |connections|
+          yield connections
+        end
+      end
+
+
+      # Send a message to all connections on all keys for this port.
+      def send_message(message)
+        connections_for.each do |port_key, connections|
+          connections.send_message(message)
+        end
+      end
       
+
       # Should be overridden.  Called when it is time to actually
       # establish the connection
       def connect!; raise NotImplementedError, "Raw ports do not know which direction to connect"; end

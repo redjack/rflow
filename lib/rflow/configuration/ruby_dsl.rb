@@ -159,7 +159,7 @@ class RFlow
         # offending message into e.message, even though it is printed
         # out if not caught
         error_message = "#{e.message} at config '#{connection_spec[:config_line]}'"
-        RFlow.logger.debug "Exceptions #{e.class} - " + error_message
+        RFlow.logger.debug "Exception #{e.class} - " + error_message
         RFlow.logger.error error_message
         raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
       end

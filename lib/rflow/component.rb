@@ -43,22 +43,21 @@ class RFlow
 
         # Create the port accessor method based on the port name
         define_method port_name_sym do |*args|
-          key = args.first ? args.first.to_s.to_sym : 0.to_s.to_sym
-
+          key = args.first ? args.first.to_s.to_sym : nil
           port = ports.by_name[port_name_sym] 
 
           if port
-            port[key]
+            key ? port[key] : port
           else
             # If the port was not connected, return a port-like object
             # that can respond/log but doesn't send any data.  Note,
             # it won't be available in the 'by_uuid' collection, as it
             # doesn't have a configured instance_uuid
-            RFlow.logger.debug "'#{name}##{port_name}' not connected, creating a disconnected port"
+            RFlow.logger.debug "'#{name}##{port_name}[#{key}]]' not connected, creating a disconnected port"
             disconnected_port = DisconnectedPort.new(port_name, 0)
             disconnected_port[key] << Disconnection.new(0)
             ports << disconnected_port
-            disconnected_port[key]
+            key ? disconnected_port[key] : disconnected_port
           end
         end
       end

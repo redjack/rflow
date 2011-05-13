@@ -4,7 +4,7 @@ require 'rake/rdoctask'
 Bundler::GemHelper.install_tasks
 
 RSpec::Core::RakeTask.new(:spec) do |t|
-  t.rcov = true
+  t.rcov = false
 end
 
 Rake::RDocTask.new do |rd|

@@ -1,5 +1,69 @@
+require 'stringio'
+require 'avro'
+
+require 'rflow/configuration'
+
 class RFlow
   class Message
+
+    class << self
+      def message_avro_schema; @message_avro_schema ||= Avro::Schema.parse(File.read(File.join(File.basename(__FILE__), '..', '..', 'schema', 'message.avsc'))); end
+      
+      def avro_reader;  @avro_reader  ||= Avro::IO::DatumReader(message_avro_schema, message_avro_schema); end
+      def avro_writer;  @avro_writer  ||= Avro::IO::DatumWriter.new(message_avro_schema); end
+      def avro_decoder(io_object); Avro::IO::BinaryDecoder.new(io_object); end
+      def avro_encoder(io_object); Avro::IO::BinaryEncoder.new(io_object); end
+
+      # Take in an Avro serialization of a message and return a new
+      # Message object.  Assumes the org.rflow.Message Avro schema.
+      def from_avro(avro_serialized_message_byte_string)
+        avro_serialized_message_byte_stringio = StringIO.new(avro_serialized_message_byte_string)
+        avro_serialized_message_byte_stringio.binmode
+        avro_reader.read avro_decoder(avro_serialized_message_byte_string)
+      end
+    end
+    
+    
+    # Serialize the current message object to Avro using the
+    # org.rflow.Message Avro schema.
+    def to_avro
+      avro_serialized_message_bytes_stringio = StringIO.new
+      avro_serialized_message_bytes_stringio.binmode
+
+      deserialized_avro_object = {
+        'data_type_name' => self.data_type_name,
+        'provenance' => self.provenance,
+        'origination_context' => self.origination_context,
+        'data_serialization' => self.data_serialization,
+        'data_schema' => self.data_schema,
+        'data' => self.data
+      }
+
+      self.class.avro_writer.write deserialized_avro_object, self.class.avro_encoder(avro_serialized_message_bytes_stringio)
+      avro_serialized_message_bytes_stringio.string
+    end
+    
+
+    attr_accessor :data_type_name, :provenance, :origination_context
+    attr_accessor :data_serialization, :data_schema, :data
+    attr_accessor :data_extensions
+    
+    def initialize(data_type_name, data_serialization=:avro)
+      # Get the schema from the registry
+      @data_type_name = data_type_name.to_sym
+      @data_serialization = data_serialization.to_sym
+      @data_schema = RFlow::Configuration.available_data_types[@data_type_name][@data_serialization]
+
+      unless @data_schema
+        error_message = "Data type '#{@data_type_name}' with serialization '#{@data_serialization}' not found"
+        RFlow.logger.error error_message
+        raise ArgumentError, error_message
+      end
+      # TODO: get the extensions from somewhere
+
+    end
+    
+
     class Data
       def self.inherited(subclass)
         RFlow.logger.debug "Found data extension #{subclass.name}"
@@ -37,7 +101,7 @@ class RFlow
 
         def initialize(name, type, data)
           @name = name
-          @type = type
+          @type = type # should be :avro or :xml
           @data = data
         end
 
