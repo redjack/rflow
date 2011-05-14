@@ -1,13 +1,15 @@
 require "rubygems"
 require "bundler/setup"
 
+require 'time'
+
+require 'active_record'
+require 'eventmachine'
 require 'log4r'
 require 'sqlite3'
-require 'active_record'
-
-require 'eventmachine'
 
 require 'rflow/configuration'
+
 require 'rflow/component'
 require 'rflow/message'
 
@@ -21,7 +23,9 @@ class RFlow
 
   LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %M'
   DATE_PATTERN_FORMAT = '%Y-%m-%dT%H:%M:%S.%9N %z'
-  LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_pattern => DATE_PATTERN_FORMAT
+  DATE_METHOD = 'xmlschema(6)'
+  LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_method => DATE_METHOD
+  #LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_pattern => DATE_PATTERN_FORMAT
   
   class << self
     attr_accessor :config_database_path
@@ -242,11 +246,14 @@ class RFlow
     # Send the port configuration to each component
     logger.info "Configuring component ports and assigning UUIDs to port names"
     components.each do |component_instance_uuid, component|
+      RFlow.logger.debug "Configuring ports for component '#{component.name}' (#{component.instance_uuid})"
       component_config = configuration.component(component.instance_uuid)
       component_config.input_ports.each do |input_port_config|
+        RFlow.logger.debug "Configuring component '#{component.name}' (#{component.instance_uuid}) with input port '#{input_port_config.name}' (#{input_port_config.uuid})"
         component.configure_input_port!(input_port_config.name, input_port_config.uuid)
       end
       component_config.output_ports.each do |output_port_config|
+        RFlow.logger.debug "Configuring component '#{component.name}' (#{component.instance_uuid}) with output port '#{output_port_config.name}' (#{output_port_config.uuid})"
         component.configure_output_port!(output_port_config.name, output_port_config.uuid)
       end
     end
@@ -258,11 +265,11 @@ class RFlow
   # specific port, specifically the port UUID, port key, type of connection, uuid
   # of connection, and a configuration specific to the connection type
   def self.configure_component_connections!
-    logger.info "Configuring component connections"
+    logger.info "Configuring component port connections"
     components.each do |component_instance_uuid, component|
       component_config = configuration.component(component.instance_uuid)
 
-      logger.debug "Configuring input connections for '#{component.name}' (#{component.instance_uuid})"
+      logger.debug "Configuring input connections for component '#{component.name}' (#{component.instance_uuid})"
       component_config.input_ports.each do |input_port_config|
         input_port_config.input_connections.each do |input_connection_config|
           logger.debug "Configuring input port '#{input_port_config.name}' (#{input_port_config.uuid}) key '#{input_connection_config.input_port_key}' with #{input_connection_config.type.to_s} connection '#{input_connection_config.name}' (#{input_connection_config.uuid})"
@@ -382,6 +389,7 @@ class RFlow
 
     logger.debug "Shutting down components"
     components.each do |component_instance_uuid, component|
+      logger.debug "Shutting down component '#{component.name}' (#{component.instance_uuid})"
       component.shutdown!
     end
 
@@ -390,6 +398,7 @@ class RFlow
     
     logger.debug "Cleaning up components"
     components.each do |component_instance_uuid, component|
+      logger.debug "Cleaning up component '#{component.name}' (#{component.instance_uuid})"
       component.cleanup!
     end
 

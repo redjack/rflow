@@ -1,33 +1,25 @@
-# Load the necessary components/gems
-#require 'rflow/components/mycomponent'
-#require '../components/localfile'
 # This will/should bring in available components and their schemas
 require 'rflow/components'
-
-
-# Only long integers allowed
-long_integer_schema = <<EOS
-{
-    "type": "record",
-    "name": "Integer",
-    "namespace": "org.rflow",
-    "aliases": [],
-    "fields": [
-        {"name": "integer", "type": "long"},
-    ]
-}
-EOS
+require 'rflow/message'
 
 #RFlow::Configuration.add_available_data_schema RFlow::Message::Data::AvroSchema.new('Integer', long_integer_schema)
 
+# Example of creating and registering a data extension
 module SimpleDataExtension
-  def crap
-    puts "CRAP WAS CALLED!!!!!"
+  # Use this to default/verify the data in data_object
+  def self.extended(base_data)
+    base_data.data_object
   end
+
+  def my_method; end
 end
+RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Integer', SimpleDataExtension)
 
-RFlow::Configuration.add_available_data_extension('A', SimpleDataExtension)
 
+
+# Example of creating and registering a new schema
+long_integer_schema = '{"type": "long"}'
+RFlow::Configuration.add_available_data_type('RFlow::Message::Data::Integer', :avro, long_integer_schema)
 
 
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
@@ -45,7 +37,9 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   # not to block the reactor
   def run!
     timer = EM::PeriodicTimer.new(@interval_seconds) do 
-      out.send_message "#{self.class} '#{name}' (#{object_id}) sent #{@start}"
+      message = RFlow::Message.new('RFlow::Message::Data::Integer')
+      message.data.data_object = @start
+      out.send_message message
       @start += @step
       timer.cancel if @start > @finish
     end
@@ -113,7 +107,7 @@ class RFlow::Components::FileOutput < RFlow::Component
   
   def process_message(input_port, input_port_key, connection, message)
     puts "About to output to a file #{output_file_path}"
-    output_file.puts message
+    output_file.puts message.data.data_object.inspect
   end
 
   

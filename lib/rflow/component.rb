@@ -53,7 +53,7 @@ class RFlow
             # that can respond/log but doesn't send any data.  Note,
             # it won't be available in the 'by_uuid' collection, as it
             # doesn't have a configured instance_uuid
-            RFlow.logger.debug "'#{name}##{port_name}[#{key}]]' not connected, creating a disconnected port"
+            RFlow.logger.debug "'#{name}##{port_name}[#{key}]' not connected, creating a disconnected port"
             disconnected_port = DisconnectedPort.new(port_name, 0)
             disconnected_port[key] << Disconnection.new(0)
             ports << disconnected_port
@@ -100,7 +100,7 @@ class RFlow
     
     def configure_input_port!(port_name, port_instance_uuid, port_options={})
       unless self.class.defined_input_ports.include? port_name.to_sym
-        raise ArgumentError, "Input port '#{port_name}' not defined on this component"
+        raise ArgumentError, "Input port '#{port_name}' not defined on component '#{self.class}'"
       end
       ports <<  InputPort.new(port_name, port_instance_uuid, port_options)
     end
@@ -108,7 +108,7 @@ class RFlow
     
     def configure_output_port!(port_name, port_instance_uuid, port_options={})
       unless self.class.defined_output_ports.include? port_name.to_sym
-        raise ArgumentError, "Output port '#{port_name}' not defined on this component"
+        raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
       end
       ports << OutputPort.new(port_name, port_instance_uuid, port_options)
     end

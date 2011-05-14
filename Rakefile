@@ -4,7 +4,8 @@ require 'rake/rdoctask'
 Bundler::GemHelper.install_tasks
 
 RSpec::Core::RakeTask.new(:spec) do |t|
-  t.rcov = false
+  t.verbose = true
+  t.rspec_opts = '--tty --color'
 end
 
 Rake::RDocTask.new do |rd|

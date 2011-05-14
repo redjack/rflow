@@ -10,22 +10,22 @@
              "type": "array", 
              "items": {
                  "type": "record", 
-                 "name": "PerformedComputation", 
+                 "name": "ProcessingEvent", 
                  "namespace": "org.rflow",
                  "aliases": [],
                  "fields": [
-                     {"name": "computation_id", "type": "string"},
-                     {"name": "started_at", "type": "string"},
-                     {"name": "completed_at", "type": "string"},
+                     {"name": "component_instance_uuid", "type": "string"},
+                     {"name": "started_at", "type": ["string", "null"]},
+                     {"name": "completed_at", "type": ["string", "null"]},
                      {"name": "context", "type": ["bytes", "null"]}
                  ]
              }
          }
         },
-        {"name": "data_serialization", 
+        {"name": "data_serialization_type", 
          "type": {
              "type": "enum", 
-             "name": "DataSerialization", 
+             "name": "DataSerializationType", 
              "symbols": ["avro", "xml"]
          }
         },
@@ -33,5 +33,4 @@
         {"name": "data", "type": "bytes"}
     ]
 }
-    
     

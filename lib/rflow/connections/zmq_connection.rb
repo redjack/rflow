@@ -1,8 +1,9 @@
-require 'rflow/connection'
-
 require 'ffi'
 require 'ffi-rzmq'
 require 'em-zeromq'
+
+require 'rflow/connection'
+require 'rflow/message'
 
 class RFlow
   module Connections
@@ -77,16 +78,15 @@ class RFlow
 
 
       def on_readable(socket, message_parts)
-        puts "#{name} (#{object_id} => #{instance_uuid}): Received Message Parts: ('#{message_parts.map(&:copy_out_string).join("', '")}')"
-        # TODO: Assemble the message into the Avro message structure
-        # that we expect
-        recv_callback.call("#{message_parts.map(&:copy_out_string).join("', '")}")
+        message = RFlow::Message.from_avro(message_parts.last.copy_out_string)
+        RFlow.logger.debug "#{name} (#{object_id} => #{instance_uuid}): Received message of type '#{message_parts.first.copy_out_string}': '#{message.data.data_object.inspect}'"
+        recv_callback.call(message)
       end
 
 
       def send_message(message)
-        puts "#{name} (#{object_id} => #{instance_uuid}): Sending Message: '#{message}'"
-        socket.send_msg(message)
+        RFlow.logger.debug "#{name} (#{object_id} => #{instance_uuid}): Sending message of type'#{message.data_type_name.to_s}': '#{message.data.data_object.inspect}'"
+        socket.send_msg(message.data_type_name.to_s, message.to_avro)
       end
       
     end

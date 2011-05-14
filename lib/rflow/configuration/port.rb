@@ -11,7 +11,7 @@ class RFlow
 
       belongs_to :component,  :primary_key => 'uuid', :foreign_key => 'component_uuid'
 
-      validates_uniqueness_of :name, :scope => :component_uuid
+      validates_uniqueness_of :name, :scope => :component_uuid, :message => "of port used multiple times"
 
       # TODO: Make some sort of component/port validation work here
       #validate :component_has_defined_port

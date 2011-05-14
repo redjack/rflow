@@ -33,6 +33,8 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'eventmachine', '>= 1.0.0.beta3'
   s.add_dependency 'em-zeromq', '= 0.2.1'
+  # Remove this when we break it out into its own gem
+  s.add_dependency 'eventmachine_httpserver', '= 0.2.1'
   
   s.add_development_dependency 'rspec', '= 2.5.0'
   s.add_development_dependency 'rake', '= 0.8.7'

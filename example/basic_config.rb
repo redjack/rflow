@@ -3,7 +3,7 @@
 RFlow::Configuration::RubyDSL.configure do |config|
   # Configure the settings, which include paths for various files, log
   # levels, and component specific stuffs
-  config.setting('rflow.log_level', 'INFO')
+  config.setting('rflow.log_level', 'DEBUG')
   config.setting('rflow.application_directory_path', '.')
 
   # Add schemas to the list of available.  Not convinced this is necessary
@@ -14,8 +14,6 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', :start => 20, :finish => 25
   config.component 'filter', 'RFlow::Components::RubyProcFilter', :filter_proc_string => 'lambda {|message| true}'
   config.component 'replicate', 'RFlow::Components::Replicate'
-#  config.component 'simple', 'SimpleComponent'
-#  config.component 'complex', 'Complex::ComplexComponent'
   config.component 'output1', 'RFlow::Components::FileOutput', :output_file_path => '/tmp/crap1'
   config.component 'output2', 'RFlow::Components::FileOutput', :output_file_path => '/tmp/crap2'
   

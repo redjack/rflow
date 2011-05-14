@@ -96,16 +96,46 @@ http_request_schema =<<EOS
 EOS
 RFlow::Configuration.add_available_data_type('HTTPRequest', :avro, http_request_schema)
 
+http_response_schema =<<EOS
+{
+    "type": "record",
+    "name": "HTTPResponse",
+    "namespace": "org.rflow",
+    "aliases": [],
+    "fields": [
+        {"name": "response_code", "type": "int"},
+        {"name": "content", "type": "bytes"}
+    ]
+}
+EOS
+RFlow::Configuration.add_available_data_type('HTTPResponse', :avro, http_response_schema)
 
+
+# Need to be careful when extending to not clobber data already in data_object
 module HTTPRequestExtension 
   def self.extended(base_data)
-    base_data.data_object = {'path' => ''}
+    base_data.data_object ||= {'path' => ''}
   end
 
   def path; data_object['path']; end
   def path=(new_path); data_object['path'] = new_path; end
 end
 RFlow::Configuration.add_available_data_extension('HTTPRequest', HTTPRequestExtension)
+
+
+# Need to be careful when extending to not clobber data already in data_object
+module HTTPResponseExtension 
+  def self.extended(base_data)
+    base_data.data_object ||= {'response_code' => 200, 'content' => ''}
+  end
+
+  def response_code; data_object['response_code']; end
+  def response_code=(new_response_code); data_object['response_code'] = new_response_code; end
+  
+  def content; data_object['content']; end
+  def content=(new_content); data_object['content'] = content; end
+end
+RFlow::Configuration.add_available_data_extension('HTTPResponse', HTTPResponseExtension)
 
 
 require 'eventmachine'
@@ -125,30 +155,51 @@ class HTTPServer < RFlow::Component
 
   def run!
     @server_signature = EM.start_server(@listen, @port, Connection) do |conn|
-      puts "Assigning server to #{conn.inspect}"
+      puts "Assigning server to #{conn.inspect} and adding to connections"
       conn.server = self
+      self.connections << conn
+      puts "done"
     end
   end
 
+  def process_message(input_port, input_port_key, connection, message)
+    RFlow.logger.debug "Received a message"
+    return unless message.data_type_name == 'HTTPResponse'
+    RFlow.logger.debug "Received an HTTPResponse message with context: #{message.context}"
+    
+  end
+  
   class Connection < EventMachine::Connection
     include EventMachine::HttpServer
 
-    attr_accessor :server
+    attr_accessor :server, :client_ip, :client_port
 
     def post_init
       puts "Post init"
-      p server
-      server.connections << self
+      @client_port, @client_ip = Socket.unpack_sockaddr_in(get_peername) rescue ["?", "?.?.?.?"]
+      RFlow.logger.debug "Connection from #{@client_ip}:#{@client_port}"
+      super
+      no_environment_strings
     end
+
+    def receive_data(data)
+      RFlow.logger.debug "Got data on http server"
+      p data
+      RFlow.logger.debug "after printing data"
+      super
+    end
+      
     
     def process_http_request
       RFlow.logger.debug "Got an http request"
       message = RFlow::Message.new('HTTPRequest')
+      message.context = "#{client_ip}:#{client_port}:#{signature}"
       message.data.path = @http_request_uri
       server.request.send_message message
     end
 
     def unbind
+      RFlow.logger.debug "Connection to lost"
       server.connections.delete(self)
     end
   end
@@ -157,5 +208,12 @@ end
 class HTTPResponder < RFlow::Component
   input_port :request
   output_port :response
+
+  def process_message(input_port, input_port_key, connection, message)
+    response_message = RFlow::Message.new('HTTPResponse')
+    response_message.data.response_code = 404
+    response_message.data.content = "CONTENT: #{message.data.path} was accessed"
+    response.send_message response_message
+  end
 end
 
