@@ -64,7 +64,7 @@ class RFlow
     new_log_level = (original_log_level == 'DEBUG' ? configuration['rflow.log_level'] : 'DEBUG')
     logger.warn "Changing log level from #{original_log_level} to #{new_log_level}"
     logger.level = LNAMES.index new_log_level
-p  end
+  end
   
   def self.trap_signals
     # Gracefully shutdown on termination signals
@@ -201,36 +201,32 @@ p  end
   # support external (i.e. non-managed components), but the current
   # stuff only supports Ruby classes
   def self.instantiate_components!
-    logger.info "Instantiating Components"
+    logger.info "Instantiating components"
     self.components = Hash.new
     configuration.components.each do |component_config|
       if component_config.managed?
-        logger.info "Instantiating component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
+        logger.debug "Instantiating component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
         begin
           logger.debug configuration.available_components.inspect
           instantiated_component = if configuration.available_components.include? component_config.specification
-                                     puts "HERE11111111"
                                      logger.debug "Component found in configuration.available_components['#{component_config.specification}']"
                                      configuration.available_components[component_config.specification].new(component_config.uuid, component_config.name)
                                    else
-                                     puts "HERE2222222"
                                      logger.debug "Component not found in configuration.available_components, constantizing component '#{component_config.specification}'"
                                      component_config.specification.constantize.new(component_config.uuid, component_config.name)
                                    end
 
           components[component_config.uuid] = instantiated_component
 
-#        rescue NameError => e
-#          p e.backtrace
-#          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): the class '#{component_config.specification}' was not found"
-#          logger.error error_message
-#          raise RuntimeError, error_message
-#        rescue Exception => e
-#          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): #{e.class} #{e.message}"
-#          logger.error error_message
-#          raise RuntimeError, error_message
+        rescue NameError => e
+          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): the class '#{component_config.specification}' was not found"
+          logger.error error_message
+          raise RuntimeError, error_message
+        rescue Exception => e
+          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): #{e.class} #{e.message}"
+          logger.error error_message
+          raise RuntimeError, error_message
         end
-
       else
         error_message = "Non-managed components not yet implemented for component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
         logger.error error_message
@@ -340,39 +336,39 @@ p  end
     end
 
     logger.info "#{application_name} configured, starting flow"
-    logger.debug "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
-    logger.debug "Available Data Schemas: #{RFlow::Configuration.available_data_schemas.inspect}"
     logger.debug "Available Components: #{RFlow::Configuration.available_components.inspect}"
+    logger.debug "Available Data Types: #{RFlow::Configuration.available_data_types.inspect}"
+    logger.debug "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
 
     # TODO: Start up a FlowManager component and connect it to the
-    # management interface on all the components
+    # management interface on all the components.
 
     instantiate_components!
     configure_component_ports!
     configure_component_connections!
     configure_components!
 
-    # At this point, each component should be ready to be connected to
-    # the others and start running
+    # At this point, each component should have their entire
+    # configuration for the component-specific stuff and all the
+    # connections and be ready to be connected to the others and start
+    # running
 
     EM.run do 
       connect_components!
 
       components.each do |component_uuid, component|
-        puts component.to_s
+        RFlow.logger.debug component.to_s
       end
 
       run_components!
-      # Sit back and relax
+
+      # Sit back and relax because everything is running
     end
     
     # Should never get here
     shutdown
     
-    # TODO: Load schemas into registry
-    # TODO: Load components into registry
     # TODO: Look into Parallel::ForkManager
-    # TODO: Figure out how to shutdown
   rescue SystemExit => e
     # Do nothing, just prevent a normal exit from causing an unsightly
     # error in the logs
@@ -383,12 +379,27 @@ p  end
 
   def self.shutdown
     logger.info "#{configuration['rflow.application_name']} shutting down"
+
+    logger.debug "Shutting down components"
+    components.each do |component_instance_uuid, component|
+      component.shutdown!
+    end
+
+    # TODO: Ensure that all the components have shut down before
+    # cleaning up
+    
+    logger.debug "Cleaning up components"
+    components.each do |component_instance_uuid, component|
+      component.cleanup!
+    end
+
     remove_pid_file configuration['rflow.pid_file_path']
     logger.info "#{configuration['rflow.application_name']} exiting"
     exit 0
   end
 
   def self.reload
+    # TODO: Actually do a real reload
     logger.info "#{configuration['rflow.application_name']} reloading"
     reload_log_file
     logger.info "#{configuration['rflow.application_name']} reloaded"

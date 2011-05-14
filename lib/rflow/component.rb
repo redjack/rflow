@@ -96,15 +96,6 @@ class RFlow
     end
     
 
-    # Method that should be overridden by a subclass to provide for
-    # component-specific configuration.  The subclass should use the
-    # self.configuration attribute (@configuration) to store its
-    # particular configuration.  The incoming deserialized_configuration
-    # parameter is from the RFlow configuration database and is (most
-    # likely) a hash.  Don't assume that the keys are symbols
-    def configure!(deserialized_configuration); end
-    
-    
     # TODO: DRY up the following two methods by factoring out into a meta-method
     
     def configure_input_port!(port_name, port_instance_uuid, port_options={})
@@ -152,9 +143,7 @@ class RFlow
           scoped_connections = input_port[input_port_key]
           scoped_connections.each do |connection|
             connection.recv_callback = Proc.new do |message|
-              pre_process_message(input_port, input_port_key, connection, message)
               process_message(input_port, input_port_key, connection, message)
-              post_process_message(input_port, input_port_key, connection, message)
             end
           end
         end
@@ -166,37 +155,45 @@ class RFlow
     end
 
     
-    # Do stuff related before the process_message subclass method is called
-    def pre_process_message(input_port, input_port_key, connection, message)
-      # Start updating the provenance with the start time
-    end
-    
-    # Designed to be abstract
-    def process_message(input_port, input_port_key, connection, message)
-      puts "#{self.class} Processing message from '#{input_port.name}' (#{input_port.instance_uuid}): '#{message}'"
-    end
-    
-    # Do stuff related after the process_message subclass method is called
-    def post_process_message(input_port, input_port_key, connection, message)
-    end
-    
-    # Main component running method.
-    def run!; end
-
     def to_s
       string = "Component '#{name}' (#{instance_uuid})\n"
       ports.each do |port|
-        p port
         port.keys.each do |port_key|
-          p port_key
           port[port_key].each do |connection|
-            p connection
             string << "\t#{port.class.to_s} '#{port.name}' (#{port.instance_uuid}) key '#{port_key}' connection '#{connection.name}' (#{connection.instance_uuid})\n"
           end
         end
       end
       string
     end
+
+    
+    # Method that should be overridden by a subclass to provide for
+    # component-specific configuration.  The subclass should use the
+    # self.configuration attribute (@configuration) to store its
+    # particular configuration.  The incoming deserialized_configuration
+    # parameter is from the RFlow configuration database and is (most
+    # likely) a hash.  Don't assume that the keys are symbols
+    def configure!(deserialized_configuration); end
+    
+    # Main component running method.  Subclasses should implement if
+    # they want to set up any EventMachine stuffs (servers, clients,
+    # etc)
+    def run!; end
+
+    # Method called when a message is received on an input port.
+    # Subclasses should implement if they want to receive messages
+    def process_message(input_port, input_port_key, connection, message); end
+
+    # Method called when RFlow is shutting down.  Subclasses should
+    # implment to terminate any servers/clients (or let them finish)
+    # and stop sending new data through the flow
+    def shutdown!; end
+
+    # Method called after all components have been shutdown! and just
+    # before the global RFlow exit.  Sublcasses should implement to
+    # cleanup any leftover state, e.g. flush file handles, etc
+    def cleanup!; end
     
   end # class Component
 end # class RFlow

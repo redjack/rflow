@@ -20,11 +20,16 @@ EOS
 
 #RFlow::Configuration.add_available_data_schema RFlow::Message::Data::AvroSchema.new('Integer', long_integer_schema)
 
-class SimpleDataExtension < RFlow::Message::Data
-  puts "-----------------SimpleDataExtension"
+module SimpleDataExtension
+  def crap
+    puts "CRAP WAS CALLED!!!!!"
+  end
 end
 
-puts "Before GenerateIntegerSequence"
+RFlow::Configuration.add_available_data_extension('A', SimpleDataExtension)
+
+
+
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
 
@@ -48,7 +53,6 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   
 end
 
-puts "Before Replicate"
 class RFlow::Components::Replicate < RFlow::Component
   input_port :in
   output_port :out
@@ -90,7 +94,6 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
       end
     rescue Exception => e
       puts "Attempting to send message to errored #{e.message}"
-      p errored
       errored.send_message message
     end
   end

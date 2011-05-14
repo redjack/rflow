@@ -11,7 +11,7 @@ class RFlow
     class ConfigurationInvalid < StandardError; end
     
     class << self
-      attr_accessor :config_file
+#      attr_accessor :config_file
 
       def available_data_types
         @available_data_types ||= Hash.new {|hash, key| hash[key] = Hash.new}
