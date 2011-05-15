@@ -51,13 +51,14 @@ class RFlow
     
 
     attr_reader :data_type_name
+    attr_accessor :processing_event
     attr_accessor :provenance
     attr_reader :data, :data_extensions
     
-    def initialize(data_type_name, provenance=[], data_serialization_type=:avro, data_schema_string=nil, serialized_data_object=nil)
+    def initialize(data_type_name, provenance=[], data_serialization_type='avro', data_schema_string=nil, serialized_data_object=nil)
       # Default the values, in case someone puts in a nil instead of
       # the default
-      @data_type_name = data_type_name ? data_type_name.to_sym : :avro
+      @data_type_name = data_type_name.to_s
 
       # Turn the provenance array of Hashes into an array of
       # ProcessingEvents for easier access and time validation.  TODO:
@@ -74,7 +75,7 @@ class RFlow
         end
       end
       
-      registered_data_schema_string = RFlow::Configuration.available_data_types[@data_type_name][data_serialization_type.to_sym]
+      registered_data_schema_string = RFlow::Configuration.available_data_types[@data_type_name][data_serialization_type.to_s]
       
       unless registered_data_schema_string
         error_message = "Data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}' not found"
@@ -90,7 +91,7 @@ class RFlow
         raise ArgumentError, error_message
       end
       
-      @data = Data.new(registered_data_schema_string, data_serialization_type.to_sym, serialized_data_object)
+      @data = Data.new(registered_data_schema_string, data_serialization_type.to_s, serialized_data_object)
 
       # Get the extensions and apply them to the data object to add capability
       @data_extensions = RFlow::Configuration.available_data_extensions[@data_type_name]
@@ -104,16 +105,22 @@ class RFlow
     class ProcessingEvent
       attr_accessor :component_instance_uuid, :started_at, :completed_at, :context
 
-      def initialize(component_instance_uuid_string, started_at_string=nil, completed_at_string=nil, context_string=nil)
-        @component_instance_uuid = component_instance_uuid_string
-        @started_at = started_at_string ? Time.xmlschema(started_at_string) : nil
-        @completed_at = completed_at_string ? Time.xmlschema(completed_at_string) : nil
-        @context = context_string
+      def initialize(component_instance_uuid, started_at=nil, completed_at=nil, context=nil)
+        @component_instance_uuid = component_instance_uuid
+        @started_at = case started_at
+                      when String then Time.xmlschema(started_at) 
+                      when Time   then started_at
+                      else; nil; end
+        @completed_at = case completed_at
+                        when String then Time.xmlschema(completed_at) 
+                        when Time   then completed_at
+                        else; nil; end
+        @context = context
       end
       
       def to_hash
         {
-          'component_instance_uuid' => component_instance_uuid,
+          'component_instance_uuid' => component_instance_uuid.to_s,
           'started_at'   => started_at   ? started_at.xmlschema(6)   : nil,
           'completed_at' => completed_at ? completed_at.xmlschema(6) : nil,
           'context'      => context      ? context.to_s              : nil,
@@ -128,15 +135,15 @@ class RFlow
       attr_reader :schema_string, :schema, :serialization_type
       attr_accessor :data_object
 
-      def initialize(schema_string, serialization_type=:avro, serialized_data_object=nil)
-        unless serialization_type.to_sym == :avro
+      def initialize(schema_string, serialization_type='avro', serialized_data_object=nil)
+        unless serialization_type == 'avro'
           error_message = "Only Avro serialization_type supported at the moment"
           RFlow.logger.error error_message
           raise ArgumentError, error_message
         end
 
         @schema_string = schema_string
-        @serialization_type = :avro
+        @serialization_type = serialization_type
 
         begin
           @schema = Avro::Schema.parse(schema_string)

@@ -3,7 +3,6 @@ class RFlow
 
     module ConnectionCollection
       def send_message(message)
-        puts "Sending message to connection collection"
         each do |connection|
           connection.send_message(message)
         end
@@ -19,13 +18,13 @@ class RFlow
         @ports = Array.new
         @by_uuid = Hash.new
         @by_name = Hash.new
-        @by_type = Hash.new {|hash, key| hash[key.to_s.to_sym] = []}
+        @by_type = Hash.new {|hash, key| hash[key.to_s] = []}
       end
 
       def <<(port)
-        by_uuid[port.instance_uuid.to_s.to_sym] = port
-        by_name[port.name.to_s.to_sym] = port
-        by_type[port.class.to_s.to_sym] << port
+        by_uuid[port.instance_uuid.to_s] = port
+        by_name[port.name.to_s] = port
+        by_type[port.class.to_s] << port
         ports << port
       end
 
@@ -55,7 +54,7 @@ class RFlow
       end
 
       def [](key)
-        connections_for[key.to_s.to_sym]
+        connections_for[key.to_s]
       end
 
 

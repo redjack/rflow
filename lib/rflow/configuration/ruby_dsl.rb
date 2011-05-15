@@ -24,7 +24,7 @@ class RFlow
       # 'rflow.' prefix on all of its settings.  Custom settings
       # should use a custom (unique) prefix
       def setting(setting_name, setting_value)
-        setting_specs << {:name => setting_name, :value => setting_value, :config_line => get_config_line(caller)}
+        setting_specs << {:name => setting_name.to_s, :value => setting_value.to_s, :config_line => get_config_line(caller)}
       end
 
       # DSL method to specify a component.  Expects a name,
@@ -138,12 +138,12 @@ class RFlow
                                                              :output_port_key => connection_spec[:output_port_key],
                                                              :input_port_key => connection_spec[:input_port_key],
                                                              :options => {
-                                                               :output_socket_type => "PUSH",
-                                                               :output_address => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
-                                                               :output_responsibility => "bind",
-                                                               :input_socket_type => "PULL",
-                                                               :input_address => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
-                                                               :input_responsibility => "connect",
+                                                               'output_socket_type' => "PUSH",
+                                                               'output_address' => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
+                                                               'output_responsibility' => "bind",
+                                                               'input_socket_type' => "PULL",
+                                                               'input_address' => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
+                                                               'input_responsibility' => "connect",
                                                              })
 
         connection.output_port = output_port

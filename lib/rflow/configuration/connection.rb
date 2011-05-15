@@ -23,15 +23,15 @@ class RFlow
 
       def all_required_options_present
         self.class.required_options.each do |option_name|
-          unless options.include? option_name.to_sym
-            errors.add(:options, "must include #{option_name}")
+          unless options.include? option_name.to_s
+            errors.add(:options, "must include #{option_name} for #{self.class.to_s}")
           end
         end
       end
       
       def merge_default_options!
         self.class.default_options.each do |option_name, default_value_or_proc|
-          self.options[option_name.to_sym] ||= default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call(self) : default_value_or_proc
+          self.options[option_name.to_s] ||= default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call(self) : default_value_or_proc
         end
       end
 
@@ -59,12 +59,12 @@ class RFlow
 
       def self.default_options
         {
-          :output_socket_type    => :push,
+          'output_socket_type'    => 'PUSH',
           :output_address       => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
-          :output_responsibility => :bind,
-          :input_socket_type     => :pull,
+          :output_responsibility => 'bind',
+          :input_socket_type     => 'PULL',
           :input_address        => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
-          :input_responsibility  => :connect,
+          :input_responsibility  => 'connect',
         }
       end
       

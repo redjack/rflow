@@ -38,13 +38,12 @@ class RFlow
       # Helper method to keep things DRY for standard component
       # definition methods input_port and output_port
       def define_port(collection, port_name)
-        port_name_sym = port_name.to_sym
-        collection[port_name_sym] = true
+        collection[port_name.to_s] = true
 
         # Create the port accessor method based on the port name
-        define_method port_name_sym do |*args|
-          key = args.first ? args.first.to_s.to_sym : nil
-          port = ports.by_name[port_name_sym] 
+        define_method port_name.to_s.to_sym do |*args|
+          key = args.first ? args.first.to_s : nil
+          port = ports.by_name[port_name.to_s] 
 
           if port
             key ? port[key] : port
@@ -70,7 +69,7 @@ class RFlow
     
     def initialize(uuid, name=nil, configuration=nil)
       @instance_uuid = uuid
-      @name = name.to_sym
+      @name = name
       @ports = PortCollection.new
       @configuration = configuration
     end
@@ -79,27 +78,27 @@ class RFlow
     # Returns a list of connected input ports.  Each port will have
     # one or more keys associated with a particular connection.
     def input_ports
-      ports.by_type[:"RFlow::Component::InputPort"]
+      ports.by_type["RFlow::Component::InputPort"]
     end
 
     
     # Returns a list of connected output ports.  Each port will have
     # one or more keys associated with the particular connection.
     def output_ports
-      ports.by_type[:"RFlow::Component::OutputPort"]
+      ports.by_type["RFlow::Component::OutputPort"]
     end
 
     
     # Returns a list of disconnected output ports.
     def disconnected_ports
-      ports.by_type[:"RFlow::Component::DisconnectedPort"]
+      ports.by_type["RFlow::Component::DisconnectedPort"]
     end
     
 
     # TODO: DRY up the following two methods by factoring out into a meta-method
     
     def configure_input_port!(port_name, port_instance_uuid, port_options={})
-      unless self.class.defined_input_ports.include? port_name.to_sym
+      unless self.class.defined_input_ports.include? port_name
         raise ArgumentError, "Input port '#{port_name}' not defined on component '#{self.class}'"
       end
       ports <<  InputPort.new(port_name, port_instance_uuid, port_options)
@@ -107,7 +106,7 @@ class RFlow
 
     
     def configure_output_port!(port_name, port_instance_uuid, port_options={})
-      unless self.class.defined_output_ports.include? port_name.to_sym
+      unless self.class.defined_output_ports.include? port_name
         raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
       end
       ports << OutputPort.new(port_name, port_instance_uuid, port_options)
@@ -126,7 +125,7 @@ class RFlow
         raise ArgumentError, "Only ZMQConnections currently supported"
       end
 
-      ports.by_uuid[port_instance_uuid.to_s.to_sym][port_key] << connection
+      ports.by_uuid[port_instance_uuid.to_s][port_key] << connection
       connection
     end
 

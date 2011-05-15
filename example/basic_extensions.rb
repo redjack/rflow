@@ -19,18 +19,18 @@ RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Integer
 
 # Example of creating and registering a new schema
 long_integer_schema = '{"type": "long"}'
-RFlow::Configuration.add_available_data_type('RFlow::Message::Data::Integer', :avro, long_integer_schema)
+RFlow::Configuration.add_available_data_type('RFlow::Message::Data::Integer', 'avro', long_integer_schema)
 
 
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
 
   def configure!(config)
-    @start = config[:start].to_i
-    @finish = config[:finish].to_i
-    @step = config[:step] ? config[:step].to_i : 1
+    @start = config['start'].to_i
+    @finish = config['finish'].to_i
+    @step = config['step'] ? config['step'].to_i : 1
     # If interval seconds is not given, it will default to 0
-    @interval_seconds = config[:interval_seconds].to_i
+    @interval_seconds = config['interval_seconds'].to_i
   end
 
   # Note that this uses the timer (sometimes with 0 interval) so as
@@ -74,8 +74,8 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   output_port :errored
 
 
-  def configure!(deserialized_configuration)
-    @filter_proc = eval(deserialized_configuration[:filter_proc_string])
+  def configure!(config)
+    @filter_proc = eval("lambda {|message| #{config['filter_proc_string']} }")
   end
   
   def process_message(input_port, input_port_key, connection, message)
@@ -98,8 +98,8 @@ class RFlow::Components::FileOutput < RFlow::Component
   attr_accessor :output_file_path, :output_file
   input_port :in
 
-  def configure!(deserialized_configuration)
-    self.output_file_path = deserialized_configuration[:output_file_path]
+  def configure!(config)
+    self.output_file_path = config['output_file_path']
     self.output_file = File.new output_file_path, 'w+'
   end
 
@@ -123,7 +123,7 @@ class SimpleComponent < RFlow::Component
   input_port :in
   output_port :out
 
-  def configure!(configuration); end
+  def configure!(config); end
   def run!; end
   def process_message(input_port, input_port_key, connection, message); end
   def shutdown!; end

@@ -38,7 +38,7 @@ class RFlow
 
         ['input', 'output'].each do |direction_prefix|
           REQUIRED_OPTIONS.each do |option_suffix|
-            config_element = "#{direction_prefix}#{option_suffix}".to_sym
+            config_element = "#{direction_prefix}#{option_suffix}"
             unless configuration.include? config_element
               missing_config_elements << config_element
             end
@@ -61,18 +61,18 @@ class RFlow
       
       def connect_input!
         RFlow.logger.debug "Connecting input #{instance_uuid} with #{configuration.find_all {|k, v| k.to_s =~ /input/}}"
-        self.socket = self.class.zmq_context.send(configuration[:input_responsibility].to_sym,
-                                                  ZMQ.const_get(configuration[:input_socket_type]),
-                                                  configuration[:input_address],
+        self.socket = self.class.zmq_context.send(configuration['input_responsibility'],
+                                                  ZMQ.const_get(configuration['input_socket_type'].to_sym),
+                                                  configuration['input_address'],
                                                   self)
       end
 
 
       def connect_output!
         RFlow.logger.debug "Connecting output #{instance_uuid} with #{configuration.find_all {|k, v| k.to_s =~ /output/}}"
-        self.socket = self.class.zmq_context.send(configuration[:output_responsibility].to_sym,
-                                                  ZMQ.const_get(configuration[:output_socket_type]),
-                                                  configuration[:output_address],
+        self.socket = self.class.zmq_context.send(configuration['output_responsibility'].to_s,
+                                                  ZMQ.const_get(configuration['output_socket_type'].to_sym),
+                                                  configuration['output_address'].to_s,
                                                   self)
       end
 

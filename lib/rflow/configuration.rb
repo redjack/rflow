@@ -29,20 +29,20 @@ class RFlow
     
     # TODO: refactor each of these add_available_* into collections to
     # make DRYer.  Also figure out what to do with all to to_syms
-    def self.add_available_data_type(data_type_name, data_serialization, data_schema)
-      unless data_serialization.to_sym == :avro or data_serialization == :xml
-        error_message = "Data serialization must be ':avro' or ':xml' for '#{data_type_name}'"
+    def self.add_available_data_type(data_type_name, data_serialization_type, data_schema)
+      unless data_serialization_type == 'avro'
+        error_message = "Data serialization_type must be 'avro' for '#{data_type_name}'"
         RFlow.logger.error error_message
         raise ArgumentError, error_message
       end
 
-      if available_data_types[data_type_name.to_sym].include? data_serialization.to_sym
-        error_message = "Data type '#{data_type_name}' already defined for serialization '#{data_serialization}'"
+      if available_data_types[data_type_name.to_s].include? data_serialization_type.to_s
+        error_message = "Data type '#{data_type_name}' already defined for serialization_type '#{data_serialization_type}'"
         RFlow.logger.error error_message
         raise ArgumentError, error_message
       end
 
-      available_data_types[data_type_name.to_sym][data_serialization.to_sym] = data_schema
+      available_data_types[data_type_name.to_s][data_serialization_type.to_s] = data_schema
     end
 
     # The data_extension parameter should be the name of a ruby module
@@ -55,7 +55,7 @@ class RFlow
         raise ArgumentError, error_message
       end
 
-      available_data_extensions[data_type_name.to_sym] << data_extension
+      available_data_extensions[data_type_name] << data_extension
     end
 
     
