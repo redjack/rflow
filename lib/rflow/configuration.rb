@@ -90,15 +90,19 @@ class RFlow
       establish_config_database_connection(config_database_path)
       migrate_database
       
+      expanded_config_file_path = File.expand_path config_file_path if config_file_path
+
+      working_dir = Dir.getwd
+      Dir.chdir File.dirname(config_database_path)
+
       if config_file_path
-        expanded_config_file_path = File.expand_path config_file_path
-        working_dir = Dir.getwd
-        Dir.chdir File.dirname(config_database_path)
-
         process_config_file(expanded_config_file_path)
-
-        Dir.chdir working_dir
       end
+
+      RFlow.logger.debug "Defaulting non-existing config values"
+      merge_defaults! 
+
+      Dir.chdir working_dir
     end
 
     
@@ -107,20 +111,21 @@ class RFlow
     def self.process_config_file(config_file_path)
       RFlow.logger.info "Processing config file (#{Dir.getwd}) '#{config_file_path}'"
       load config_file_path
-
-      RFlow.logger.debug "Defaulting non-existing config values"
-      merge_defaults! 
     end
 
     def self.merge_defaults!
       Setting::DEFAULTS.each do |name, default_value_or_proc|
-        Setting.find_or_create_by_name(:name => name,
-                                       :value => default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call() : default_value_or_proc)
+        setting = Setting.find_or_create_by_name(:name => name,
+                                                 :value => default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call() : default_value_or_proc)
+        unless setting.valid?
+          error_message = setting.errors.map do |attribute, error_string|
+            error_string
+          end.join ', '
+          raise RuntimeError, error_message
+        end
       end
     end
     
-    
-
     
     attr_accessor :config_database_path
     attr_accessor :cached_settings
@@ -137,17 +142,17 @@ class RFlow
 
       @config_database_path = config_database_path
       self.class.establish_config_database_connection(config_database_path)
-      
+
       RFlow.logger.debug self.to_s
     end
 
     
     def to_s
       string = "Configuration:\n"
-      Setting.all.each do |setting|
+      settings.each do |setting|
         string << "Setting: '#{setting.name}' = '#{setting.value}'\n"
       end
-      Component.all.each do |component|
+      components.each do |component|
         string << "Component '#{component.name}' as #{component.specification} (#{component.uuid})\n"
         component.output_ports.each do |output_port|
           output_port.output_connections.each do |output_connection|

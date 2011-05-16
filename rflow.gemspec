@@ -25,7 +25,6 @@ Gem::Specification.new do |s|
   
   s.add_dependency 'sqlite3', '= 1.3.3'
   s.add_dependency 'activerecord', '= 3.0.7'
-
     
   s.add_dependency 'avro', '>= 1.3.3'
   s.add_dependency 'ffi', '= 1.0.7'

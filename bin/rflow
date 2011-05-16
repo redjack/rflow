@@ -7,11 +7,13 @@ require 'optparse'
 options = {
   :daemonize => true,
   :startup_log_level => :WARN,
+  :extensions_file_paths => [],
+  :gems => []
 }
 
 option_parser = OptionParser.new do |opts|
   opts.banner = <<EOB
-Usage: $0 [options] [start|stop|status]
+Usage: #{File.basename $0} [options] (start|stop|status)
 EOB
 
   opts.on("-d", "--database DB", "Config database (sqlite) path (GENERALLY REQUIRED)") do |db|
@@ -22,8 +24,12 @@ EOB
     options[:config_file_path] = File.expand_path(config)
   end
 
-  opts.on("-e", "--extensions EXTENSIONS", "Extensions file path") do |extensions|
-    options[:extensions_file_path] = File.expand_path(extensions)
+  opts.on("-e", "--extensions FILE1[,FILE_N]", Array, "Extension file paths (will load)") do |extensions|
+    options[:extensions_file_paths] += extensions.map {|extension| File.expand_path(extension)}
+  end
+  
+  opts.on("-g", "--gems GEM1[,GEM_N]", Array, "Extension gems (will require)") do |gems|
+    options[:gems] += gems
   end
   
   opts.on("-l", "--log LOGFILE", "Initial startup log file (in addition to stdout)") do |log|
@@ -50,10 +56,16 @@ EOB
   end
   
 end
-option_parser.parse!
+
+begin
+  option_parser.parse!
+rescue Exception => e
+  STDERR.puts "Error processing arguments: #{e.class}: #{e.message}"
+  exit 1
+end
 
 # Now require rflow because the following parts of the startup require
-# pieces (usually RFlow::Configuration)
+# pieces (usually RFlow::Configuration or RFlow.logger)
 require 'rflow'
 
 # Set up the startup logging, which is distinct from the runtime
@@ -72,6 +84,13 @@ if options[:startup_log_file_path]
   end
 end
 
+command = ARGV[0]
+unless ['start', 'stop', 'status'].include? command
+  startup_logger.fatal "Command needs to be one of [start|stop|status]\n#{option_parser.help}"
+  exit 1
+end
+
+
 unless options[:config_database_path]
   startup_logger.warn "Config database not specified, using default 'config.sqlite'"
   options[:config_database_path] = File.expand_path(File.join(Dir.getwd, 'config.sqlite'))
@@ -83,36 +102,6 @@ end
 # setting up.  The running log will transition to what is specified in
 # the config database
 RFlow.logger = startup_logger
-
-command = ARGV[0] || 'start'
-case command
-when 'start'
-  # Keep on going, all other branches exit
-when 'stop'
-  config = RFlow::Configuration.new(options[:config_database_path])
-  pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
-  if pid
-    RFlow.logger.info "Terminating #{config['rflow.application_name']} process, pid #{pid}"
-    Process.kill 'INT', pid
-    exit 0
-  else
-    RFlow.logger.warn "#{config['rflow.application_name']} process not found in #{config['rflow.pid_file_path']}"
-    exit 1
-  end
-when 'status'
-  config = RFlow::Configuration.new(options[:config_database_path])
-  pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
-  if pid
-    RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{config['rflow.pid_file_path']}"
-    exit 0
-  else
-    RFlow.logger.warn "#{config['rflow.application_name']} not running, process not found in #{config['rflow.pid_file_path']}"
-    exit 1
-  end
-else
-  RFlow.logger.error "Did not understand command '#{command}'"
-  exit 1
-end
 
 
 # If the config file was specified, load a new database with it.
@@ -133,13 +122,14 @@ if options[:config_file_path]
   end
 end
 
+
 # Initialize the configuration database, if needed
 unless File.exist? options[:config_database_path]
   startup_logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
   begin
     RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])
   rescue Exception => e
-    startup_logger.fatal "Error initializing configuration database: #{e.message}"
+    startup_logger.fatal "Error initializing configuration database: #{e.message}: #{e.backtrace.join "\n"}"
     exit 1
   end
 end
@@ -151,21 +141,55 @@ unless File.readable? options[:config_database_path]
 end
 
 
-# Check to make sure the extensions file is readable, if it exists,
-# and load it.  
-if options[:extensions_file_path]
-  unless File.readable? options[:extensions_file_path]
-    startup_logger.fatal "Extensions file ('#{Dir.getwd}') '#{options[:extensions_file_path]}' not reabable\n#{option_parser.help}"
+# Figure out what was asked of us, default to 'start'
+# TODO: clean this up ... it is sooo ugly
+case command
+when 'start', 'stop', 'status'
+  config = RFlow::Configuration.new(options[:config_database_path])
+  Dir.chdir(File.dirname(options[:config_database_path]))
+  pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
+  startup_logger.level = INFO
+  if pid
+    if command == 'stop'
+      RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}, terminating"
+      Process.kill 'INT', pid
+    else
+      RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}"
+    end
+    exit 0
+  elsif command == 'status' || command == 'stop'
+    RFlow.logger.warn "#{config['rflow.application_name']} process not found in #{File.expand_path(config['rflow.pid_file_path'])}"
     exit 1
   end
-  # Load the extensions
-  load options[:extensions_file_path]
+else
+  RFlow.logger.error "Did not understand command '#{command}'"
+  exit 1
+end
+
+
+# require all the gem extensions
+options[:gems].each do |extension_gem|
+  require extension_gem
+end
+
+
+# load all the file extensions
+options[:extensions_file_paths].each do |extensions_file_path|
+  unless File.readable? extensions_file_path
+    startup_logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not reabable\n#{option_parser.help}"
+    exit 1
+  end
+  load extensions_file_path
 end
 
 
 # Start the flow
-RFlow.run options[:config_database_path], options[:daemonize]
-
+begin
+  RFlow.run options[:config_database_path], options[:daemonize]
+rescue Exception => e
+  startup_logger.fatal "Error running rflow: #{e.class}: #{e.message}"
+end
+  
 __END__
 
 # TODO: all the stuffs after here

@@ -5,7 +5,6 @@ class RFlow
   class Component
     # Keep track of available component subclasses
     def self.inherited(subclass)
-      RFlow.logger.debug "Found component #{subclass.name}"
       RFlow::Configuration.add_available_component(subclass)
     end
 

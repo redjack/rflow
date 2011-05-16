@@ -41,7 +41,7 @@ class RFlow
 #     Configuration.new(File.basename(config_database_path), config_file_path)
 #   end
 
-  def self.initialize_logger(log_file_path, log_level='INFO')
+  def self.initialize_logger(log_file_path, log_level='INFO', include_stdout=nil)
     rflow_logger = Logger.new 'rflow.log'
     begin
       rflow_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
@@ -50,6 +50,11 @@ class RFlow
       raise Error, "Log file '#{log_file_path}' problem: #{e.message}"
     end
 
+    if include_stdout
+      puts "including standardout"
+      rflow_logger.add StdoutOutputter.new('rflow_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
+    end
+    
     rflow_logger.level = LNAMES.index log_level
     
     RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
@@ -326,9 +331,18 @@ class RFlow
     # relative paths for the other files/directories, such as the
     # application_directory_path
     Dir.chdir File.dirname(config_database_path)
+
+    # Bail unless you have some of the basic information.  TODO:
+    # rethink this when things get more dynamic
+    unless configuration['rflow.application_directory_path']
+      error_message = "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
+      RFlow.logger.error "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
+      raise ArgumentError, error_message
+    end
+
     Dir.chdir configuration['rflow.application_directory_path']
 
-    initialize_logger(configuration['rflow.log_file_path'], configuration['rflow.log_level'])
+    initialize_logger(configuration['rflow.log_file_path'], configuration['rflow.log_level'], !daemonize)
 
     application_name = configuration['rflow.application_name']
     logger.info "#{application_name} starting"
