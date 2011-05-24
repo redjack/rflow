@@ -19,7 +19,7 @@ describe RFlow::Message::Data do
   context "if created with an invalid schema for the serialization" do
     it "should throw and exception" do 
       expect {RFlow::Message::Data.new(@invalid_avro_schema_string)}.to raise_error(ArgumentError)
-      expect {RFlow::Message::Data.new(@invalid_avro_schema_string, :avro)}.to raise_error(ArgumentError)
+      expect {RFlow::Message::Data.new(@invalid_avro_schema_string, 'avro')}.to raise_error(ArgumentError)
       expect {RFlow::Message::Data.new(@invalid_avro_schema_string, 'avro')}.to raise_error(ArgumentError)
     end
   end
@@ -29,7 +29,7 @@ describe RFlow::Message::Data do
 
   context "if created with a valid avro schema" do 
     it "should instantiate correctly" do 
-      expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, :avro)}.to_not raise_error
+      expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro')}.to_not raise_error
       expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro')}.to_not raise_error
     end
     
@@ -44,14 +44,14 @@ describe RFlow::Message::Data do
     
     context "if created with an avro serialization" do
       it "should instantiate correctly" do
-        expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, :avro)}.to_not raise_error
+        expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro')}.to_not raise_error
         expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro')}.to_not raise_error
       end
 
       context "if created with a serialized data object" do
         it "should instantiate correctly" do
-          expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, :avro, @avro_serialized_string)}.to_not raise_error
-          message = RFlow::Message::Data.new(@valid_avro_string_schema_string, :avro, @avro_serialized_string)
+          expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro', @avro_serialized_string)}.to_not raise_error
+          message = RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro', @avro_serialized_string)
           p message
         end
       end

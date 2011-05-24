@@ -15,7 +15,7 @@ describe RFlow::Message do
   context "if created with a known data type" do
     before(:all) do
       @avro_string_schema_string = '{"type": "string"}'
-      RFlow::Configuration.add_available_data_type(:string_type, :avro, @avro_string_schema_string)
+      RFlow::Configuration.add_available_data_type(:string_type, 'avro', @avro_string_schema_string)
     end
 
     it "should instantiate correctly" do
@@ -32,7 +32,7 @@ describe RFlow::Message do
 
       context "if created with a known data serialization" do
         it "should instantiate correctly" do
-          expect {RFlow::Message.new('string_type', [], :avro)}.to_not raise_error
+          expect {RFlow::Message.new('string_type', [], 'avro')}.to_not raise_error
           expect {RFlow::Message.new('string_type', [], 'avro')}.to_not raise_error
         end
 
@@ -51,8 +51,8 @@ describe RFlow::Message do
             end
             
             it "should instantiate correctly" do
-              expect {RFlow::Message.new('string_type', [], :avro, nil, @avro_serialized_string)}.to_not raise_error
-              message = RFlow::Message.new('string_type', [], :avro, nil, @avro_serialized_string)
+              expect {RFlow::Message.new('string_type', [], 'avro', nil, @avro_serialized_string)}.to_not raise_error
+              message = RFlow::Message.new('string_type', [], 'avro', nil, @avro_serialized_string)
             end
           end
         end

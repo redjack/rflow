@@ -11,7 +11,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
 
   # Instantiate components
   config.component 'generate_ints1', 'RFlow::Components::GenerateIntegerSequence', 'start' => 0, 'finish' => 10, 'step' => 3, 'interval_seconds' => 1
-  config.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', 'start' => 20, 'finish' => 25
+  config.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', 'start' => 20, 'finish' => 2500
   config.component 'filter', 'RFlow::Components::RubyProcFilter', 'filter_proc_string' => 'lambda {|message| true}'
   config.component 'replicate', 'RFlow::Components::Replicate'
   config.component 'output1', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap1'

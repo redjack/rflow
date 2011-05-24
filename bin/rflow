@@ -169,12 +169,14 @@ end
 
 # require all the gem extensions
 options[:gems].each do |extension_gem|
+  startup_logger.info "Requiring #{extension_gem}"
   require extension_gem
 end
 
 
 # load all the file extensions
 options[:extensions_file_paths].each do |extensions_file_path|
+  startup_logger.info "Loading #{extensions_file_path}"
   unless File.readable? extensions_file_path
     startup_logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not reabable\n#{option_parser.help}"
     exit 1
