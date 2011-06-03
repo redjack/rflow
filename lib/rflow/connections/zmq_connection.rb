@@ -79,14 +79,21 @@ class RFlow
 
       def on_readable(socket, message_parts)
         message = RFlow::Message.from_avro(message_parts.last.copy_out_string)
-        RFlow.logger.debug "#{name} (#{object_id} => #{instance_uuid}): Received message of type '#{message_parts.first.copy_out_string}': '#{message.data.data_object.inspect}'"
+        RFlow.logger.debug "#{name} (#{object_id} => #{instance_uuid}): Received message of type '#{message_parts.first.copy_out_string}'"
         recv_callback.call(message)
       end
 
-
+      # TODO: fix this tight loop of retries
       def send_message(message)
-        RFlow.logger.debug "#{name} (#{object_id} => #{instance_uuid}): Sending message of type'#{message.data_type_name.to_s}': '#{message.data.data_object.inspect}'"
-        socket.send_msg(message.data_type_name.to_s, message.to_avro)
+        RFlow.logger.debug "#{name} (#{object_id} => #{instance_uuid}): Sending message of type '#{message.data_type_name.to_s}'"
+
+        begin
+          socket.send_msg(message.data_type_name.to_s, message.to_avro)
+          RFlow.logger.debug "#{name} (#{object_id} => #{instance_uuid}): Successfully sent message of type '#{message.data_type_name.to_s}'"
+        rescue Exception => e
+          RFlow.logger.debug "Exception #{e.class}: #{e.message}, retrying send"
+          retry
+        end
       end
       
     end

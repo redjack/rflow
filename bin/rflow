@@ -13,7 +13,7 @@ options = {
 
 option_parser = OptionParser.new do |opts|
   opts.banner = <<EOB
-Usage: #{File.basename $0} [options] (start|stop|status)
+Usage: #{File.basename $0} [options] (start|stop|status|load)
 EOB
 
   opts.on("-d", "--database DB", "Config database (sqlite) path (GENERALLY REQUIRED)") do |db|
@@ -85,8 +85,8 @@ if options[:startup_log_file_path]
 end
 
 command = ARGV[0]
-unless ['start', 'stop', 'status'].include? command
-  startup_logger.fatal "Command needs to be one of [start|stop|status]\n#{option_parser.help}"
+unless ['start', 'stop', 'status', 'load'].include? command
+  startup_logger.fatal "Command needs to be one of [start|stop|status|load]\n#{option_parser.help}"
   exit 1
 end
 

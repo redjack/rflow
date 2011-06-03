@@ -32,10 +32,14 @@ class RFlow
     
     
     # Serialize the current message object to Avro using the
-    # org.rflow.Message Avro schema.
+    # org.rflow.Message Avro schema.  Note that we have to manually
+    # set the encoding for Ruby 1.9, otherwise the stringio would use
+    # UTF-8 by default, which would not work correctly, as a serialize
+    # avro string is BINARY, not UTF-8
     def to_avro
-      avro_serialized_message_bytes_stringio = StringIO.new
-      avro_serialized_message_bytes_stringio.binmode
+      avro_serialized_message_bytes = ''
+      avro_serialized_message_bytes.force_encoding 'BINARY'
+      avro_serialized_message_bytes_stringio = StringIO.new(avro_serialized_message_bytes, 'w')
 
       deserialized_avro_object = {
         'data_type_name' => self.data_type_name.to_s,
@@ -46,7 +50,7 @@ class RFlow
       }
 
       self.class.avro_writer.write deserialized_avro_object, self.class.avro_encoder(avro_serialized_message_bytes_stringio)
-      avro_serialized_message_bytes_stringio.string
+      avro_serialized_message_bytes
     end
     
 
@@ -54,6 +58,7 @@ class RFlow
     attr_accessor :processing_event
     attr_accessor :provenance
     attr_reader :data, :data_extensions
+
     
     def initialize(data_type_name, provenance=[], data_serialization_type='avro', data_schema_string=nil, serialized_data_object=nil)
       # Default the values, in case someone puts in a nil instead of
@@ -75,8 +80,10 @@ class RFlow
         end
       end
       
+      # TODO: Make this better.  This check is technically
+      # unnecessary, as we are able to completely desrialize the
+      # message without needing to resort to the registered schema.
       registered_data_schema_string = RFlow::Configuration.available_data_types[@data_type_name][data_serialization_type.to_s]
-      
       unless registered_data_schema_string
         error_message = "Data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}' not found"
         RFlow.logger.error error_message
@@ -154,6 +161,7 @@ class RFlow
         end
         
         if serialized_data_object
+          serialized_data_object.force_encoding 'BINARY'
           avro_decoder = Avro::IO::BinaryDecoder.new StringIO.new(serialized_data_object)
           @data_object = Avro::IO::DatumReader.new(schema, schema).read avro_decoder
         end
@@ -164,9 +172,11 @@ class RFlow
       end
       
       def to_avro
-        serialized_data_object_stringio = StringIO.new
-        Avro::IO::DatumWriter.new(@schema).write @data_object, Avro::IO::BinaryEncoder.new(serialized_data_object_stringio)
-        serialized_data_object_stringio.string
+        serialized_data_object_bytes = ''
+        serialized_data_object_bytes.force_encoding 'BINARY'
+        serialized_data_object_bytes_stringio = StringIO.new(serialized_data_object_bytes)
+        Avro::IO::DatumWriter.new(@schema).write @data_object, Avro::IO::BinaryEncoder.new(serialized_data_object_bytes_stringio)
+        serialized_data_object_bytes
       end
 
       # Proxy methods down to the underlying data_object, probably a

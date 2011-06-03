@@ -21,10 +21,13 @@ include Log4r
 class RFlow
   class Error < StandardError; end
 
-  LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %M'
-  DATE_PATTERN_FORMAT = '%Y-%m-%dT%H:%M:%S.%9N %z'
+  LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %t: %M'
   DATE_METHOD = 'xmlschema(6)'
   LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_method => DATE_METHOD
+
+  # Might be slightly faster, but also not completely correct XML
+  #schema timestamps due to %z
+  #DATE_PATTERN_FORMAT = '%Y-%m-%dT%H:%M:%S.%9N %z'
   #LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_pattern => DATE_PATTERN_FORMAT
   
   class << self
@@ -43,6 +46,9 @@ class RFlow
 
   def self.initialize_logger(log_file_path, log_level='INFO', include_stdout=nil)
     rflow_logger = Logger.new 'rflow.log'
+    # TODO: Remove this once all the logging puts in its own
+    # Class.Method names.
+    rflow_logger.trace = true
     begin
       rflow_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
     rescue Exception => e

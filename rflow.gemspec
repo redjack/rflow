@@ -20,22 +20,22 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
-  s.add_dependency 'uuidtools', '= 2.1.2'
-  s.add_dependency 'log4r', '= 1.1.9'
+  s.add_dependency 'uuidtools', '~> 2.1'
+  s.add_dependency 'log4r', '~> 1.1'
   
-  s.add_dependency 'sqlite3', '= 1.3.3'
-  s.add_dependency 'activerecord', '= 3.0.7'
+  s.add_dependency 'sqlite3', '~> 1.3'
+  s.add_dependency 'activerecord', '~> 3.0'
     
   s.add_dependency 'avro', '>= 1.3.3'
-  s.add_dependency 'ffi', '= 1.0.7'
-  s.add_dependency 'ffi-rzmq' , '= 0.8.0'
+  s.add_dependency 'ffi', '~> 1.0'
+  s.add_dependency 'ffi-rzmq' , '~> 0.8'
 
   s.add_dependency 'eventmachine', '>= 1.0.0.beta3'
-  s.add_dependency 'em-zeromq', '= 0.2.1'
+  s.add_dependency 'em-zeromq', '~> 0.2'
   # Remove this when we break it out into its own gem
-  s.add_dependency 'eventmachine_httpserver', '= 0.2.1'
+  s.add_dependency 'eventmachine_httpserver', '~> 0.2'
   
-  s.add_development_dependency 'rspec', '= 2.5.0'
-  s.add_development_dependency 'rake', '= 0.8.7'
+  s.add_development_dependency 'rspec', '~> 2.6'
+  s.add_development_dependency 'rake', '>= 0.8.7'
   #s.add_development_dependency 'rcov', '= 0.9.9' # Not 1.9.2 compatible
 end
