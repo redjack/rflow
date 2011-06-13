@@ -6,7 +6,7 @@ require 'optparse'
 
 options = {
   :daemonize => true,
-  :startup_log_level => :WARN,
+  :startup_log_level => :INFO,
   :extensions_file_paths => [],
   :gems => []
 }
@@ -36,7 +36,7 @@ EOB
     options[:startup_log_file_path] = File.expand_path(log)
   end
 
-  opts.on("-v", "--verbose [LEVEL]", [:DEBUG, :INFO, :WARN], "Control the startup log (and stdout) verbosity (DEBUG, INFO, WARN) defaults to WARN") do |level|
+  opts.on("-v", "--verbose [LEVEL]", [:DEBUG, :INFO, :WARN], "Control the startup log (and stdout) verbosity (DEBUG, INFO, WARN) defaults to INFO") do |level|
     options[:startup_log_level] = level || :DEBUG
   end
 
@@ -160,26 +160,26 @@ pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
 case command
 when 'stop'
   if pid
-    RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}, terminating"
+    startup_logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}, terminating"
     # TODO: check if it actually shut down
     Process.kill 'INT', pid
   else
-    RFlow.logger.warn "#{config['rflow.application_name']} process not found in #{File.expand_path(config['rflow.pid_file_path'])}"
+    startup_logger.warn "#{config['rflow.application_name']} process not found in #{File.expand_path(config['rflow.pid_file_path'])}"
     exit 1
   end
   exit 0
 
 when 'status'
   unless pid
-    RFlow.logger.warn "#{config['rflow.application_name']} process not found in #{File.expand_path(config['rflow.pid_file_path'])}"
+    startup_logger.error "#{config['rflow.application_name']} process not found in #{File.expand_path(config['rflow.pid_file_path'])}"
     exit 1
   end
-  RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}"
+  startup_logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}"
   exit 0
 
 when 'start'
   if pid
-    RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}"
+    startup_logger.error "#{config['rflow.application_name']} already running, process #{pid} found in #{File.expand_path(config['rflow.pid_file_path'])}"
     exit 1
   end
 end
