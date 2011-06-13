@@ -57,7 +57,6 @@ class RFlow
     end
 
     if include_stdout
-      puts "including standardout"
       rflow_logger.add StdoutOutputter.new('rflow_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
     end
     
@@ -353,15 +352,6 @@ class RFlow
     application_name = configuration['rflow.application_name']
     logger.info "#{application_name} starting"
 
-    trap_signals
-
-    if daemonize
-      daemonize!(application_name, configuration['rflow.pid_file_path'])
-    else
-      # Still write the PID file for consistency
-      write_pid_file configuration['rflow.pid_file_path']
-    end
-
     logger.info "#{application_name} configured, starting flow"
     logger.debug "Available Components: #{RFlow::Configuration.available_components.inspect}"
     logger.debug "Available Data Types: #{RFlow::Configuration.available_data_types.inspect}"
@@ -380,6 +370,13 @@ class RFlow
     # connections and be ready to be connected to the others and start
     # running
 
+
+    # Daemonize
+    trap_signals
+    daemonize!(application_name, configuration['rflow.pid_file_path']) if daemonize
+    write_pid_file configuration['rflow.pid_file_path']
+
+    # Start the event loop and startup each component
     EM.run do 
       connect_components!
 
