@@ -143,7 +143,18 @@ class RFlow
       @config_database_path = config_database_path
       self.class.establish_config_database_connection(config_database_path)
 
-      RFlow.logger.debug self.to_s
+      # Validate the connected database.  TODO: make this more
+      # complete, i.e. validate the various columns
+      begin
+        Setting.first
+        Component.first
+        Port.first
+        Connection.first
+      rescue ActiveRecord::StatementInvalid => e
+        error_message = "Invalid schema in configuration database: #{e.message}"
+        RFlow.logger.error error_message
+        raise ArgumentError, error_message
+      end
     end
 
     

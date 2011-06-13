@@ -26,6 +26,7 @@ class RFlow
         by_name[port.name.to_s] = port
         by_type[port.class.to_s] << port
         ports << port
+        self
       end
 
 
@@ -39,12 +40,18 @@ class RFlow
       end
     end
     
-    
+
+    # Bare superclass for (potential) later methods.  Currently empty
     class Port; end
 
     
-    # Allows for a list of connections to be assigned to each port/key combination
-    class HashPort
+    # Allows for a list of connections to be assigned to each port/key
+    # combination.  Note that binding an input port to an un-indexed
+    # output port will result in messages from all indexed connections
+    # being received.  Similarly, sending to an unindexed port will
+    # result in the same message being sent to all indexed
+    # connections.
+    class HashPort < Port
       attr_reader :name, :instance_uuid, :options, :connections_for
       
       def initialize(name, instance_uuid, options={})
@@ -53,8 +60,9 @@ class RFlow
         @connections_for = Hash.new {|hash, key| hash[key] = Array.new.extend(ConnectionCollection)}
       end
 
+
       def [](key)
-        connections_for[key.to_s]
+        connections_for[key]
       end
 
 
@@ -72,12 +80,11 @@ class RFlow
         end
       end
 
-
-      # Send a message to all connections on all keys for this port.
+      
+      # Send a message to all connections on all keys for this port,
+      # but only once per connection.
       def send_message(message)
-        connections_for.each do |port_key, connections|
-          connections.send_message(message)
-        end
+        all_connections.send_message(message)
       end
       
 
@@ -85,6 +92,14 @@ class RFlow
       # establish the connection
       def connect!; raise NotImplementedError, "Raw ports do not know which direction to connect"; end
 
+      private
+
+      def all_connections
+        @all_connections ||= connections_for.map do |port_key, connections|
+          connections
+        end.flatten.uniq.extend(ConnectionCollection)
+      end
+      
     end
 
     
@@ -101,10 +116,18 @@ class RFlow
     
     class OutputPort < HashPort
       def connect!
-        connections_for.each do |port_key, scoped_connections|
-          scoped_connections.each do |connection|
+        connections_for.each do |port_key, keyed_connections|
+          keyed_connections.each do |connection|
             connection.connect_output!
           end
+        end
+        
+        # Add the nil-keyed port to the all of the keyed connections
+        connections_for.keys.each do |port_key|
+          next unless port_key
+          connections_for[port_key] += connections_for[nil]
+          # TODO: make this better/easier
+          connections_for[port_key].extend(ConnectionCollection)
         end
       end
     end
@@ -113,3 +136,9 @@ class RFlow
     
   end
 end
+
+__END__
+
+out[even] -> a
+out[odd]  -> b
+out[nil]  -> c
