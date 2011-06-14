@@ -68,12 +68,12 @@ class RFlow
       end
 
       # Splits the connection string into component/port parts
-      COMPONENT_PORT_STRING_REGEX = /^(\w+)#(\w+)(?:\[(\w+)\])?$/
+      COMPONENT_PORT_STRING_REGEX = /^(\w+)#(\w+)(?:\[([^\]]+)\])?$/
       def parse_connection_string(connection_string)
         matched = COMPONENT_PORT_STRING_REGEX.match(connection_string)
         raise ArgumentError, "Invalid component/port string specification: #{connection_string}" unless matched
         # component_name, port_name, port_key
-        [matched[1], matched[2], (matched[3] || '0')]
+        [matched[1], matched[2], (matched[3] || nil)]
       end
 
       
@@ -91,7 +91,7 @@ class RFlow
       def process_setting_specs
         setting_specs.each do |setting_spec|
           RFlow.logger.debug "Found config file setting '#{setting_spec[:name]}' = (#{Dir.getwd}) '#{setting_spec[:value]}'"
-          RFlow::Configuration::Setting.create :name => setting_spec[:name], :value => setting_spec[:value]
+          RFlow::Configuration::Setting.create! :name => setting_spec[:name], :value => setting_spec[:value]
         end
       end
 
@@ -101,7 +101,7 @@ class RFlow
       def process_component_specs
         component_specs.each do |component_spec|
           RFlow.logger.debug "Found component '#{component_spec[:name]}', creating"
-          RFlow::Configuration::Component.create :name => component_spec[:name], :specification => component_spec[:specification], :options => component_spec[:options]
+          RFlow::Configuration::Component.create! :name => component_spec[:name], :specification => component_spec[:specification], :options => component_spec[:options]
         end
       end
 
@@ -134,15 +134,21 @@ class RFlow
         input_port = input_component.input_ports.find_or_initialize_by_name :name => connection_spec[:input_port_name]
         input_port.save!
 
+        # Create a unique ZMQ address
+        zmq_address = "ipc://run/rflow.#{output_component.uuid}.#{output_port.uuid}"
+        if connection_spec[:output_port_key]
+          zmq_address << ".#{connection_spec[:output_port_key].gsub(/[^\w]/, '').downcase}"
+        end
+          
         connection = RFlow::Configuration::ZMQConnection.new(:name => connection_spec[:name],
                                                              :output_port_key => connection_spec[:output_port_key],
                                                              :input_port_key => connection_spec[:input_port_key],
                                                              :options => {
                                                                'output_socket_type' => "PUSH",
-                                                               'output_address' => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
+                                                               'output_address' => zmq_address,
                                                                'output_responsibility' => "bind",
                                                                'input_socket_type' => "PULL",
-                                                               'input_address' => "ipc://rflow.#{output_component.uuid}.#{output_port.uuid}.#{connection_spec[:output_port_key]}",
+                                                               'input_address' => zmq_address,
                                                                'input_responsibility' => "connect",
                                                              })
 

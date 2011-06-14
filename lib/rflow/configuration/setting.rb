@@ -46,13 +46,13 @@ class RFlow
 
       def valid_directory_path
         unless File.directory? self.value
-          errors.add :value, "setting '#{self.name}' is not a directory ('#{self.value}')"
+          errors.add :value, "setting '#{self.name}' is not a directory ('#{File.expand_path self.value}')"
         end
       end
       
       def valid_writable_path
         unless File.writable? self.value
-          errors.add :value, "setting '#{self.name}' is not writable ('#{self.value}')"
+          errors.add :value, "setting '#{self.name}' is not writable ('#{File.expand_path self.value}')"
         end
       end
 

@@ -40,23 +40,18 @@ class RFlow
         collection[port_name.to_s] = true
 
         # Create the port accessor method based on the port name
-        define_method port_name.to_s.to_sym do |*args|
-          key = args.first ? args.first.to_s : nil
+        define_method port_name.to_s.to_sym do
           port = ports.by_name[port_name.to_s] 
-
-          if port
-            key ? port[key] : port
-          else
-            # If the port was not connected, return a port-like object
-            # that can respond/log but doesn't send any data.  Note,
-            # it won't be available in the 'by_uuid' collection, as it
-            # doesn't have a configured instance_uuid
-            RFlow.logger.debug "'#{name}##{port_name}[#{key}]' not connected, creating a disconnected port"
-            disconnected_port = DisconnectedPort.new(port_name, 0)
-            disconnected_port[key] << Disconnection.new(0)
-            ports << disconnected_port
-            key ? disconnected_port[key] : disconnected_port
-          end
+          return port if port
+          
+          # If the port was not connected, return a port-like object
+          # that can respond/log but doesn't send any data.  Note,
+          # it won't be available in the 'by_uuid' collection, as it
+          # doesn't have a configured instance_uuid
+          RFlow.logger.debug "'#{self.name}##{port_name}' not connected, creating a disconnected port"
+          disconnected_port = DisconnectedPort.new(port_name, 0)
+          ports << disconnected_port
+          disconnected_port
         end
       end
     end
@@ -136,10 +131,10 @@ class RFlow
       input_ports.each do |input_port|
         input_port.connect!
 
-        # Create the callbacks for recieveing messages as a proc
+        # Create the callbacks for recieving messages as a proc
         input_port.keys.each do |input_port_key|
-          scoped_connections = input_port[input_port_key]
-          scoped_connections.each do |connection|
+          keyed_connections = input_port[input_port_key]
+          keyed_connections.each do |connection|
             connection.recv_callback = Proc.new do |message|
               process_message(input_port, input_port_key, connection, message)
             end

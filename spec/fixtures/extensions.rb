@@ -46,7 +46,6 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
       else
         even_odd_out['odd'].send_message message
       end
-      even_odd_out.send_message message
       
       @start += @step
       timer.cancel if @start > @finish
