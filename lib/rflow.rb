@@ -46,21 +46,22 @@ class RFlow
 
   def self.initialize_logger(log_file_path, log_level='INFO', include_stdout=nil)
     rflow_logger = Logger.new 'rflow.log'
+    rflow_logger.level = LNAMES.index log_level
     # TODO: Remove this once all the logging puts in its own
     # Class.Method names.
     rflow_logger.trace = true
     begin
       rflow_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
     rescue Exception => e
-      RFlow.logger.error "Log file '#{File.expand_path log_file_path}' problem: #{e.message}"
-      raise Error, "Log file '#{log_file_path}' problem: #{e.message}"
+      error_message = "Log file '#{File.expand_path log_file_path}' problem: #{e.message}\b#{e.backtrace.join("\n")}"
+      RFlow.logger.error error_message
+      raise ArgumentError, error_message
     end
 
     if include_stdout
       rflow_logger.add StdoutOutputter.new('rflow_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
     end
     
-    rflow_logger.level = LNAMES.index log_level
     
     RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
     RFlow.logger = rflow_logger
@@ -73,6 +74,10 @@ class RFlow
     File.open(log_file.path, 'a') { |tmp_log_file| log_file.reopen(tmp_log_file) }
   end
 
+  def self.close_log_file
+    Outputter['rflow.log_file'].close
+  end
+  
   def self.toggle_log_level
     original_log_level = LNAMES[logger.level]
     new_log_level = (original_log_level == 'DEBUG' ? configuration['rflow.log_level'] : 'DEBUG')

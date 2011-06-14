@@ -24,7 +24,8 @@ RFlow::Configuration.add_available_data_type('RFlow::Message::Data::Integer', 'a
 
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
-
+  output_port :even_odd_out
+  
   def configure!(config)
     @start = config['start'].to_i
     @finish = config['finish'].to_i
@@ -40,11 +41,18 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
       message = RFlow::Message.new('RFlow::Message::Data::Integer')
       message.data.data_object = @start
       out.send_message message
+      if @start % 2 == 0
+        even_odd_out['even'].send_message message
+      else
+        even_odd_out['odd'].send_message message
+      end
+      even_odd_out.send_message message
+      
       @start += @step
       timer.cancel if @start > @finish
     end
   end
-  
+
 end
 
 class RFlow::Components::Replicate < RFlow::Component
@@ -108,6 +116,7 @@ class RFlow::Components::FileOutput < RFlow::Component
   def process_message(input_port, input_port_key, connection, message)
     puts "About to output to a file #{output_file_path}"
     output_file.puts message.data.data_object.inspect
+    output_file.flush
   end
 
   

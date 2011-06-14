@@ -91,7 +91,7 @@ class RFlow
       def process_setting_specs
         setting_specs.each do |setting_spec|
           RFlow.logger.debug "Found config file setting '#{setting_spec[:name]}' = (#{Dir.getwd}) '#{setting_spec[:value]}'"
-          RFlow::Configuration::Setting.create :name => setting_spec[:name], :value => setting_spec[:value]
+          RFlow::Configuration::Setting.create! :name => setting_spec[:name], :value => setting_spec[:value]
         end
       end
 
@@ -101,7 +101,7 @@ class RFlow
       def process_component_specs
         component_specs.each do |component_spec|
           RFlow.logger.debug "Found component '#{component_spec[:name]}', creating"
-          RFlow::Configuration::Component.create :name => component_spec[:name], :specification => component_spec[:specification], :options => component_spec[:options]
+          RFlow::Configuration::Component.create! :name => component_spec[:name], :specification => component_spec[:specification], :options => component_spec[:options]
         end
       end
 

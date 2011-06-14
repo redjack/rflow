@@ -10,12 +10,12 @@ RFlow::Configuration::RubyDSL.configure do |config|
 #  config.schema('schemaname', 'schematype', 'schemadata')
 
   # Instantiate components
-  config.component 'generate_ints1', 'RFlow::Components::GenerateIntegerSequence', 'start' => 0, 'finish' => 10, 'step' => 3, 'interval_seconds' => 1
-  config.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', 'start' => 20, 'finish' => 2500
-  config.component 'filter', 'RFlow::Components::RubyProcFilter', 'filter_proc_string' => 'lambda {|message| true}'
-  config.component 'replicate', 'RFlow::Components::Replicate'
-  config.component 'output1', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap1'
-  config.component 'output2', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap2'
+#  config.component 'generate_ints1', 'RFlow::Components::GenerateIntegerSequence', 'start' => 0, 'finish' => 10, 'step' => 3, 'interval_seconds' => 1
+#  config.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', 'start' => 20, 'finish' => 30
+#  config.component 'filter', 'RFlow::Components::RubyProcFilter', 'filter_proc_string' => 'lambda {|message| true}'
+#  config.component 'replicate', 'RFlow::Components::Replicate'
+#  config.component 'output1', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap1'
+#  config.component 'output2', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap2'
   
   # Hook components together
   # config.connect 'generate_ints#out' => 'filter#in'
@@ -25,14 +25,25 @@ RFlow::Configuration::RubyDSL.configure do |config|
   # config.connect 'simple#out' => 'output#in'
   # config.connect 'complex#out' => 'output#in'
 
-  config.connect 'generate_ints1#out' => 'filter#in'
-  config.connect 'generate_ints2#out' => 'filter#in'
-  config.connect 'filter#filtered' => 'replicate#in'
-  config.connect 'replicate#out[1]' => 'output1#in'
-  config.connect 'replicate#out[2]' => 'output2#in'
+#  config.connect 'generate_ints1#out' => 'filter#in'
+#  config.connect 'generate_ints2#out' => 'filter#in'
+#  config.connect 'filter#filtered' => 'replicate#in'
+#  config.connect 'replicate#out[1]' => 'output1#in'
+#  config.connect 'replicate#out[2]' => 'output2#in'
   # Some tests that should fail
   # output should not have an 'out' ports
 #  config.connect 'output#out' => 'simple#in'
+
+  config.component 'generate_ints', 'RFlow::Components::GenerateIntegerSequence', 'start' => 20, 'finish' => 30
+  config.component 'output', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap'
+  config.component 'output_even', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap_even'
+  config.component 'output_odd', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap_odd'
+
+  config.connect 'generate_ints#even_odd_out' => 'output#in'
+  config.connect 'generate_ints#even_odd_out[even]' => 'output_even#in'
+  config.connect 'generate_ints#even_odd_out[odd]' => 'output_odd#in'
+  
+
 end
 
 
