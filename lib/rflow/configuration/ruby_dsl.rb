@@ -142,15 +142,15 @@ class RFlow
           
         connection = RFlow::Configuration::ZMQConnection.new(:name => connection_spec[:name],
                                                              :output_port_key => connection_spec[:output_port_key],
-                                                             :input_port_key => connection_spec[:input_port_key],
-                                                             :options => {
-                                                               'output_socket_type' => "PUSH",
-                                                               'output_address' => zmq_address,
-                                                               'output_responsibility' => "bind",
-                                                               'input_socket_type' => "PULL",
-                                                               'input_address' => zmq_address,
-                                                               'input_responsibility' => "connect",
-                                                             })
+                                                             :input_port_key => connection_spec[:input_port_key])
+#                                                             :options => {
+#                                                               'output_socket_type' => "PUSH",
+#                                                               'output_address' => zmq_address,
+#                                                               'output_responsibility' => "bind",
+#                                                               'input_socket_type' => "PULL",
+#                                                               'input_address' => zmq_address,
+#                                                               'input_responsibility' => "connect",
+#                                                             })
 
         connection.output_port = output_port
         connection.input_port = input_port
@@ -164,7 +164,7 @@ class RFlow
         # TODO: Figure out why an ArgumentError doesn't put the
         # offending message into e.message, even though it is printed
         # out if not caught
-        error_message = "#{e.message} at config '#{connection_spec[:config_line]}'"
+        error_message = "#{e.class}: #{e.message} at config '#{connection_spec[:config_line]}'"
         RFlow.logger.debug "Exception #{e.class} - " + error_message
         RFlow.logger.error error_message
         raise RFlow::Configuration::Connection::ConnectionInvalid, error_message

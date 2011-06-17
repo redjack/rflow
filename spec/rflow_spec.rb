@@ -64,8 +64,8 @@ describe RFlow do
       end
 
       # TODO: figure out a way to get rid of this sleep, as it is not correct
-      sleep(2)
-      
+      sleep(5)
+
       all_file_path = File.join(@temp_directory_path, 'out')
       even_file_path = File.join(@temp_directory_path, 'out_even')
       odd_file_path = File.join(@temp_directory_path, 'out_odd')

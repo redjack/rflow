@@ -4,31 +4,88 @@ require 'rflow/configuration/component'
 require 'rflow/configuration/port'
 require 'rflow/configuration/connection'
 
-# Config file requires at the bottom of the file
 
 class RFlow
+
+  # Contains all the configuration data and methods for RFlow.
+  # Interacts directly with underlying sqlite database, and keeps a
+  # registry of available data types, extensions, and components.
+  # Also includes an external DSL, RubyDSL, that can be used in
+  # crafting config-like files that load the database.
+  #
+  # Configuration provides a MVC-like framework for config files,
+  # where the models are the Setting, Component, Port, and Connection
+  # subclasses, the controllers are things like RubyDSL, and the views
+  # are defined relative to the controllers
   class Configuration
+
+    # An exception class
     class ConfigurationInvalid < StandardError; end
+
+    
+    # A collection class for data extensions that supports a naive
+    # prefix-based 'inheritance' on lookup.  When looking up a key
+    # with [] all existing keys will be examined to determine if the
+    # existing key is a string prefix of the lookup key. All the
+    # results are consolidated into a single, flattened array.
+    class DataExtensionCollection
+
+      def initialize
+        # TODO: choose a different data structure ...
+        @hash = Hash.new {|hash, key| hash[key] = Array.new}
+      end
+
+      # Return an array of all of the values that have keys that are
+      # prefixes of the lookup key.
+      def [](key)
+        key_string = key.to_s
+        @hash.map do |data_type, extensions|
+          key_string.start_with?(data_type) ? extensions : nil
+        end.flatten.compact
+      end
+
+      # Adds a data extension for a given data type to the collection
+      def add(data_type, extension)
+        @hash[data_type.to_s] << extension
+      end
+
+      # Remove all elements from the collection.  Useful for testing,
+      # not much else
+      def clear
+        @hash.clear
+      end
+      
+    end
+
     
     class << self
-#      attr_accessor :config_file
 
+      # A collection of data types (schemas) indexed by their name and
+      # their schema type ('avro').
       def available_data_types
         @available_data_types ||= Hash.new {|hash, key| hash[key] = Hash.new}
       end
 
+      # A DataExtensionCollection to hold available extensions that
+      # will be applied to the de-serialized data types
       def available_data_extensions
-        @available_data_extensions ||= Hash.new {|hash, key| hash[key] = Array.new}
+        @available_data_extensions ||= DataExtensionCollection.new
       end
 
+      # A Hash of defined components, usually automatically populated
+      # when a component subclasses RFlow::Component
       def available_components
         @available_components ||= Hash.new
       end
     end
 
-    
     # TODO: refactor each of these add_available_* into collections to
     # make DRYer.  Also figure out what to do with all to to_syms
+
+    # Add a schema to the available_data_types class attribute.
+    # Schema is indexed by data_type_name and schema/serialization
+    # type.  'avro' is currently the only supported
+    # data_serialization_type.
     def self.add_available_data_type(data_type_name, data_serialization_type, data_schema)
       unless data_serialization_type == 'avro'
         error_message = "Data serialization_type must be 'avro' for '#{data_type_name}'"
@@ -45,9 +102,12 @@ class RFlow
       available_data_types[data_type_name.to_s][data_serialization_type.to_s] = data_schema
     end
 
-    # The data_extension parameter should be the name of a ruby module
-    # that will extend RFlow::Message::Data object to provide
-    # additional methods/capability
+    # Add a data extension to the available_data_extensions class
+    # attributes.  The data_extension parameter should be the name of
+    # a ruby module that will extend RFlow::Message::Data object to
+    # provide additional methods/capability.  Naive, prefix-based
+    # inheritance is possible, see available_data_extensions or the
+    # DataExtensionCollection class
     def self.add_available_data_extension(data_type_name, data_extension)
       unless data_extension.is_a? Module
         error_message = "Invalid data extension #{data_extension} for #{data_type_name}.  Only Ruby Modules allowed"
@@ -55,7 +115,7 @@ class RFlow
         raise ArgumentError, error_message
       end
 
-      available_data_extensions[data_type_name] << data_extension
+      available_data_extensions.add data_type_name, data_extension
     end
 
     
@@ -71,6 +131,7 @@ class RFlow
     end
 
 
+    # Connect to the configuration sqlite database.
     def self.establish_config_database_connection(config_database_path)
       RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{config_database_path}'"
       ActiveRecord::Base.logger = RFlow.logger
@@ -78,13 +139,27 @@ class RFlow
                                               :database  => config_database_path)
     end
 
+    
+    # Using default ActiveRecord migrations, attempt to migrate the
+    # database to the latest version.
     def self.migrate_database
       RFlow.logger.debug "Applying default migrations to config database"
       migrations_directory_path = File.join(File.dirname(__FILE__), 'configuration', 'migrations')
 #      ActiveRecord::Migration.verbose = RFlow.logger
       ActiveRecord::Migrator.migrate migrations_directory_path
     end
+
+
+    # Load the config file, which should load/process/store all the
+    # elements.  Only run this after the database has been setup
+    def self.process_config_file(config_file_path)
+      RFlow.logger.info "Processing config file (#{Dir.getwd}) '#{config_file_path}'"
+      load config_file_path
+    end
+
     
+    # Connect to the configuration database, migrate it to the latest
+    # version, and process a config file if provided.
     def self.initialize_database(config_database_path, config_file_path=nil)
       RFlow.logger.debug "Initializing config database (#{Dir.getwd}) '#{config_database_path}'"
       establish_config_database_connection(config_database_path)
@@ -106,13 +181,7 @@ class RFlow
     end
 
     
-    # Load the config file, which should load/process/store all the
-    # elements.  Only run this after the database has been setup
-    def self.process_config_file(config_file_path)
-      RFlow.logger.info "Processing config file (#{Dir.getwd}) '#{config_file_path}'"
-      load config_file_path
-    end
-
+    # Make sure that the configuration has all the necessary values set.
     def self.merge_defaults!
       Setting::DEFAULTS.each do |name, default_value_or_proc|
         setting = Setting.find_or_create_by_name(:name => name,
