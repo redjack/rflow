@@ -21,6 +21,7 @@ class RFlow
 
       validate :all_required_options_present
 
+      
       def all_required_options_present
         self.class.required_options.each do |option_name|
           unless self.options.include? option_name.to_s
@@ -28,6 +29,7 @@ class RFlow
           end
         end
       end
+
       
       def merge_default_options!
         self.options ||= {}
@@ -55,11 +57,6 @@ class RFlow
     # STI Subclass for ZMQ connections and their required options
     class ZMQConnection < Connection
 
-      # No options are required if you like the defaults
-      def self.required_options
-        []
-      end
-
       def self.default_options
         {
           'output_socket_type'    => 'PUSH',
@@ -76,10 +73,6 @@ class RFlow
     # STI Subclass for AMQP connections and their required options
     class AMQPConnection < Connection
 
-      # No options are required if you like the defaults
-      def self.required_options
-      end
-      
       def self.default_options
         {
           'host'     => 'localhost',
