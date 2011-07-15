@@ -1,0 +1,9 @@
+{
+    "type": "record",
+    "name": "Raw",
+    "namespace": "org.rflow.message.data",
+    "aliases": [],
+    "fields": [
+        {"name": "raw", "type": "bytes"}
+    ]
+}

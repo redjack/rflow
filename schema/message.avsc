@@ -1,0 +1,36 @@
+{
+    "type": "record",
+    "name": "Message",
+    "namespace": "org.rflow",
+    "aliases": [],
+    "fields": [
+        {"name": "data_type_name", "type": "string"},
+        {"name": "provenance", 
+         "type": {
+             "type": "array", 
+             "items": {
+                 "type": "record", 
+                 "name": "ProcessingEvent", 
+                 "namespace": "org.rflow",
+                 "aliases": [],
+                 "fields": [
+                     {"name": "component_instance_uuid", "type": "string"},
+                     {"name": "started_at", "type": ["string", "null"]},
+                     {"name": "completed_at", "type": ["string", "null"]},
+                     {"name": "context", "type": ["bytes", "null"]}
+                 ]
+             }
+         }
+        },
+        {"name": "data_serialization_type", 
+         "type": {
+             "type": "enum", 
+             "name": "DataSerializationType", 
+             "symbols": ["avro", "xml"]
+         }
+        },
+        {"name": "data_schema", "type": "string"},
+        {"name": "data", "type": "bytes"}
+    ]
+}
+    

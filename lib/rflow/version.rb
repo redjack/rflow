@@ -1,3 +1,3 @@
-module RFlow
-  VERSION = "0.0.1"
-end
+class RFlow
+  VERSION = "0.0.2"
+end # class RFlow
