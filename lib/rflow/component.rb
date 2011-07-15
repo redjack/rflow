@@ -95,7 +95,7 @@ class RFlow
       unless self.class.defined_input_ports.include? port_name
         raise ArgumentError, "Input port '#{port_name}' not defined on component '#{self.class}'"
       end
-      ports <<  InputPort.new(port_name, port_instance_uuid, port_options)
+      ports << InputPort.new(port_name, port_instance_uuid, port_options)
     end
 
     
@@ -119,7 +119,7 @@ class RFlow
         raise ArgumentError, "Only ZMQConnections currently supported"
       end
 
-      ports.by_uuid[port_instance_uuid.to_s][port_key] << connection
+      ports.by_uuid[port_instance_uuid.to_s].add_connection(port_key, connection)
       connection
     end
 

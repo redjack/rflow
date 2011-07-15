@@ -69,7 +69,8 @@ describe RFlow do
         RFlow.run config_database_path, false
       end
 
-      # TODO: figure out a way to get rid of this sleep, as it is not correct
+      # TODO: figure out a way to get rid of this sleep, as there
+      # should be a better way
       sleep(5)
 
       all_file_path = File.join(@temp_directory_path, 'out')
@@ -77,18 +78,21 @@ describe RFlow do
       even_file_path = File.join(@temp_directory_path, 'out_even')
       odd_file_path = File.join(@temp_directory_path, 'out_odd')
       even_odd_file_path = File.join(@temp_directory_path, 'out_even_odd')
+      even_odd2_file_path = File.join(@temp_directory_path, 'out_even_odd2')
       
       File.exist?(all_file_path).should be_true
       File.exist?(all2_file_path).should be_true
       File.exist?(even_file_path).should be_true
       File.exist?(odd_file_path).should be_true
       File.exist?(even_odd_file_path).should be_true
+      File.exist?(even_odd2_file_path).should be_true
 
       File.readlines(all_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
       File.readlines(all2_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
       File.readlines(even_file_path).map(&:to_i).should == [20, 22, 24, 26, 28, 30]
       File.readlines(odd_file_path).map(&:to_i).should == [21, 23, 25, 27, 29]
       File.readlines(even_odd_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+      File.readlines(even_odd2_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
     end
   end
   

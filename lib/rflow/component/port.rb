@@ -1,6 +1,9 @@
 class RFlow
   class Component
 
+    # TODO: make this into a class to limit the amount of extensions
+    # that we have to do when operating on these "Arrays", i.e. when
+    # adding two together
     module ConnectionCollection
       def send_message(message)
         each do |connection|
@@ -60,12 +63,23 @@ class RFlow
         @connections_for = Hash.new {|hash, key| hash[key] = Array.new.extend(ConnectionCollection)}
       end
 
-
+      # Returns an extended Array of all the connections that should
+      # be sent/received on this port.  Merges the nil-keyed port
+      # (i.e. any connections for a port without a key) to those
+      # specific for the key, so should only be used to read a list of
+      # connections, not to add new ones.  Use add_connection to add a
+      # new connection for a given key.
       def [](key)
-        connections_for[key]
+         (connections_for[key] + connections_for[nil]).extend(ConnectionCollection)
       end
 
 
+      # Adds a connection for a given key
+      def add_connection(key, connection)
+        connections_for[key] << connection
+      end
+
+      
       # Return a list of connected keys
       def keys
         connections_for.keys
@@ -120,14 +134,6 @@ class RFlow
           keyed_connections.each do |connection|
             connection.connect_output!
           end
-        end
-        
-        # Add the nil-keyed port to the all of the keyed connections
-        connections_for.keys.each do |port_key|
-          next unless port_key
-          connections_for[port_key] += connections_for[nil]
-          # TODO: make this better/easier
-          connections_for[port_key].extend(ConnectionCollection)
         end
       end
     end

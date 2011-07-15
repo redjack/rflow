@@ -21,7 +21,7 @@ include Log4r
 class RFlow
   class Error < StandardError; end
 
-  LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %M (at %t)'
+  LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %M'
   DATE_METHOD = 'xmlschema(6)'
   LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_method => DATE_METHOD
 
