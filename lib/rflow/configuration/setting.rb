@@ -3,7 +3,7 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
-    class Setting < ActiveRecord::Base
+    class Setting < ConfigDB
       class SettingInvalid < StandardError; end
 
       include ActiveModel::Validations

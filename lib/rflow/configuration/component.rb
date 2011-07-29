@@ -3,7 +3,7 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
-    class Component < ActiveRecord::Base
+    class Component < ConfigDB
       include UUIDKeyed
       include ActiveModel::Validations
       
