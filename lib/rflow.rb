@@ -351,7 +351,7 @@ class RFlow
     end
 
     Dir.chdir configuration['rflow.application_directory_path']
-
+    
     initialize_logger(configuration['rflow.log_file_path'], configuration['rflow.log_level'], !daemonize)
 
     application_name = configuration['rflow.application_name']
