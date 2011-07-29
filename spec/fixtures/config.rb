@@ -6,6 +6,8 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.setting('rflow.log_level', 'DEBUG')
   config.setting('rflow.application_directory_path', '../tmp')
 
+  config.setting('rflow.application_name', 'testapp')
+  
   # Add schemas to the list of available.  Not convinced this is necessary
 #  config.schema('schemaname', 'schematype', 'schemadata')
 

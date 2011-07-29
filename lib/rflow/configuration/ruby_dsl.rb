@@ -135,10 +135,10 @@ class RFlow
         input_port.save!
 
         # Create a unique ZMQ address
-        zmq_address = "ipc://run/rflow.#{output_component.uuid}.#{output_port.uuid}"
-        if connection_spec[:output_port_key]
-          zmq_address << ".#{connection_spec[:output_port_key].gsub(/[^\w]/, '').downcase}"
-        end
+#        zmq_address = "ipc://run/rflow.#{output_component.uuid}.#{output_port.uuid}"
+#        if connection_spec[:output_port_key]
+#          zmq_address << ".#{connection_spec[:output_port_key].gsub(/[^\w]/, '').downcase}"
+#        end
           
         connection = RFlow::Configuration::ZMQConnection.new(:name => connection_spec[:name],
                                                              :output_port_key => connection_spec[:output_port_key],

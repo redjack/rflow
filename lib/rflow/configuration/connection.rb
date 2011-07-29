@@ -3,7 +3,7 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
-    class Connection < ActiveRecord::Base
+    class Connection < ConfigDB
       class ConnectionInvalid < StandardError; end
 
       include UUIDKeyed

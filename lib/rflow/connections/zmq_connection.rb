@@ -30,14 +30,14 @@ class RFlow
 
       attr_accessor :socket
 
-      REQUIRED_OPTIONS = ['_socket_type', '_address', '_responsibility']
+      REQUIRED_OPTION_SUFFIXES = ['_socket_type', '_address', '_responsibility']
 
       def self.configuration_errors(configuration)
         # TODO: Normalize/validate configuration
         missing_config_elements = []
 
         ['input', 'output'].each do |direction_prefix|
-          REQUIRED_OPTIONS.each do |option_suffix|
+          REQUIRED_OPTION_SUFFIXES.each do |option_suffix|
             config_element = "#{direction_prefix}#{option_suffix}"
             unless configuration.include? config_element
               missing_config_elements << config_element

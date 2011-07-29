@@ -16,9 +16,10 @@ require 'rflow/message'
 require 'rflow/components'
 require 'rflow/connections'
 
-include Log4r
 
 class RFlow
+  include Log4r
+
   class Error < StandardError; end
 
   LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %M'
@@ -45,7 +46,7 @@ class RFlow
 #   end
 
   def self.initialize_logger(log_file_path, log_level='INFO', include_stdout=nil)
-    rflow_logger = Logger.new 'rflow.log'
+    rflow_logger = Logger.new((configuration['rflow.application_name'] rescue File.basename(log_file_path)))
     rflow_logger.level = LNAMES.index log_level
     # TODO: Remove this once all the logging puts in its own
     # Class.Method names.
@@ -351,7 +352,7 @@ class RFlow
     end
 
     Dir.chdir configuration['rflow.application_directory_path']
-
+    
     initialize_logger(configuration['rflow.log_file_path'], configuration['rflow.log_level'], !daemonize)
 
     application_name = configuration['rflow.application_name']

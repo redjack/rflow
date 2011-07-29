@@ -1,9 +1,4 @@
 require 'rflow/util'
-require 'rflow/configuration/setting'
-require 'rflow/configuration/component'
-require 'rflow/configuration/port'
-require 'rflow/configuration/connection'
-
 
 class RFlow
 
@@ -22,6 +17,12 @@ class RFlow
     # An exception class
     class ConfigurationInvalid < StandardError; end
 
+    
+    # A class to hold DB config and connection information
+    class ConfigDB < ActiveRecord::Base
+        self.abstract_class = true
+    end
+    
     
     # A collection class for data extensions that supports a naive
     # prefix-based 'inheritance' on lookup.  When looking up a key
@@ -131,14 +132,16 @@ class RFlow
     end
 
 
-    # Connect to the configuration sqlite database.
+    # Connect to the configuration sqlite database, but use the
+    # ConfigDB subclass to protect the connection information from
+    # other ActiveRecord apps (i.e. Rails)
     def self.establish_config_database_connection(config_database_path)
       RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{config_database_path}'"
       ActiveRecord::Base.logger = RFlow.logger
-      ActiveRecord::Base.establish_connection(:adapter => "sqlite3",
-                                              :database  => config_database_path)
+      ConfigDB.establish_connection(:adapter => "sqlite3",
+                                    :database  => config_database_path)
     end
-
+    
     
     # Using default ActiveRecord migrations, attempt to migrate the
     # database to the latest version.
@@ -162,7 +165,12 @@ class RFlow
     # version, and process a config file if provided.
     def self.initialize_database(config_database_path, config_file_path=nil)
       RFlow.logger.debug "Initializing config database (#{Dir.getwd}) '#{config_database_path}'"
-      establish_config_database_connection(config_database_path)
+
+      RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{config_database_path}'"
+      ActiveRecord::Base.logger = RFlow.logger
+      ActiveRecord::Base.establish_connection(:adapter => "sqlite3",
+                                              :database  => config_database_path)
+
       migrate_database
       
       expanded_config_file_path = File.expand_path config_file_path if config_file_path
@@ -271,6 +279,12 @@ class RFlow
     end
   end
 end
+
+# Load the models
+require 'rflow/configuration/setting'
+require 'rflow/configuration/component'
+require 'rflow/configuration/port'
+require 'rflow/configuration/connection'
 
 # Incorporate various config file processors
 require 'rflow/configuration/ruby_dsl'
