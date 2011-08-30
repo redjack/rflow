@@ -154,8 +154,8 @@ rescue Exception => e
 end
 
 Dir.chdir(File.dirname(options[:config_database_path]))
+Dir.chdir(config['rflow.application_directory_path'])
 pid = RFlow.running_pid_file_path?(config['rflow.pid_file_path'])
-
 
 case command
 when 'stop'
