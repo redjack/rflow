@@ -53,8 +53,8 @@ describe RFlow do
     end
 
     it "should startup and run correctly with non-trivial workflow" do
-      config_file_path = File.join(@fixture_directory_path, 'config.rb')
-      extensions_path = File.join(@fixture_directory_path, 'extensions.rb')
+      config_file_path = File.join(@fixture_directory_path, 'config_ints.rb')
+      extensions_path = File.join(@fixture_directory_path, 'extensions_ints.rb')
       config_database_path = File.join(@temp_directory_path, 'config.sqlite')
 
       # Load the new database with the fixtured config file
