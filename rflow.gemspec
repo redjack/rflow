@@ -31,7 +31,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'ffi-rzmq' , '~> 0.8'
 
   s.add_dependency 'eventmachine', '>= 1.0.0.beta3'
-  s.add_dependency 'em-zeromq', '~> 0.2'
+  # MRI-only because of the FFI memory leak.  TODO: remove when ffi fixed
+  s.add_dependency 'em-zeromq-mri', '~> 0.2'
   # Remove this when we break it out into its own gem
   s.add_dependency 'eventmachine_httpserver', '~> 0.2'
   

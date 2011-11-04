@@ -1,6 +1,6 @@
-require 'ffi'
-require 'ffi-rzmq'
-require 'em-zeromq'
+#require 'ffi'
+#require 'ffi-rzmq'
+require 'em-zeromq-mri'
 
 require 'rflow/connection'
 require 'rflow/message'
