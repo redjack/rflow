@@ -66,6 +66,9 @@ class RFlow
     
     RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
     RFlow.logger = rflow_logger
+    ActiveRecord::Base.logger = RFlow.logger
+
+    rflow_logger
   end
 
   def self.reopen_log_file
