@@ -9,12 +9,12 @@ RSpec.configure do |config|
     RFlow.logger.add Log4r::StdoutOutputter.new('test_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
   end
 
-  config.before(:each) do
+  config.around(:each) do |example|
     @temp_directory_path = File.expand_path(File.join(File.dirname(__FILE__), 'tmp'))
     Dir.mkdir @temp_directory_path
-  end
 
-  config.after(:each) do
+    example.run
+
     FileUtils.rm_rf @temp_directory_path
   end
 end

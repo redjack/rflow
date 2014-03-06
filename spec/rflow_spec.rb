@@ -7,7 +7,7 @@ describe RFlow do
     @fixture_directory_path = File.join(File.dirname(__FILE__), 'fixtures')
   end
 
-  
+
   describe 'logger' do
     it "should initialize correctly" do
       log_file_path = File.join(@temp_directory_path, 'logfile')
@@ -17,26 +17,26 @@ describe RFlow do
 
       RFlow.logger.error "TESTTESTTEST"
       File.read(log_file_path).should match(/TESTTESTTEST/)
-      
+
       RFlow.close_log_file
     end
 
     it "should reopen correctly" do
       log_file_path = File.join(@temp_directory_path, 'logfile')
       moved_path = log_file_path + '.old'
-      
+
       RFlow.initialize_logger log_file_path
       File.exist?(log_file_path).should be_true
       File.exist?(moved_path).should be_false
 
       File.rename log_file_path, moved_path
-      
+
       RFlow.reopen_log_file
 
       RFlow.logger.error "TESTTESTTEST"
       File.read(log_file_path).should match(/TESTTESTTEST/)
       File.read(moved_path).should_not match(/TESTTESTTEST/)
-      
+
       RFlow.close_log_file
     end
 
@@ -64,6 +64,8 @@ describe RFlow do
       # Load the fixtured extensions
       load extensions_path
 
+      current_wd = Dir.getwd
+
       # Startup RFlow in its own thread
       rflow_thread = Thread.new do
         RFlow.run config_database_path, false
@@ -71,30 +73,27 @@ describe RFlow do
 
       # TODO: figure out a way to get rid of this sleep, as there
       # should be a better way
-      sleep(5)
+      sleep(3)
 
-      all_file_path = File.join(@temp_directory_path, 'out')
-      all2_file_path = File.join(@temp_directory_path, 'out2')
-      even_file_path = File.join(@temp_directory_path, 'out_even')
-      odd_file_path = File.join(@temp_directory_path, 'out_odd')
-      even_odd_file_path = File.join(@temp_directory_path, 'out_even_odd')
-      even_odd2_file_path = File.join(@temp_directory_path, 'out_even_odd2')
-      
-      File.exist?(all_file_path).should be_true
-      File.exist?(all2_file_path).should be_true
-      File.exist?(even_file_path).should be_true
-      File.exist?(odd_file_path).should be_true
-      File.exist?(even_odd_file_path).should be_true
-      File.exist?(even_odd2_file_path).should be_true
+      # RFlow changes the wd ... set it back so RSpec doesn't complain
+      Dir.chdir current_wd
 
-      File.readlines(all_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
-      File.readlines(all2_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
-      File.readlines(even_file_path).map(&:to_i).should == [20, 22, 24, 26, 28, 30]
-      File.readlines(odd_file_path).map(&:to_i).should == [21, 23, 25, 27, 29]
-      File.readlines(even_odd_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
-      File.readlines(even_odd2_file_path).map(&:to_i).should == [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+      output_files = {
+        File.join(@temp_directory_path, 'out')           => [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+        File.join(@temp_directory_path, 'out2')          => [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+        File.join(@temp_directory_path, 'out_even')      => [20, 22, 24, 26, 28, 30],
+        File.join(@temp_directory_path, 'out_odd')       => [21, 23, 25, 27, 29],
+        File.join(@temp_directory_path, 'out_even_odd')  => [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+        File.join(@temp_directory_path, 'out_even_odd2') => [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+      }
+
+
+      output_files.each do |file_name, expected_contents|
+        File.exist?(file_name).should be_true
+        File.readlines(file_name).map(&:to_i).should == expected_contents
+      end
     end
   end
-  
+
 
 end
