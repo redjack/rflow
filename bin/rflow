@@ -27,11 +27,11 @@ EOB
   opts.on("-e", "--extensions FILE1[,FILE_N]", Array, "Extension file paths (will load)") do |extensions|
     options[:extensions_file_paths] += extensions.map {|extension| File.expand_path(extension)}
   end
-  
+
   opts.on("-g", "--gems GEM1[,GEM_N]", Array, "Extension gems (will require)") do |gems|
     options[:gems] += gems
   end
-  
+
   opts.on("-l", "--log LOGFILE", "Initial startup log file (in addition to stdout)") do |log|
     options[:startup_log_file_path] = File.expand_path(log)
   end
@@ -49,12 +49,12 @@ EOB
     puts RFlow::VERSION
     exit 0
   end
-  
+
   opts.on_tail("-h", "--help", "Show this message and exit") do
     puts opts
     exit 0
   end
-  
+
 end
 
 begin
@@ -120,18 +120,18 @@ when 'load'
       startup_logger.fatal "Config file '#{options[:config_file_path]}' not found\n#{option_parser.help}"
       exit 1
     end
-    
+
     unless File.readable? options[:config_file_path]
       startup_logger.fatal "Config file '#{options[:config_file_path]}' not readable\n#{option_parser.help}"
       exit 1
     end
   end
-  
+
   if File.exist? options[:config_database_path]
     startup_logger.fatal "Config database '#{options[:config_database_path]}' exists, exiting to prevent accidental overwrite from config file '#{options[:config_file_path]}'"
     exit 1
   end
-  
+
   startup_logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
   begin
     RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])

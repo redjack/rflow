@@ -7,9 +7,9 @@ class CreatePorts < ActiveRecord::Migration
       # For STI
       t.text   :type
 
-      # UUID version of belongs_to :component 
+      # UUID version of belongs_to :component
       t.string :component_uuid
-      
+
       t.timestamps
     end
 
@@ -17,7 +17,7 @@ class CreatePorts < ActiveRecord::Migration
     add_index :ports, :component_uuid
     add_index :ports, [:component_uuid, :name], :unique => true
   end
- 
+
   def self.down
     drop_table :ports
   end

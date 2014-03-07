@@ -5,12 +5,12 @@
     "aliases": [],
     "fields": [
         {"name": "data_type_name", "type": "string"},
-        {"name": "provenance", 
+        {"name": "provenance",
          "type": {
-             "type": "array", 
+             "type": "array",
              "items": {
-                 "type": "record", 
-                 "name": "ProcessingEvent", 
+                 "type": "record",
+                 "name": "ProcessingEvent",
                  "namespace": "org.rflow",
                  "aliases": [],
                  "fields": [
@@ -22,10 +22,10 @@
              }
          }
         },
-        {"name": "data_serialization_type", 
+        {"name": "data_serialization_type",
          "type": {
-             "type": "enum", 
-             "name": "DataSerializationType", 
+             "type": "enum",
+             "name": "DataSerializationType",
              "symbols": ["avro", "xml"]
          }
         },
@@ -33,4 +33,4 @@
         {"name": "data", "type": "bytes"}
     ]
 }
-    
+

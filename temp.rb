@@ -40,8 +40,8 @@ class Message::Data
   end
 
   # Pointer to encapsulating message
-  attr_accessor :message 
-  
+  attr_accessor :message
+
   def initialize(data_type_name, serialized_data=nil, schema_name=nil, schema_type=nil, schema=nil, message=nil)
     # schema_name ||= 'org.rflow.Messages.GenericStringMap'
     # schema_type ||= 'avro'
@@ -58,9 +58,9 @@ class Message::Data
       # registry register the schema?
       self.class.schema_registry.register(data_type_name, schema_name, schema_type, schema)
     else
-      
+
     end
-    
+
   end
 
   def self.create(data_type_name, data=nil, schema_name=nil, schema_type=nil, schema=nil)
@@ -102,9 +102,9 @@ class HTTPRequest < RFlow::Message::Data
     # figure out if you are being called with incompatible arguments,
     # i.e. schema stuff
   end
-  
+
 end
-  
+
 class Message
   # contains all definitions about what to do for a message
   # has a default Avro schema for a data type
@@ -113,7 +113,7 @@ class Message
     attr_accessor :data_class_registry
   end
 
-  
+
   # Should load all the data stuff, perhaps to top level method on object
 
   attr_accessor :data_type_name, :provenance, :origination_context, :data_type_schema, :data
@@ -138,7 +138,7 @@ class Message
       end
     end
   end
-  
+
 end
 
 class Port
@@ -174,8 +174,8 @@ class Component
       port_incidence = :single
     end
     @@input_ports[port_name] = InputPort.new port_name, port_incidence
-  end 
-  
+  end
+
   def self.output_port
     # same as input port with different stuffs
   end
@@ -192,7 +192,7 @@ class Component
     :logger,
     :working_directory_path,
   }
-  
+
   def initialize(config, run_directory)
     # configure component
     config = {
@@ -209,7 +209,7 @@ class Component
       out.send('stuff')
       another_out.send('more stuff')
     end
-    # listen to 
+    # listen to
   end
 
   def process_message(input_port, message)
@@ -219,7 +219,7 @@ class Component
   def receive_message(port)
     port.receive
   end
-  
+
   def send_message(port, message)
     port.send(message)
   end
@@ -229,11 +229,11 @@ end
 class HTTPServer < RFlow::Component
   input_port :responses
   output_port :requests
-  
+
   input_types "HTTP::Response"
   output_types "HTTP::Request"
 
-  
+
 end
 
 class PassThrough < RFlow::Component
@@ -242,29 +242,29 @@ class PassThrough < RFlow::Component
   output_port :out
   output_port :another_out
 
-  output_types 
-  
+  output_types
+
   def initialize(config, run_directory)
     # This will initialize the ports
     super
     # Do stuff to initialize component.  Don't assume singleton
-  end   
+  end
 
 
   def process_message(input_port, data)
     out.send(message)
     another_out.send(message)
 
-    
+
   end
 
   def process_data(input_port
-  
+
 end
 
 
 class Transform < RFlow::Component
-  
+
 end
 
 # Plugins:

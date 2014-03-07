@@ -14,13 +14,13 @@ class CreateConnections < ActiveRecord::Migration
       t.string  :input_port_key, :default => '0'
 
       t.text :options
-      
+
       t.timestamps
     end
 
     add_index :connections, :uuid, :unique => true
   end
- 
+
   def self.down
     drop_table :connections
   end

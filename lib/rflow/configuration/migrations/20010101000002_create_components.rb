@@ -6,13 +6,13 @@ class CreateComponents < ActiveRecord::Migration
       t.boolean :managed, :default => true
       t.text   :specification
       t.text   :options
-      
+
       t.timestamps
     end
 
     add_index :components, :uuid, :unique => true
   end
- 
+
   def self.down
     drop_table :components
   end

@@ -6,7 +6,7 @@ class RFlow
     class Component < ConfigDB
       include UUIDKeyed
       include ActiveModel::Validations
-      
+
       class ComponentInvalid < StandardError; end
       class ComponentNotFound < StandardError; end
 
@@ -19,7 +19,7 @@ class RFlow
       #has_many :input_connections, :through => :input_ports, :source => :input_connections
       #has_many :output_connections, :through => :output_ports, :source => :output_connection
 
-      
+
       validates_uniqueness_of :name
 
     end

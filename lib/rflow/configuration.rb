@@ -17,13 +17,13 @@ class RFlow
     # An exception class
     class ConfigurationInvalid < StandardError; end
 
-    
+
     # A class to hold DB config and connection information
     class ConfigDB < ActiveRecord::Base
         self.abstract_class = true
     end
-    
-    
+
+
     # A collection class for data extensions that supports a naive
     # prefix-based 'inheritance' on lookup.  When looking up a key
     # with [] all existing keys will be examined to determine if the
@@ -55,10 +55,10 @@ class RFlow
       def clear
         @hash.clear
       end
-      
+
     end
 
-    
+
     class << self
 
       # A collection of data types (schemas) indexed by their name and
@@ -119,7 +119,7 @@ class RFlow
       available_data_extensions.add data_type_name, data_extension
     end
 
-    
+
     # Used when RFlow::Component is subclassed to add another
     # available component to the list.
     def self.add_available_component(component)
@@ -141,8 +141,8 @@ class RFlow
       ConfigDB.establish_connection(:adapter => "sqlite3",
                                     :database  => config_database_path)
     end
-    
-    
+
+
     # Using default ActiveRecord migrations, attempt to migrate the
     # database to the latest version.
     def self.migrate_database
@@ -160,7 +160,7 @@ class RFlow
       load config_file_path
     end
 
-    
+
     # Connect to the configuration database, migrate it to the latest
     # version, and process a config file if provided.
     def self.initialize_database(config_database_path, config_file_path=nil)
@@ -172,7 +172,7 @@ class RFlow
                                               :database  => config_database_path)
 
       migrate_database
-      
+
       expanded_config_file_path = File.expand_path config_file_path if config_file_path
 
       working_dir = Dir.getwd
@@ -183,12 +183,12 @@ class RFlow
       end
 
       RFlow.logger.debug "Defaulting non-existing config values"
-      merge_defaults! 
+      merge_defaults!
 
       Dir.chdir working_dir
     end
 
-    
+
     # Make sure that the configuration has all the necessary values set.
     def self.merge_defaults!
       Setting::DEFAULTS.each do |name, default_value_or_proc|
@@ -202,8 +202,8 @@ class RFlow
         end
       end
     end
-    
-    
+
+
     attr_accessor :config_database_path
     attr_accessor :cached_settings
     attr_accessor :cached_components
@@ -234,7 +234,7 @@ class RFlow
       end
     end
 
-    
+
     def to_s
       string = "Configuration:\n"
       settings.each do |setting|
@@ -253,23 +253,23 @@ class RFlow
       end
       string
     end
-      
+
     # Helper method to access settings with minimal syntax
     def [](setting_name)
       Setting.find_by_name(setting_name).value rescue nil
     end
 
-    
+
     def components
       Component.all
     end
 
-    
+
     def component(component_instance_uuid)
       Component.find_by_uuid component_instance_uuid
     end
-    
-    
+
+
     def settings
       Setting.all
     end

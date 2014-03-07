@@ -22,7 +22,7 @@ describe 'RFlow::Message::Data::Raw Avro Schema' do
     p raw['raw'].encoding
 
     decoded_raw['raw'].should == raw['raw']
-    
+
   end
-  
+
 end

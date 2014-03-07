@@ -4,9 +4,9 @@ class RFlow
   class Connection
     attr_accessor :instance_uuid, :name, :configuration, :recv_callback
 
-    # Attribute that holds the 
+    # Attribute that holds the
     attr_accessor :recv_callback
-    
+
     def initialize(connection_instance_uuid, connection_name=nil, connection_configuration={})
       @instance_uuid = connection_instance_uuid
       @name = connection_name
@@ -29,7 +29,7 @@ class RFlow
       raise NotImplementedError, "Raw connections do not support connect_output.  Please subclass and define a connect_output method."
     end
 
-    
+
     # Subclass and implement to handle outgoing messages.  The message
     # will be a RFlow::Message object and the subclasses are expected
     # to marshal it up into something that will be unmarshalled on the
@@ -47,7 +47,7 @@ class RFlow
     def recv_callback
       @recv_callback ||= Proc.new {|message|}
     end
-    
+
   end # class Connection
 
   class Disconnection < Connection
@@ -55,5 +55,5 @@ class RFlow
       RFlow.logger.debug "Attempting to send without a connection, doing nothing"
     end
   end
-  
+
 end # class RFlow

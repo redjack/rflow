@@ -50,7 +50,7 @@ describe RFlow::Message do
               @string = 'this is a string to be serialized'
               @avro_serialized_string = encode_avro(@avro_string_schema_string, @string)
             end
-            
+
             it "should instantiate correctly" do
               expect {RFlow::Message.new('string_type', [], 'avro', nil, @avro_serialized_string)}.to_not raise_error
               message = RFlow::Message.new('string_type', [], 'avro', nil, @avro_serialized_string)
@@ -65,12 +65,12 @@ describe RFlow::Message do
         @invalid_processing_event_hash = {'started_at' => 'bad time string'}
         @invalid_provenance = [@invalid_processing_event_hash]
       end
-      
+
       it "should throw an exception" do
         expect {RFlow::Message.new('string_type', @invalid_provenance)}.to raise_error(ArgumentError)
       end
     end
-    
+
     context "if created with valid provenance" do
       before(:all) do
         @valid_xmlschema_time = '2001-01-01T01:01:01.000001Z'
@@ -87,7 +87,7 @@ describe RFlow::Message do
                                     {"component_instance_uuid"=>"uuid", "started_at"=>@valid_xmlschema_time, "completed_at"=>@valid_xmlschema_time, "context"=>"context"},
                                    ]
       end
-      
+
       it "should instantiate correctly" do
         p @valid_provenance
         expect {RFlow::Message.new('string_type', @valid_provenance)}.to_not raise_error
@@ -105,7 +105,7 @@ describe RFlow::Message do
         message = RFlow::Message.new('string_type', @valid_provenance)
         message.provenance.map(&:to_hash).should == @valid_provenance_hashes
       end
-      
+
     end
 
     context "if correctly created" do
@@ -119,7 +119,7 @@ describe RFlow::Message do
         message.data.data_object.should == processed_message.data.data_object
       end
     end
-    
+
     context "if data extensions exist" do
       it "should extend the data element with the extension" do
         module ExtensionModule; def ext_method; end; end
@@ -138,9 +138,9 @@ describe RFlow::Message do
   it "should correctly handle large raw types" do
     message = RFlow::Message.new('RFlow::Message::Data::Raw')
     message.data.raw = Array.new(101) { rand(256) }.pack('c*')
-    
+
     message_avro = message.to_avro.force_encoding('BINARY')
-    
+
     processed_message = RFlow::Message.from_avro(message_avro)
     processed_message_avro = processed_message.to_avro.force_encoding('BINARY')
 
@@ -148,13 +148,13 @@ describe RFlow::Message do
 
     encode_avro(@raw_schema, message.data.data_object).should == message.data.to_avro
     decode_avro(@raw_schema, message.data.to_avro).should == message.data.data_object
-    
+
     p message.data.raw
     p message_avro
     p message_avro.bytesize
     p processed_message_avro
     p processed_message_avro.bytesize
-    
+
     p message_avro.encoding
     p message_avro.valid_encoding?
 
@@ -163,7 +163,7 @@ describe RFlow::Message do
 
     message_data_avro = message.data.to_avro.force_encoding('BINARY')
     processed_message_data_avro = processed_message.data.to_avro.force_encoding('BINARY')
-    
+
     p message_data_avro.encoding
     p message_data_avro.valid_encoding?
     p message_data_avro
@@ -173,10 +173,10 @@ describe RFlow::Message do
 
     Digest::MD5.hexdigest(message_avro).should == Digest::MD5.hexdigest(processed_message_avro)
 
-    
+
     message_data_avro.should == processed_message_data_avro
     Digest::MD5.hexdigest(message_data_avro).should == Digest::MD5.hexdigest(processed_message_data_avro)
     Digest::MD5.hexdigest(message.data.raw).should == Digest::MD5.hexdigest(processed_message.data.raw)
   end
-  
+
 end

@@ -9,7 +9,7 @@ describe RFlow::Configuration do
 #    RFlow::Configuration.available_data_extensions.clear
   end
 
-  
+
   describe '.add_available_data_type' do
     context 'if passed a data_serialization that is not avro or xml' do
       it "should throw an exception" do
@@ -27,7 +27,7 @@ describe RFlow::Configuration do
   end
 
   describe "Data Extensions" do
-  
+
     describe ".add_available_data_extension" do
       context 'if passed a non-module data extension' do
         it "should throw an exception" do
@@ -36,7 +36,7 @@ describe RFlow::Configuration do
           end.to raise_error(ArgumentError)
         end
       end
-      
+
       context "if passed a valid Module as a data extension" do
         it "should update the available_data_extensions" do
           num_extensions = RFlow::Configuration.available_data_extensions['data_type'].size
@@ -47,7 +47,7 @@ describe RFlow::Configuration do
         end
       end
     end
-    
+
     it "should perform simple 'prefix'-based inheritance for extensions" do
       RFlow::Configuration.add_available_data_extension('A', A = Module.new)
       RFlow::Configuration.add_available_data_extension('A::B', B = Module.new)

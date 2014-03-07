@@ -8,7 +8,7 @@ class RFlow
       RFlow::Configuration.add_available_component(subclass)
     end
 
-        
+
     # The Component class methods used in the creation of a component
     class << self
       def defined_input_ports
@@ -23,7 +23,7 @@ class RFlow
       # Port defintions only have names
 
       # TODO: consider class-based UUIDs to identify component types
-      
+
       # Define an input port with a given name
       def input_port(port_name)
         define_port(defined_input_ports, port_name)
@@ -41,9 +41,9 @@ class RFlow
 
         # Create the port accessor method based on the port name
         define_method port_name.to_s.to_sym do
-          port = ports.by_name[port_name.to_s] 
+          port = ports.by_name[port_name.to_s]
           return port if port
-          
+
           # If the port was not connected, return a port-like object
           # that can respond/log but doesn't send any data.  Note,
           # it won't be available in the 'by_uuid' collection, as it
@@ -60,7 +60,7 @@ class RFlow
     attr_reader :name
     attr_reader :configuration
     attr_reader :ports
-    
+
     def initialize(uuid, name=nil, configuration=nil)
       @instance_uuid = uuid
       @name = name
@@ -68,29 +68,29 @@ class RFlow
       @configuration = configuration
     end
 
-    
+
     # Returns a list of connected input ports.  Each port will have
     # one or more keys associated with a particular connection.
     def input_ports
       ports.by_type["RFlow::Component::InputPort"]
     end
 
-    
+
     # Returns a list of connected output ports.  Each port will have
     # one or more keys associated with the particular connection.
     def output_ports
       ports.by_type["RFlow::Component::OutputPort"]
     end
 
-    
+
     # Returns a list of disconnected output ports.
     def disconnected_ports
       ports.by_type["RFlow::Component::DisconnectedPort"]
     end
-    
+
 
     # TODO: DRY up the following two methods by factoring out into a meta-method
-    
+
     def configure_input_port!(port_name, port_instance_uuid, port_options={})
       unless self.class.defined_input_ports.include? port_name
         raise ArgumentError, "Input port '#{port_name}' not defined on component '#{self.class}'"
@@ -98,7 +98,7 @@ class RFlow
       ports << InputPort.new(port_name, port_instance_uuid, port_options)
     end
 
-    
+
     def configure_output_port!(port_name, port_instance_uuid, port_options={})
       unless self.class.defined_output_ports.include? port_name
         raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
@@ -123,7 +123,7 @@ class RFlow
       connection
     end
 
-    
+
     # Tell the component to establish it's ports' connections, i.e. make
     # the connection.  Uses the underlying connection object.  Also
     # establishes the callbacks for each of the input ports
@@ -141,13 +141,13 @@ class RFlow
           end
         end
       end
-        
+
       output_ports.each do |output_port|
         output_port.connect!
       end
     end
 
-    
+
     def to_s
       string = "Component '#{name}' (#{instance_uuid})\n"
       ports.each do |port|
@@ -160,7 +160,7 @@ class RFlow
       string
     end
 
-    
+
     # Method that should be overridden by a subclass to provide for
     # component-specific configuration.  The subclass should use the
     # self.configuration attribute (@configuration) to store its
@@ -168,7 +168,7 @@ class RFlow
     # parameter is from the RFlow configuration database and is (most
     # likely) a hash.  Don't assume that the keys are symbols
     def configure!(deserialized_configuration); end
-    
+
     # Main component running method.  Subclasses should implement if
     # they want to set up any EventMachine stuffs (servers, clients,
     # etc)
@@ -187,6 +187,6 @@ class RFlow
     # before the global RFlow exit.  Sublcasses should implement to
     # cleanup any leftover state, e.g. flush file handles, etc
     def cleanup!; end
-    
+
   end # class Component
 end # class RFlow

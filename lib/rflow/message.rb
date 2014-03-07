@@ -13,7 +13,7 @@ class RFlow
 
     class << self
       def avro_message_schema; @avro_message_schema ||= Avro::Schema.parse(File.read(File.join(File.dirname(__FILE__), '..', '..', 'schema', 'message.avsc'))); end
-      
+
       def avro_reader;  @avro_reader  ||= Avro::IO::DatumReader.new(avro_message_schema, avro_message_schema); end
       def avro_writer;  @avro_writer  ||= Avro::IO::DatumWriter.new(avro_message_schema); end
       def avro_decoder(io_object); Avro::IO::BinaryDecoder.new(io_object); end
@@ -29,8 +29,8 @@ class RFlow
                     message_hash['data'])
       end
     end
-    
-    
+
+
     # Serialize the current message object to Avro using the
     # org.rflow.Message Avro schema.  Note that we have to manually
     # set the encoding for Ruby 1.9, otherwise the stringio would use
@@ -52,14 +52,14 @@ class RFlow
       self.class.avro_writer.write deserialized_avro_object, self.class.avro_encoder(avro_serialized_message_bytes_stringio)
       avro_serialized_message_bytes
     end
-    
+
 
     attr_reader :data_type_name
     attr_accessor :processing_event
     attr_accessor :provenance
     attr_reader :data, :data_extensions
 
-    
+
     def initialize(data_type_name, provenance=[], data_serialization_type='avro', data_schema_string=nil, serialized_data_object=nil)
       # Default the values, in case someone puts in a nil instead of
       # the default
@@ -79,7 +79,7 @@ class RFlow
                               processing_event_hash_or_object['context'])
         end
       end
-      
+
       # TODO: Make this better.  This check is technically
       # unnecessary, as we are able to completely desrialize the
       # message without needing to resort to the registered schema.
@@ -97,7 +97,7 @@ class RFlow
         RFlow.logger.error error_message
         raise ArgumentError, error_message
       end
-      
+
       @data = Data.new(registered_data_schema_string, data_serialization_type.to_s, serialized_data_object)
 
       # Get the extensions and apply them to the data object to add capability
@@ -115,16 +115,16 @@ class RFlow
       def initialize(component_instance_uuid, started_at=nil, completed_at=nil, context=nil)
         @component_instance_uuid = component_instance_uuid
         @started_at = case started_at
-                      when String then Time.xmlschema(started_at) 
+                      when String then Time.xmlschema(started_at)
                       when Time   then started_at
                       else; nil; end
         @completed_at = case completed_at
-                        when String then Time.xmlschema(completed_at) 
+                        when String then Time.xmlschema(completed_at)
                         when Time   then completed_at
                         else; nil; end
         @context = context
       end
-      
+
       def to_hash
         {
           'component_instance_uuid' => component_instance_uuid.to_s,
@@ -134,7 +134,7 @@ class RFlow
         }
       end
     end
-    
+
     # Should proxy most methods to data_object that we can serialize
     # to avro using the schema.  Extensions should use 'extended' hook
     # to apply immediate changes.
@@ -159,7 +159,7 @@ class RFlow
           RFlow.logger.error error_message
           raise ArgumentError, error_message
         end
-        
+
         if serialized_data_object
           serialized_data_object.force_encoding 'BINARY'
           avro_decoder = Avro::IO::BinaryDecoder.new StringIO.new(serialized_data_object)
@@ -170,7 +170,7 @@ class RFlow
       def valid?
         Avro::Schema.validate @schema, @data_object
       end
-      
+
       def to_avro
         serialized_data_object_bytes = ''
         serialized_data_object_bytes.force_encoding 'BINARY'
@@ -186,6 +186,6 @@ class RFlow
         @data_object.send(method_sym, *args, &block)
       end
     end
-      
+
   end
 end

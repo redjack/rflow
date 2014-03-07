@@ -25,7 +25,7 @@ RFlow::Configuration.add_available_data_type('RFlow::Message::Data::Integer', 'a
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
   output_port :even_odd_out
-  
+
   def configure!(config)
     @start = config['start'].to_i
     @finish = config['finish'].to_i
@@ -37,7 +37,7 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   # Note that this uses the timer (sometimes with 0 interval) so as
   # not to block the reactor
   def run!
-    timer = EM::PeriodicTimer.new(@interval_seconds) do 
+    timer = EM::PeriodicTimer.new(@interval_seconds) do
       message = RFlow::Message.new('RFlow::Message::Data::Integer')
       message.data.data_object = @start
       out.send_message message
@@ -47,7 +47,7 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
         even_odd_out['odd'].send_message message
       end
       even_odd_out.send_message message
-      
+
       @start += @step
       timer.cancel if @start > @finish
     end
@@ -59,7 +59,7 @@ class RFlow::Components::Replicate < RFlow::Component
   input_port :in
   output_port :out
   output_port :errored
-  
+
   def process_message(input_port, input_port_key, connection, message)
     puts "Processing message in Replicate"
     out.each do |connections|
@@ -85,7 +85,7 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   def configure!(config)
     @filter_proc = eval("lambda {|message| #{config['filter_proc_string']} }")
   end
-  
+
   def process_message(input_port, input_port_key, connection, message)
     puts "Processing message in RubyProcFilter"
     begin
@@ -112,18 +112,18 @@ class RFlow::Components::FileOutput < RFlow::Component
   end
 
   #def run!; end
-  
+
   def process_message(input_port, input_port_key, connection, message)
     puts "About to output to a file #{output_file_path}"
     output_file.puts message.data.data_object.inspect
     output_file.flush
   end
 
-  
+
   def cleanup
     output_file.close
   end
-  
+
 end
 
 # TODO: Ensure that all the following methods work as they are

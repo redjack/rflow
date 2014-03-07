@@ -6,7 +6,7 @@ class RFlow
     class Port < ConfigDB
       include UUIDKeyed
       include ActiveModel::Validations
-      
+
       class PortInvalid < StandardError; end
 
       belongs_to :component,  :primary_key => 'uuid', :foreign_key => 'component_uuid'

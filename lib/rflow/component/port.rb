@@ -10,7 +10,7 @@ class RFlow
           connection.send_message(message)
         end
       end
-    end  
+    end
 
     # Collection class to make it easier to index by both names,
     # UUIDs, and types.
@@ -42,12 +42,12 @@ class RFlow
         end
       end
     end
-    
+
 
     # Bare superclass for (potential) later methods.  Currently empty
     class Port; end
 
-    
+
     # Allows for a list of connections to be assigned to each port/key
     # combination.  Note that binding an input port to an un-indexed
     # output port will result in messages from all indexed connections
@@ -56,7 +56,7 @@ class RFlow
     # connections.
     class HashPort < Port
       attr_reader :name, :instance_uuid, :options, :connections_for
-      
+
       def initialize(name, instance_uuid, options={})
         @name = name
         @instance_uuid = instance_uuid
@@ -79,7 +79,7 @@ class RFlow
         connections_for[key] << connection
       end
 
-      
+
       # Return a list of connected keys
       def keys
         connections_for.keys
@@ -94,13 +94,13 @@ class RFlow
         end
       end
 
-      
+
       # Send a message to all connections on all keys for this port,
       # but only once per connection.
       def send_message(message)
         all_connections.send_message(message)
       end
-      
+
 
       # Should be overridden.  Called when it is time to actually
       # establish the connection
@@ -113,10 +113,10 @@ class RFlow
           connections
         end.flatten.uniq.extend(ConnectionCollection)
       end
-      
+
     end
 
-    
+
     class InputPort < HashPort
       def connect!
         connections_for.each do |port_key, connections|
@@ -127,7 +127,7 @@ class RFlow
       end
     end
 
-    
+
     class OutputPort < HashPort
       def connect!
         connections_for.each do |port_key, keyed_connections|
@@ -139,7 +139,7 @@ class RFlow
     end
 
     class DisconnectedPort < HashPort; end
-    
+
   end
 end
 
