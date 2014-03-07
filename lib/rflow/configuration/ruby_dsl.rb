@@ -7,7 +7,7 @@ class RFlow
     # TODO: more docs and examples
     class RubyDSL
       attr_accessor :setting_specs, :component_specs, :connection_specs, :allocated_system_ports
-      
+
       def initialize
         @setting_specs = []
         @component_specs = []
@@ -19,7 +19,7 @@ class RFlow
       def get_config_line(call_history)
         call_history.first.split(':in').first
       end
-      
+
       # DSL method to specify a name/value pair.  RFlow core uses the
       # 'rflow.' prefix on all of its settings.  Custom settings
       # should use a custom (unique) prefix
@@ -55,9 +55,9 @@ class RFlow
           input_component_name, input_port_name, input_port_key = parse_connection_string(input_string)
 
           connection_specs << {
-            :name => output_string + '=>' + input_string, 
+            :name => output_string + '=>' + input_string,
             :output_component_name => output_component_name,
-            :output_port_name => output_port_name, :output_port_key => output_port_key, 
+            :output_port_name => output_port_name, :output_port_key => output_port_key,
             :output_string => output_string,
             :input_component_name => input_component_name,
             :input_port_name => input_port_name, :input_port_key => input_port_key,
@@ -76,7 +76,7 @@ class RFlow
         [matched[1], matched[2], (matched[3] || nil)]
       end
 
-      
+
       # Method to process the 'DSL' objects into the config database
       # via ActiveRecord
       def process
@@ -85,7 +85,7 @@ class RFlow
         process_connection_specs
       end
 
-      
+
       # Iterates through each setting specified in the DSL and
       # creates rows in the database corresponding to the setting
       def process_setting_specs
@@ -95,7 +95,7 @@ class RFlow
         end
       end
 
-      
+
       # Iterates through each component specified in the DSL and
       # creates rows in the database corresponding to the component.
       def process_component_specs
@@ -105,7 +105,7 @@ class RFlow
         end
       end
 
-      
+
       # Iterates through each component specified in the DSL and uses
       # 'process_connection' to insert all the parts of the connection
       # into the database
@@ -121,36 +121,22 @@ class RFlow
       # ZeroMQ ipc sockets
       def process_connection_spec(connection_spec)
         RFlow.logger.debug "Found connection from '#{connection_spec[:output_string]}' to '#{connection_spec[:input_string]}', creating"
-        
+
         # an input port can be associated with multiple outputs, but
         # an output port can only be associated with one input
         output_component = RFlow::Configuration::Component.find_by_name connection_spec[:output_component_name]
         raise RFlow::Configuration::Component::ComponentNotFound, "#{connection_spec[:output_component_name]}" unless output_component
         output_port = output_component.output_ports.find_or_initialize_by_name :name => connection_spec[:output_port_name]
         output_port.save!
-        
+
         input_component = RFlow::Configuration::Component.find_by_name connection_spec[:input_component_name]
         raise RFlow::Configuration::Component::ComponentNotFound, "#{connection_spec[:input_component_name]}" unless input_component
         input_port = input_component.input_ports.find_or_initialize_by_name :name => connection_spec[:input_port_name]
         input_port.save!
 
-        # Create a unique ZMQ address
-#        zmq_address = "ipc://run/rflow.#{output_component.uuid}.#{output_port.uuid}"
-#        if connection_spec[:output_port_key]
-#          zmq_address << ".#{connection_spec[:output_port_key].gsub(/[^\w]/, '').downcase}"
-#        end
-          
         connection = RFlow::Configuration::ZMQConnection.new(:name => connection_spec[:name],
                                                              :output_port_key => connection_spec[:output_port_key],
                                                              :input_port_key => connection_spec[:input_port_key])
-#                                                             :options => {
-#                                                               'output_socket_type' => "PUSH",
-#                                                               'output_address' => zmq_address,
-#                                                               'output_responsibility' => "bind",
-#                                                               'input_socket_type' => "PULL",
-#                                                               'input_address' => zmq_address,
-#                                                               'input_responsibility' => "connect",
-#                                                             })
 
         connection.output_port = output_port
         connection.input_port = input_port
@@ -170,7 +156,7 @@ class RFlow
         raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
       end
 
-      
+
       # Method called within the config file itself
       def self.configure
         config_file = self.new

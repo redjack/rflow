@@ -10,18 +10,18 @@ class RFlow
       include ActiveModel::Validations
 
       serialize :options, Hash
-      
+
       belongs_to :input_port, :primary_key => 'uuid', :foreign_key => 'input_port_uuid'
       belongs_to :output_port,:primary_key => 'uuid', :foreign_key => 'output_port_uuid'
 
       before_create :merge_default_options!
-      
+
       validates_uniqueness_of :uuid
       validates_presence_of :output_port_uuid, :input_port_uuid
 
       validate :all_required_options_present
 
-      
+
       def all_required_options_present
         self.class.required_options.each do |option_name|
           unless self.options.include? option_name.to_s
@@ -30,7 +30,7 @@ class RFlow
         end
       end
 
-      
+
       def merge_default_options!
         self.options ||= {}
         self.class.default_options.each do |option_name, default_value_or_proc|
@@ -43,7 +43,7 @@ class RFlow
       # used in validations.  To be overridden.
       def self.required_options; []; end
 
-      
+
       # Should return a hash of default options, where the keys are
       # the option names and the values are either default option
       # values or Procs that take a single connection argument.  This
@@ -53,7 +53,7 @@ class RFlow
 
     end
 
-    
+
     # STI Subclass for ZMQ connections and their required options
     class ZMQConnection < Connection
 
@@ -61,15 +61,15 @@ class RFlow
         {
           'output_socket_type'    => 'PUSH',
           'output_address'       => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
-          'output_responsibility' => 'bind',
+          'output_responsibility' => 'connect',
           'input_socket_type'     => 'PULL',
           'input_address'        => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
-          'input_responsibility'  => 'connect',
+          'input_responsibility'  => 'bind',
         }
       end
     end
 
-    
+
     # STI Subclass for AMQP connections and their required options
     class AMQPConnection < Connection
 
@@ -95,4 +95,3 @@ class RFlow
     end
   end
 end
-
