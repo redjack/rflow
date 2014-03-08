@@ -6,12 +6,14 @@ class RFlow
     # Ruby DSL config file controller.
     # TODO: more docs and examples
     class RubyDSL
-      attr_accessor :setting_specs, :component_specs, :connection_specs, :allocated_system_ports
+      attr_accessor :setting_specs, :shard_specs, :connection_specs, :allocated_system_ports
 
       def initialize
         @setting_specs = []
-        @component_specs = []
+        @shard_specs = [{:type => :process, :count => 1, :components => []}]
         @connection_specs = []
+
+        @current_shard = @shard_specs.first
       end
 
       # Helper function to extract the line of the config that
@@ -27,11 +29,19 @@ class RFlow
         setting_specs << {:name => setting_name.to_s, :value => setting_value.to_s, :config_line => get_config_line(caller)}
       end
 
+      # DSL method to specify a shard block for either a process or thread
+      def shard(shard_type = :process, shard_count = 1)
+        @current_shard = {:type => shard_type, :count => shard_count, :components => [], :config_line => get_config_line(caller)}
+        @shard_specs << @current_shard
+        yield self
+        @current_shard = @shard_specs.first
+      end
+
       # DSL method to specify a component.  Expects a name,
       # specification, and set of component specific options, that
       # must be marshallable into the database (i.e. should all be strings)
       def component(component_name, component_specification, component_options={})
-        component_specs << {
+        @current_shard[:components] << {
           :name => component_name,
           :specification => component_specification.to_s, :options => component_options,
           :config_line => get_config_line(caller)
@@ -81,7 +91,7 @@ class RFlow
       # via ActiveRecord
       def process
         process_setting_specs
-        process_component_specs
+        process_shard_specs
         process_connection_specs
       end
 
@@ -96,12 +106,31 @@ class RFlow
       end
 
 
-      # Iterates through each component specified in the DSL and
-      # creates rows in the database corresponding to the component.
-      def process_component_specs
-        component_specs.each do |component_spec|
-          RFlow.logger.debug "Found component '#{component_spec[:name]}', creating"
-          RFlow::Configuration::Component.create! :name => component_spec[:name], :specification => component_spec[:specification], :options => component_spec[:options]
+      # Iterates through each shard specified in the DSL and creates
+      # rows in the database corresponding to the shard and included
+      # components
+      def process_shard_specs
+        @shard_specs.each do |shard_spec|
+          RFlow.logger.debug "Found #{shard_spec[:type]} shard, creating"
+
+          shard_class = case shard_spec[:type]
+                        when :process
+                          RFlow::Configuration::ProcessShard
+                        when :thread
+                          RFlow::Configuration::ThreadShard
+                        else
+                          raise RFlow::Configuration::Shard::ShardInvalid, "Invalid shard: #{shard_spec.inspect}"
+                        end
+
+          shard = shard_class.create! :count => shard_spec[:count]
+
+          shard_spec[:components].each do |component_spec|
+            RFlow.logger.debug "Found component '#{component_spec[:name]}', creating"
+            RFlow::Configuration::Component.create!(:shard => shard,
+                                                    :name => component_spec[:name],
+                                                    :specification => component_spec[:specification],
+                                                    :options => component_spec[:options])
+          end
         end
       end
 

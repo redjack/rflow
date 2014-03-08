@@ -186,6 +186,8 @@ class RFlow
       merge_defaults!
 
       Dir.chdir working_dir
+
+      self.new(config_database_path)
     end
 
 
@@ -237,17 +239,22 @@ class RFlow
 
     def to_s
       string = "Configuration:\n"
+
       settings.each do |setting|
         string << "Setting: '#{setting.name}' = '#{setting.value}'\n"
       end
-      components.each do |component|
-        string << "Component '#{component.name}' as #{component.specification} (#{component.uuid})\n"
-        component.output_ports.each do |output_port|
-          output_port.output_connections.each do |output_connection|
-            input_port = output_connection.input_port
-            string << "\tOutputPort '#{output_port.name}' key '#{output_connection.output_port_key}' (#{output_port.uuid}) =>\n"
-            string << "\t\tConnection '#{output_connection.name}' as #{output_connection.type} (#{output_connection.uuid}) =>\n"
-            string << "\t\tInputPort '#{input_port.name}' key '#{output_connection.input_port_key}' (#{input_port.uuid}) Component '#{input_port.component.name}' (#{input_port.component.uuid})\n"
+
+      shards.each do |shard|
+        string << "Shard #{shard.uuid}, type #{shard.class.name}, count #{shard.count}\n"
+        shard.components.each do |component|
+          string << "  Component '#{component.name}' as #{component.specification} (#{component.uuid})\n"
+          component.output_ports.each do |output_port|
+            output_port.output_connections.each do |output_connection|
+              input_port = output_connection.input_port
+              string << "    OutputPort '#{output_port.name}' key '#{output_connection.output_port_key}' (#{output_port.uuid}) =>\n"
+              string << "      Connection '#{output_connection.name}' as #{output_connection.type} (#{output_connection.uuid}) =>\n"
+              string << "      InputPort '#{input_port.name}' key '#{output_connection.input_port_key}' (#{input_port.uuid}) Component '#{input_port.component.name}' (#{input_port.component.uuid})\n"
+            end
           end
         end
       end
@@ -259,19 +266,20 @@ class RFlow
       Setting.find_by_name(setting_name).value rescue nil
     end
 
+    def settings
+      Setting.all
+    end
+
+    def shards
+      Shard.all
+    end
 
     def components
       Component.all
     end
 
-
     def component(component_instance_uuid)
       Component.find_by_uuid component_instance_uuid
-    end
-
-
-    def settings
-      Setting.all
     end
 
     def available_components
@@ -282,6 +290,7 @@ end
 
 # Load the models
 require 'rflow/configuration/setting'
+require 'rflow/configuration/shard'
 require 'rflow/configuration/component'
 require 'rflow/configuration/port'
 require 'rflow/configuration/connection'

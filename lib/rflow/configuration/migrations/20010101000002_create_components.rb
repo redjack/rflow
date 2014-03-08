@@ -7,10 +7,14 @@ class CreateComponents < ActiveRecord::Migration
       t.text   :specification
       t.text   :options
 
+      # UUID version of belongs_to :shard
+      t.string :shard_uuid
+
       t.timestamps
     end
 
     add_index :components, :uuid, :unique => true
+    add_index :components, :shard_uuid
   end
 
   def self.down

@@ -73,7 +73,7 @@ describe RFlow do
 
       # TODO: figure out a way to get rid of this sleep, as there
       # should be a better way
-      sleep(3)
+      sleep(2)
 
       # RFlow changes the wd ... set it back so RSpec doesn't complain
       Dir.chdir current_wd
