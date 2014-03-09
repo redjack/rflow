@@ -213,14 +213,18 @@ class RFlow
     attr_accessor :cached_connections
 
 
-    def initialize(config_database_path)
+    def initialize(config_database_path=nil)
       @cached_settings = Hash.new
       @cached_components = Hash.new
       @cached_ports = []
       @cached_connections = []
 
-      @config_database_path = config_database_path
-      self.class.establish_config_database_connection(config_database_path)
+      # If there is not a config DB path, assume that an AR
+      # conncection has already been established
+      if config_database_path
+        @config_database_path = config_database_path
+        self.class.establish_config_database_connection(config_database_path)
+      end
 
       # Validate the connected database.  TODO: make this more
       # complete, i.e. validate the various columns
