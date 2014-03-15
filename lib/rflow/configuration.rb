@@ -278,6 +278,10 @@ class RFlow
       Shard.all
     end
 
+    def shard(shard_instance_uuid)
+      Shard.find_by_uuid shard_instance_uuid
+    end
+
     def components
       Component.all
     end

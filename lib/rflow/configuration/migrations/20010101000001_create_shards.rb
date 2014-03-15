@@ -12,6 +12,7 @@ class CreateShards < ActiveRecord::Migration
     end
 
     add_index :shards, :uuid, :unique => true
+    add_index :shards, :name, :unique => true
   end
 
   def self.down

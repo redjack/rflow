@@ -12,6 +12,7 @@ class RFlow
 
       has_many :components, :primary_key => 'uuid', :foreign_key => 'shard_uuid'
 
+      validates_uniqueness_of :name
       validates_numericality_of :count, :only_integer => true, :greater_than => 0
     end
 

@@ -14,6 +14,7 @@ class CreateComponents < ActiveRecord::Migration
     end
 
     add_index :components, :uuid, :unique => true
+    add_index :components, :name, :unique => true
     add_index :components, :shard_uuid
   end
 
