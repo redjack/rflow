@@ -249,7 +249,7 @@ class RFlow
       end
 
       shards.each do |shard|
-        string << "Shard #{shard.uuid}, type #{shard.class.name}, count #{shard.count}\n"
+        string << "Shard #{shard.name} (#{shard.uuid}), type #{shard.class.name}, count #{shard.count}\n"
         shard.components.each do |component|
           string << "  Component '#{component.name}' as #{component.specification} (#{component.uuid})\n"
           component.output_ports.each do |output_port|

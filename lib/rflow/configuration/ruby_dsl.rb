@@ -10,7 +10,7 @@ class RFlow
 
       def initialize
         @setting_specs = []
-        @shard_specs = [{:type => :process, :count => 1, :components => []}]
+        @shard_specs = [{:name => "DEFAULT", :type => :process, :count => 1, :components => []}]
         @connection_specs = []
 
         @current_shard = @shard_specs.first
@@ -30,8 +30,17 @@ class RFlow
       end
 
       # DSL method to specify a shard block for either a process or thread
-      def shard(shard_type = :process, shard_count = 1)
-        @current_shard = {:type => shard_type, :count => shard_count, :components => [], :config_line => get_config_line(caller)}
+      def shard(shard_name, shard_options={})
+        raise ArgumentError, "Cannot use DEFAULT as a shard name" if shard_name == 'DEFAULT'
+        shard_type = if shard_options[:thread] || shard_options[:type] == :thread
+                       :thread
+                     else
+                       :process
+                     end
+
+        shard_count = shard_options[shard_type] || shard_options[:count] || 1
+
+        @current_shard = {:name => shard_name, :type => shard_type, :count => shard_count, :components => [], :config_line => get_config_line(caller)}
         @shard_specs << @current_shard
         yield self
         @current_shard = @shard_specs.first
@@ -111,7 +120,7 @@ class RFlow
       # components
       def process_shard_specs
         @shard_specs.each do |shard_spec|
-          RFlow.logger.debug "Found #{shard_spec[:type]} shard, creating"
+          RFlow.logger.debug "Found #{shard_spec[:type]} shard '#{shard_spec[:name]}', creating"
 
           shard_class = case shard_spec[:type]
                         when :process
@@ -122,10 +131,10 @@ class RFlow
                           raise RFlow::Configuration::Shard::ShardInvalid, "Invalid shard: #{shard_spec.inspect}"
                         end
 
-          shard = shard_class.create! :count => shard_spec[:count]
+          shard = shard_class.create! :name => shard_spec[:name], :count => shard_spec[:count]
 
           shard_spec[:components].each do |component_spec|
-            RFlow.logger.debug "Found component '#{component_spec[:name]}', creating"
+            RFlow.logger.debug "Shard '#{shard_spec[:name]}' found component '#{component_spec[:name]}', creating"
             RFlow::Configuration::Component.create!(:shard => shard,
                                                     :name => component_spec[:name],
                                                     :specification => component_spec[:specification],

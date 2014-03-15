@@ -86,11 +86,11 @@ describe RFlow::Configuration::RubyDSL do
     described_class.configure do |c|
       c.component 'first', 'First', :opt1 => 'opt1'
 
-      c.shard(:process, 2) do |s|
+      c.shard "s1", :process => 2 do |s|
         s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
       end
 
-      c.shard(:process, 10) do |s|
+      c.shard "s2", :type => :process, :count => 10 do |s|
         s.component 'third', 'Third'
         s.component 'fourth', 'Fourth'
       end
@@ -111,6 +111,7 @@ describe RFlow::Configuration::RubyDSL do
     RFlow::Configuration::Connection.count.should == 5
 
     shards = RFlow::Configuration::Shard.all
+    shards.map(&:name).should == ['DEFAULT', 's1', 's2']
     shards.first.components.all.map(&:name).should == ['first', 'fifth']
     shards.second.components.all.map(&:name).should == ['second']
     shards.third.components.all.map(&:name).should == ['third', 'fourth']
