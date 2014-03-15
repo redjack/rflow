@@ -10,6 +10,7 @@ require 'sqlite3'
 
 require 'rflow/configuration'
 
+require 'rflow/shard'
 require 'rflow/component'
 require 'rflow/message'
 
@@ -35,6 +36,7 @@ class RFlow
     attr_accessor :config_database_path
     attr_accessor :logger
     attr_accessor :configuration
+    attr_accessor :shards
     attr_accessor :components
   end
 
@@ -212,51 +214,16 @@ class RFlow
     $$
   end
 
-
-  # Iterate through each component config in the configuration
-  # database and attempt to instantiate each one, storing the
-  # resulting instantiated components in the 'components' class
-  # instance attribute.  This assumes that the specification of a
-  # component is a fully qualified Ruby class that has already been
-  # loaded.  It will first attempt to find subclasses of
-  # RFlow::Component (in the available_components hash) and then
-  # attempt to constantize the specification into a different class.  Future releases will
-  # support external (i.e. non-managed components), but the current
-  # stuff only supports Ruby classes
-  def self.instantiate_components!
-    logger.info "Instantiating components"
-    self.components = Hash.new
-    configuration.components.each do |component_config|
-      if component_config.managed?
-        logger.debug "Instantiating component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
-        begin
-          logger.debug configuration.available_components.inspect
-          instantiated_component = if configuration.available_components.include? component_config.specification
-                                     logger.debug "Component found in configuration.available_components['#{component_config.specification}']"
-                                     configuration.available_components[component_config.specification].new(component_config.uuid, component_config.name)
-                                   else
-                                     logger.debug "Component not found in configuration.available_components, constantizing component '#{component_config.specification}'"
-                                     component_config.specification.constantize.new(component_config.uuid, component_config.name)
-                                   end
-
-          components[component_config.uuid] = instantiated_component
-
-        rescue NameError => e
-          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): the class '#{component_config.specification}' was not found"
-          logger.error error_message
-          raise RuntimeError, error_message
-        rescue Exception => e
-          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): #{e.class} #{e.message}"
-          logger.error error_message
-          raise RuntimeError, error_message
-        end
-      else
-        error_message = "Non-managed components not yet implemented for component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
-        logger.error error_message
-        raise NotImplementedError, error_message
-      end
+  def self.instantiate_shards!
+    logger.info "Instantiating shards"
+    self.shards = Hash.new
+    configuration.shards.each do |shard_config|
+      logger.debug "Instantiating shard '#{shard_config.name}' (#{shard_config.uuid})"
+      shards[shard_config.uuid] = Shard.new(shard_config.uuid, shard_config.name, shard_config.count)
     end
   end
+
+
 
 
   # Iterate through the instantiated components and send each
@@ -361,47 +328,30 @@ class RFlow
     application_name = configuration['rflow.application_name']
     logger.info "#{application_name} starting"
 
+    $0 = application_name
+
     logger.info "#{application_name} configured, starting flow"
     logger.debug "Available Components: #{RFlow::Configuration.available_components.inspect}"
     logger.debug "Available Data Types: #{RFlow::Configuration.available_data_types.inspect}"
     logger.debug "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
 
-    # TODO: Start up a FlowManager component and connect it to the
-    # management interface on all the components.
-
-    instantiate_components!
-    configure_component_ports!
-    configure_component_connections!
-    configure_components!
-
-    # At this point, each component should have their entire
-    # configuration for the component-specific stuff and all the
-    # connections and be ready to be connected to the others and start
-    # running
-
+    instantiate_shards!
 
     # Daemonize
     trap_signals
     daemonize!(application_name, configuration['rflow.pid_file_path']) if daemonize
     write_pid_file configuration['rflow.pid_file_path']
 
-    # Start the event loop and startup each component
+    shards.values.each {|s| s.run!}
+
+    $0 += " master"
+
     EM.run do
-      connect_components!
-
-      components.each do |component_uuid, component|
-        RFlow.logger.debug component.to_s
-      end
-
-      run_components!
-
-      # Sit back and relax because everything is running
+      # Do something here to monitor the shards
     end
 
     # Should never get here
     shutdown
-
-    # TODO: Look into Parallel::ForkManager
   rescue SystemExit => e
     # Do nothing, just prevent a normal exit from causing an unsightly
     # error in the logs
