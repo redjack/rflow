@@ -7,7 +7,7 @@ class RFlow::Components::Replicate < RFlow::Component
   input_port :in
   output_port :out
   output_port :errored
-  
+
   def process_message(input_port, input_port_key, connection, message)
     out.each do |connections|
       begin
@@ -31,7 +31,7 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   def configure!(config)
     @filter_proc = eval("lambda {|message| #{config['filter_proc_string']} }")
   end
-  
+
   def process_message(input_port, input_port_key, connection, message)
     RFlow.logger.debug "Filtering message"
     begin
@@ -61,7 +61,7 @@ class RFlow::Components::FileOutput < RFlow::Component
     output_file.puts message.data.data_object.inspect
     output_file.flush
   end
-  
+
   def cleanup!
     output_file.close
   end
@@ -110,7 +110,7 @@ RFlow::Configuration.add_available_data_type('HTTPResponse', 'avro', http_respon
 
 
 # Need to be careful when extending to not clobber data already in data_object
-module HTTPRequestExtension 
+module HTTPRequestExtension
   def self.extended(base_data)
     base_data.data_object ||= {'path' => ''}
   end
@@ -122,14 +122,14 @@ RFlow::Configuration.add_available_data_extension('HTTPRequest', HTTPRequestExte
 
 
 # Need to be careful when extending to not clobber data already in data_object
-module HTTPResponseExtension 
+module HTTPResponseExtension
   def self.extended(base_data)
     base_data.data_object ||= {'status' => 200, 'content' => ''}
   end
 
   def status; data_object['status']; end
   def status=(new_status); data_object['status'] = new_status; end
-  
+
   def content; data_object['content']; end
   def content=(new_content); data_object['content'] = new_content; end
 end
@@ -144,7 +144,7 @@ class HTTPServer < RFlow::Component
   output_port :request_port
 
   attr_accessor :port, :listen, :server_signature, :connections
-  
+
   def configure!(config)
     @listen = config['listen'] ? config['listen'] : '127.0.0.1'
     @port = config['port'] ? config['port'].to_i : 8000
@@ -179,7 +179,7 @@ class HTTPServer < RFlow::Component
       end
     end
   end
-  
+
   class Connection < EventMachine::Connection
     include EventMachine::HttpServer
 
@@ -192,16 +192,16 @@ class HTTPServer < RFlow::Component
       no_environment_strings
     end
 
-    
+
     def receive_data(data)
       RFlow.logger.debug "Received #{data.bytesize} data from #{client_ip}:#{client_port}"
       super
     end
-      
-    
+
+
     def process_http_request
       RFlow.logger.debug "Received a full HTTP request from #{client_ip}:#{client_port}"
-      
+
       processing_event = RFlow::Message::ProcessingEvent.new(server.instance_uuid, Time.now.utc)
 
       request_message = RFlow::Message.new('HTTPRequest')
@@ -214,7 +214,7 @@ class HTTPServer < RFlow::Component
       server.request_port.send_message request_message
     end
 
-    
+
     def send_http_response(response_message=nil)
       RFlow.logger.debug "Sending an HTTP response to #{client_ip}:#{client_port}"
       resp = EventMachine::DelegatedHttpResponse.new(self)
@@ -224,7 +224,7 @@ class HTTPServer < RFlow::Component
       resp.content                 = ""
       resp.headers["Content-Type"] = "text/html; charset=UTF-8"
       resp.headers["Server"]       = "Apache/2.2.3 (CentOS)"
-      
+
       if response_message
         resp.status  = response_message.data.status
         resp.content = response_message.data.content
@@ -234,7 +234,7 @@ class HTTPServer < RFlow::Component
       close_connection_after_writing
     end
 
-    
+
     # Called when a connection is torn down for whatever reason.
     # Remove this connection from the server's list
     def unbind

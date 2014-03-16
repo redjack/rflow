@@ -10,6 +10,7 @@ require 'sqlite3'
 
 require 'rflow/configuration'
 
+require 'rflow/shard'
 require 'rflow/component'
 require 'rflow/message'
 
@@ -30,14 +31,15 @@ class RFlow
   #schema timestamps due to %z
   #DATE_PATTERN_FORMAT = '%Y-%m-%dT%H:%M:%S.%9N %z'
   #LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_pattern => DATE_PATTERN_FORMAT
-  
+
   class << self
     attr_accessor :config_database_path
     attr_accessor :logger
     attr_accessor :configuration
+    attr_accessor :shards
     attr_accessor :components
   end
-  
+
 #   def self.initialize_config_database(config_database_path, config_file_path=nil)
 #     # To handle relative paths in the config (all relative paths are
 #     # relative to the config database
@@ -62,10 +64,13 @@ class RFlow
     if include_stdout
       rflow_logger.add StdoutOutputter.new('rflow_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
     end
-    
-    
+
+
     RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
     RFlow.logger = rflow_logger
+    ActiveRecord::Base.logger = RFlow.logger
+
+    rflow_logger
   end
 
   def self.reopen_log_file
@@ -78,14 +83,14 @@ class RFlow
   def self.close_log_file
     Outputter['rflow.log_file'].close
   end
-  
+
   def self.toggle_log_level
     original_log_level = LNAMES[logger.level]
     new_log_level = (original_log_level == 'DEBUG' ? configuration['rflow.log_level'] : 'DEBUG')
     logger.warn "Changing log level from #{original_log_level} to #{new_log_level}"
     logger.level = LNAMES.index new_log_level
   end
-  
+
   def self.trap_signals
     # Gracefully shutdown on termination signals
     ['SIGTERM', 'SIGINT', 'SIGQUIT'].each do |signal|
@@ -110,7 +115,7 @@ class RFlow
         logger.warn "Terminal signal (#{signal}) received, ignoring"
       end
     end
-    
+
     # Reopen logs on USR1
     ['SIGUSR1'].each do |signal|
       Signal.trap signal do
@@ -126,18 +131,18 @@ class RFlow
         toggle_log_level
       end
     end
-    
+
     # TODO: Manage SIGCHLD when spawning other processes
   end
 
-  
+
   # returns a PID if a given path contains a non-stale PID file,
   # nil otherwise.
   def self.running_pid_file_path?(pid_file_path)
     return nil unless File.exist? pid_file_path
     running_pid? File.read(pid_file_path).to_i
   end
-  
+
   def self.running_pid?(pid)
     return if pid <= 0
     Process.kill(0, pid)
@@ -154,7 +159,7 @@ class RFlow
     (File.read(pid_file_path).to_i == $$ and File.unlink(pid_file_path)) rescue nil
     logger.debug "Removed PID (#$$) file '#{File.expand_path pid_file_path}'"
   end
-  
+
   # TODO: Handle multiple instances and existing PID file
   def self.write_pid_file(pid_file_path)
     pid = running_pid_file_path?(pid_file_path)
@@ -183,7 +188,7 @@ class RFlow
 
     pid_file_path
   end
-  
+
   # TODO: Refactor this to be cleaner
   def self.daemonize!(application_name, pid_file_path)
     logger.info "#{application_name} daemonizing"
@@ -202,58 +207,23 @@ class RFlow
     # Close standard IO
     $stdout.sync = $stderr.sync = true
     $stdin.binmode; $stdout.binmode; $stderr.binmode
-    begin; $stdin.reopen  "/dev/null"; rescue ::Exception; end  
+    begin; $stdin.reopen  "/dev/null"; rescue ::Exception; end
     begin; $stdout.reopen "/dev/null"; rescue ::Exception; end
     begin; $stderr.reopen "/dev/null"; rescue ::Exception; end
 
     $$
   end
 
-
-  # Iterate through each component config in the configuration
-  # database and attempt to instantiate each one, storing the
-  # resulting instantiated components in the 'components' class
-  # instance attribute.  This assumes that the specification of a
-  # component is a fully qualified Ruby class that has already been
-  # loaded.  It will first attempt to find subclasses of
-  # RFlow::Component (in the available_components hash) and then
-  # attempt to constantize the specification into a different class.  Future releases will
-  # support external (i.e. non-managed components), but the current
-  # stuff only supports Ruby classes
-  def self.instantiate_components!
-    logger.info "Instantiating components"
-    self.components = Hash.new
-    configuration.components.each do |component_config|
-      if component_config.managed?
-        logger.debug "Instantiating component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
-        begin
-          logger.debug configuration.available_components.inspect
-          instantiated_component = if configuration.available_components.include? component_config.specification
-                                     logger.debug "Component found in configuration.available_components['#{component_config.specification}']"
-                                     configuration.available_components[component_config.specification].new(component_config.uuid, component_config.name)
-                                   else
-                                     logger.debug "Component not found in configuration.available_components, constantizing component '#{component_config.specification}'"
-                                     component_config.specification.constantize.new(component_config.uuid, component_config.name)
-                                   end
-
-          components[component_config.uuid] = instantiated_component
-
-        rescue NameError => e
-          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): the class '#{component_config.specification}' was not found"
-          logger.error error_message
-          raise RuntimeError, error_message
-        rescue Exception => e
-          error_message = "Could not instantiate component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid}): #{e.class} #{e.message}"
-          logger.error error_message
-          raise RuntimeError, error_message
-        end
-      else
-        error_message = "Non-managed components not yet implemented for component '#{component_config.name}' as '#{component_config.specification}' (#{component_config.uuid})"
-        logger.error error_message
-        raise NotImplementedError, error_message
-      end
+  def self.instantiate_shards!
+    logger.info "Instantiating shards"
+    self.shards = Hash.new
+    configuration.shards.each do |shard_config|
+      logger.debug "Instantiating shard '#{shard_config.name}' (#{shard_config.uuid})"
+      shards[shard_config.uuid] = Shard.new(shard_config.uuid, shard_config.name, shard_config.count)
     end
   end
+
+
 
 
   # Iterate through the instantiated components and send each
@@ -304,8 +274,8 @@ class RFlow
       end
     end
   end
-  
-  
+
+
   # Send the component-specific configuration to the component
   def self.configure_components!
     logger.info "Configuring components with component-specific configurations"
@@ -317,7 +287,7 @@ class RFlow
   end
 
   # Send a command to each component to tell them to connect their
-  # ports via their connections 
+  # ports via their connections
   def self.connect_components!
     logger.info "Connecting components"
     components.each do |component_uuid, component|
@@ -334,7 +304,7 @@ class RFlow
       component.run!
     end
   end
-  
+
   def self.run(config_database_path, daemonize=nil)
     self.configuration = Configuration.new(config_database_path)
 
@@ -352,53 +322,36 @@ class RFlow
     end
 
     Dir.chdir configuration['rflow.application_directory_path']
-    
+
     initialize_logger(configuration['rflow.log_file_path'], configuration['rflow.log_level'], !daemonize)
 
     application_name = configuration['rflow.application_name']
     logger.info "#{application_name} starting"
+
+    $0 = application_name
 
     logger.info "#{application_name} configured, starting flow"
     logger.debug "Available Components: #{RFlow::Configuration.available_components.inspect}"
     logger.debug "Available Data Types: #{RFlow::Configuration.available_data_types.inspect}"
     logger.debug "Available Data Extensions: #{RFlow::Configuration.available_data_extensions.inspect}"
 
-    # TODO: Start up a FlowManager component and connect it to the
-    # management interface on all the components.
-
-    instantiate_components!
-    configure_component_ports!
-    configure_component_connections!
-    configure_components!
-
-    # At this point, each component should have their entire
-    # configuration for the component-specific stuff and all the
-    # connections and be ready to be connected to the others and start
-    # running
-
+    instantiate_shards!
 
     # Daemonize
     trap_signals
     daemonize!(application_name, configuration['rflow.pid_file_path']) if daemonize
     write_pid_file configuration['rflow.pid_file_path']
 
-    # Start the event loop and startup each component
-    EM.run do 
-      connect_components!
+    shards.values.each {|s| s.run!}
 
-      components.each do |component_uuid, component|
-        RFlow.logger.debug component.to_s
-      end
+    $0 += " master"
 
-      run_components!
-
-      # Sit back and relax because everything is running
+    EM.run do
+      # Do something here to monitor the shards
     end
-    
+
     # Should never get here
     shutdown
-    
-    # TODO: Look into Parallel::ForkManager
   rescue SystemExit => e
     # Do nothing, just prevent a normal exit from causing an unsightly
     # error in the logs
@@ -418,7 +371,7 @@ class RFlow
 
     # TODO: Ensure that all the components have shut down before
     # cleaning up
-    
+
     logger.debug "Cleaning up components"
     components.each do |component_instance_uuid, component|
       logger.debug "Cleaning up component '#{component.name}' (#{component.instance_uuid})"

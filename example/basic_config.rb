@@ -16,7 +16,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
 #  config.component 'replicate', 'RFlow::Components::Replicate'
 #  config.component 'output1', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap1'
 #  config.component 'output2', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap2'
-  
+
   # Hook components together
   # config.connect 'generate_ints#out' => 'filter#in'
   # config.connect 'filter#filtered' => 'replicate#in'
@@ -42,7 +42,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'generate_ints#even_odd_out' => 'output#in'
   config.connect 'generate_ints#even_odd_out[even]' => 'output_even#in'
   config.connect 'generate_ints#even_odd_out[odd]' => 'output_odd#in'
-  
+
 
 end
 

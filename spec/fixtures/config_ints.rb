@@ -7,7 +7,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.setting('rflow.application_directory_path', '../tmp')
 
   config.setting('rflow.application_name', 'testapp')
-  
+
   # Add schemas to the list of available.  Not convinced this is necessary
 #  config.schema('schemaname', 'schematype', 'schemadata')
 
@@ -18,7 +18,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
 #  config.component 'replicate', 'RFlow::Components::Replicate'
 #  config.component 'output1', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap1'
 #  config.component 'output2', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/crap2'
-  
+
   # Hook components together
   # config.connect 'generate_ints#out' => 'filter#in'
   # config.connect 'filter#filtered' => 'replicate#in'
@@ -50,10 +50,10 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'generate_ints#even_odd_out' => 'output_even_odd#in'
 
 
-  
+
   config.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', 'start' => 20, 'finish' => 30
   config.component 'output_even_odd2', 'RFlow::Components::FileOutput', 'output_file_path' => '../tmp/out_even_odd2'
-  
+
   config.connect 'generate_ints2#even_odd_out' => 'output_even_odd2#in'
 
 end

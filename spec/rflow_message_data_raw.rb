@@ -3,14 +3,14 @@ require 'spec_helper.rb'
 require 'rflow/components/raw'
 
 describe 'RFlow::Message::Data::Raw Avro Schema' do
-  before(:each) do 
+  before(:each) do
     @schema_string = RFlow::Configuration.available_data_types['RFlow::Message::Data::Raw']['avro']
   end
 
   it "should load the schema" do
     @schema_string.should_not == nil
   end
-  
+
   it "should encode and decode an object" do
     raw = {'raw' => 'rawdata'}
 

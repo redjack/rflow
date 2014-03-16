@@ -20,12 +20,12 @@ rflow <config file>
     - place pid files in deployment's run directory
   Configure components via zmq
   Daemonize self
-  
+
 
 
 class Component
   def self.input_port
-  end 
+  end
 
   def self.output_port
   end
@@ -33,11 +33,11 @@ class Component
   attr_accessor :state
 
   def initialize(config, run_directory)
-    
+
   end
 
   def run
-    
+
   end
 
   def configure
@@ -56,7 +56,7 @@ class PassThrough < Component
     # This will initialize the ports
     super
     # Do stuff to initialize component
-  end   
+  end
 
 end
 
@@ -66,7 +66,7 @@ Computation Requirements:
     - management bus connection information
     - group and instance UUID
     - beacon interval
-    - run directory, containing 
+    - run directory, containing
       - PID files
       - log dir + logs
       - computation-specific configuration (conf dir)
@@ -90,7 +90,7 @@ Computation Requirements:
 
 External Computations:
   - Given (out-of-band) startup info (mgmt bus, UUIDs, beacon interval)
-  - 
+  -
 
 
 RFlow
@@ -100,7 +100,7 @@ RFlow
 
 Translate
   - Need to add <associated type="objtype" name="myname"> where name attr can be used in later XML templates
-      
+
 
 
 
@@ -112,7 +112,7 @@ Plugins:
     - necessary to tell system?
     - need a protocol for defining schema transfer
     - each message has attached schema
-  
+
 
 lib/rflow/message.rb
 
@@ -122,7 +122,7 @@ RFlow::Management
   - Somewhere for external people to register new computations with running system
   - computation says that its running and asks for Connection configuration
     - how will it specify where in the workflow it wants to run????
-  
+
 RFlow::Message(complete on-the-wire Avro message format)
   data_type, provenance, external_ids, empty, data (see below)
 
@@ -142,7 +142,7 @@ RFlow::Connection::AMQP
 
 RFlow::Connection::ZMQ
 
-    
+
 
 
 computation_a.output_port -> (connection.incoming -> connection.outgoing) -> computation_b.input_port
@@ -152,12 +152,12 @@ AMQP::Topic - responsible for setting up a topic -> queue binding
   r.outgoing = amqp connection, channel, vhost, login, password, queue name
   behavior -> n x m, "round-robin" among the connected outgoing
     incoming behavior will need to set topic/key, uses the data type in the RFlow::Message
-    
+
 
 ZMQ::PubSub - device-less, responsible for assigning ip/port and assigning one client to bind the port
   r.incoming = zmq connection string (tcp://ip:port), type pub
   r.outgoing = zmq connection string (tcp://ip:port), type sub
-  behavior -> n x m, broadcast sending, 
+  behavior -> n x m, broadcast sending,
 
 ZMQ::PushPull - device-less, responsible for assigning ip/port and assigning one client to bind the port
   r.incoming = zmq connection string (tcp://ip:port), type push

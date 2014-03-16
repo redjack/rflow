@@ -1,9 +1,9 @@
 class RFlow
   module Components
     module Raw
-      
+
       module Extensions
-        
+
         module RawExtension
           def self.extended(base_data)
             base_data.data_object ||= {'raw' => ''}
