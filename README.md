@@ -1,5 +1,7 @@
 # RFlow
 
+[![Build Status](https://travis-ci.org/redjack/rflow.png?branch=master)](https://travis-ci.org/redjack/rflow)
+
 RFlow is a Ruby framework inspired by
 [flow-based programming](http://en.wikipedia.org/wiki/Flow-based_programming)
 (FBP), which was previously inspired by
