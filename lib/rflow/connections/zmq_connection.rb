@@ -70,6 +70,7 @@ class RFlow
         input_socket.on(:message) do |*message_parts|
           message = RFlow::Message.from_avro(message_parts.last.copy_out_string)
           RFlow.logger.debug "#{name}: Received message of type '#{message_parts.first.copy_out_string}'"
+          message_parts.each { |part| part.close } # avoid memory leaks
           recv_callback.call(message)
         end
 
