@@ -1,7 +1,18 @@
 language: ruby
+
 rvm:
-  - "1.9.2"
-  - "1.9.3"
-  - "2.0.0"
-  - "2.1.0"
+  - 1.9.3
+  - 2.0.0
+  - 2.1.0
+
+before_install:
+  - sudo add-apt-repository -y ppa:chris-lea/zeromq
+  - sudo apt-get update
+  - sudo apt-get libzmq3 libzmq3-dev
+
 script: bundle exec rspec spec
+
+notifications:
+  hipchat:
+    rooms:
+      secure: a4nrCmDPwhteJA65QFRlBdnsknT+4y/JtZL/sLPCObOahFWvLOXMggPXvHAOssCaa2ydYrMMvWNliOz63nuu3qAnR90H7aOU3o+2K3zeACy0cAjF27lDonLhaYHeUz07oPwr/iDlFC8bDfFDempjIFFnXSc/LhUWaCltnJ7W5vI=
