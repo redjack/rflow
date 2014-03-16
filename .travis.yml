@@ -1,7 +1,11 @@
 language: ruby
 rvm:
-  - "1.9.2"
-  - "1.9.3"
-  - "2.0.0"
-  - "2.1.0"
+  - 1.9.2
+  - 1.9.3
+  - 2.0.0
+  - 2.1.0
 script: bundle exec rspec spec
+notifications:
+  hipchat:
+    rooms:
+      secure: a4nrCmDPwhteJA65QFRlBdnsknT+4y/JtZL/sLPCObOahFWvLOXMggPXvHAOssCaa2ydYrMMvWNliOz63nuu3qAnR90H7aOU3o+2K3zeACy0cAjF27lDonLhaYHeUz07oPwr/iDlFC8bDfFDempjIFFnXSc/LhUWaCltnJ7W5vI=
