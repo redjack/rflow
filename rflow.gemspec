@@ -9,11 +9,10 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 1.9'
   s.authors     = ["Michael L. Artz"]
   s.email       = ["michael.artz@redjack.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/redjack/rflow"
+  s.license     = "Apache-2.0"
   s.summary     = %q{A Ruby flow-based programming framework}
   s.description = %q{A Ruby flow-based programming framework that utilizes ZeroMQ for component connections and Avro for serialization}
-
-  s.rubyforge_project = "rflow"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
