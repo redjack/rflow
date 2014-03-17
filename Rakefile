@@ -1,16 +1,9 @@
-require 'bundler'
+require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
-require 'rdoc/task'
-Bundler::GemHelper.install_tasks
+require 'yard'
 
-RSpec::Core::RakeTask.new(:spec) do |t|
-  t.verbose = true
-  t.rspec_opts = '--tty --color'
-end
+RSpec::Core::RakeTask.new(:spec)
 
-RDoc::Task.new do |rd|
-  rd.main = "README"
-  rd.rdoc_files.include("README", "lib/**/*.rb")
-  rd.rdoc_dir = File.join('doc', 'html')
-end
+task :default => :spec
 
+YARD::Rake::YardocTask.new

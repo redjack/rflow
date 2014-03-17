@@ -1,0 +1,1 @@
+--output ./doc --main README.md --files schema/*.avsc lib/**/*.rb bin/*.rb - README.md LICENSE
