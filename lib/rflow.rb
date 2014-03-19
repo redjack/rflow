@@ -223,95 +223,15 @@ class RFlow
     end
   end
 
-
-
-
-  # Iterate through the instantiated components and send each
-  # component its soon-to-be connected port names and UUIDs
-  def self.configure_component_ports!
-    # Send the port configuration to each component
-    logger.info "Configuring component ports and assigning UUIDs to port names"
-    components.each do |component_instance_uuid, component|
-      RFlow.logger.debug "Configuring ports for component '#{component.name}' (#{component.instance_uuid})"
-      component_config = configuration.component(component.instance_uuid)
-      component_config.input_ports.each do |input_port_config|
-        RFlow.logger.debug "Configuring component '#{component.name}' (#{component.instance_uuid}) with input port '#{input_port_config.name}' (#{input_port_config.uuid})"
-        component.configure_input_port!(input_port_config.name, input_port_config.uuid)
-      end
-      component_config.output_ports.each do |output_port_config|
-        RFlow.logger.debug "Configuring component '#{component.name}' (#{component.instance_uuid}) with output port '#{output_port_config.name}' (#{output_port_config.uuid})"
-        component.configure_output_port!(output_port_config.name, output_port_config.uuid)
-      end
-    end
-  end
-
-
-  # Iterate through the instantiated components and send each
-  # component the information necessary to configure a connection on a
-  # specific port, specifically the port UUID, port key, type of connection, uuid
-  # of connection, and a configuration specific to the connection type
-  def self.configure_component_connections!
-    logger.info "Configuring component port connections"
-    components.each do |component_instance_uuid, component|
-      component_config = configuration.component(component.instance_uuid)
-
-      logger.debug "Configuring input connections for component '#{component.name}' (#{component.instance_uuid})"
-      component_config.input_ports.each do |input_port_config|
-        input_port_config.input_connections.each do |input_connection_config|
-          logger.debug "Configuring input port '#{input_port_config.name}' (#{input_port_config.uuid}) key '#{input_connection_config.input_port_key}' with #{input_connection_config.type.to_s} connection '#{input_connection_config.name}' (#{input_connection_config.uuid})"
-          component.configure_connection!(input_port_config.uuid, input_connection_config.input_port_key,
-                                          input_connection_config.type, input_connection_config.uuid, input_connection_config.name, input_connection_config.options)
-        end
-      end
-
-      logger.debug "Configuring output connections for '#{component.name}' (#{component.instance_uuid})"
-      component_config.output_ports.each do |output_port_config|
-        output_port_config.output_connections.each do |output_connection_config|
-          logger.debug "Configuring output port '#{output_port_config.name}' (#{output_port_config.uuid}) key '#{output_connection_config.output_port_key}' with #{output_connection_config.type.to_s} connection '#{output_connection_config.name}' (#{output_connection_config.uuid})"
-          component.configure_connection!(output_port_config.uuid, output_connection_config.output_port_key,
-                                          output_connection_config.type, output_connection_config.uuid, output_connection_config.name, output_connection_config.options)
-        end
-      end
-    end
-  end
-
-
-  # Send the component-specific configuration to the component
-  def self.configure_components!
-    logger.info "Configuring components with component-specific configurations"
-    components.each do |component_uuid, component|
-      component_config = configuration.component(component.instance_uuid)
-      logger.debug "Configuring component '#{component.name}' (#{component.instance_uuid})"
-      component.configure!(component_config.options)
-    end
-  end
-
-  # Send a command to each component to tell them to connect their
-  # ports via their connections
-  def self.connect_components!
-    logger.info "Connecting components"
-    components.each do |component_uuid, component|
-      logger.debug "Connecting component '#{component.name}' (#{component.instance_uuid})"
-      component.connect!
-    end
-  end
-
-  # Start each component running
-  def self.run_components!
-    logger.info "Running components"
-    components.each do |component_uuid, component|
-      logger.debug "Running component '#{component.name}' (#{component.instance_uuid})"
-      component.run!
-    end
-  end
-
-  def self.run(config_database_path, daemonize=nil)
+  def self.run(config_database_path=nil, daemonize=nil)
     self.configuration = Configuration.new(config_database_path)
 
-    # First change to the config database directory, which might hold
-    # relative paths for the other files/directories, such as the
-    # application_directory_path
-    Dir.chdir File.dirname(config_database_path)
+    if config_database_path
+      # First change to the config database directory, which might hold
+      # relative paths for the other files/directories, such as the
+      # application_directory_path
+      Dir.chdir File.dirname(config_database_path)
+    end
 
     # Bail unless you have some of the basic information.  TODO:
     # rethink this when things get more dynamic
@@ -355,6 +275,7 @@ class RFlow
   rescue SystemExit => e
     # Do nothing, just prevent a normal exit from causing an unsightly
     # error in the logs
+    logger.info "Exiting: #{e.message}"
   rescue Exception => e
     logger.fatal "Exception caught: #{e.class} - #{e.message}\n#{e.backtrace.join "\n"}"
     exit 1
@@ -363,19 +284,16 @@ class RFlow
   def self.shutdown
     logger.info "#{configuration['rflow.application_name']} shutting down"
 
-    logger.debug "Shutting down components"
-    components.each do |component_instance_uuid, component|
-      logger.debug "Shutting down component '#{component.name}' (#{component.instance_uuid})"
-      component.shutdown!
+    logger.debug "Shutting down shards"
+    shards.each do |shard_instance_uuid, shard|
+      logger.debug "Shutting down shard '#{shard.name}' (#{shard.instance_uuid})"
+      #shard.shutdown!
     end
 
-    # TODO: Ensure that all the components have shut down before
-    # cleaning up
-
-    logger.debug "Cleaning up components"
-    components.each do |component_instance_uuid, component|
-      logger.debug "Cleaning up component '#{component.name}' (#{component.instance_uuid})"
-      component.cleanup!
+    logger.debug "Cleaning up shards"
+    shards.each do |shard_instance_uuid, shard|
+      logger.debug "Cleaning up shard '#{shard.name}' (#{shard.instance_uuid})"
+      #shard.cleanup!
     end
 
     remove_pid_file configuration['rflow.pid_file_path']
