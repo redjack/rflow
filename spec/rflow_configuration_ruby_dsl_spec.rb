@@ -82,7 +82,7 @@ describe RFlow::Configuration::RubyDSL do
     puts config.to_s
   end
 
-  it "should correctly process a shard declarations" do
+  it "should correctly process shard declarations" do
     described_class.configure do |c|
       c.component 'first', 'First', :opt1 => 'opt1'
 
@@ -125,6 +125,24 @@ describe RFlow::Configuration::RubyDSL do
                                                                 'third#out=>fifth#in']
 
     puts config.to_s
+  end
+
+  it "should not allow two components with the same name" do
+    expect do
+      described_class.configure do |c|
+        c.component 'first', 'First'
+        c.component 'first', 'First'
+      end
+    end.to raise_error
+  end
+
+  it "should not allow two shards with the same name" do
+    expect do
+      described_class.configure do |c|
+        c.shard("s1", :process => 2) { |s| }
+        c.shard("s1", :process => 2) { |s| }
+      end
+    end.to raise_error
   end
 
 end

@@ -218,7 +218,7 @@ class RFlow
     logger.info "Instantiating shards"
     self.shards = Hash.new
     configuration.shards.each do |shard_config|
-      logger.debug "Instantiating shard '#{shard_config.name}' (#{shard_config.uuid})"
+      logger.debug "Instantiating shard '#{shard_config.name}' (#{shard_config.uuid}) with #{shard_config.count} workers"
       shards[shard_config.uuid] = Shard.new(shard_config.uuid, shard_config.name, shard_config.count)
     end
   end

@@ -7,15 +7,17 @@ RSpec.configure do |config|
   config.before(:all) do
     RFlow.logger = Log4r::Logger.new 'test'
     RFlow.logger.add Log4r::StdoutOutputter.new('test_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
+    @base_temp_directory_path = File.join(File.dirname(__FILE__), 'tmp')
   end
 
-  config.around(:each) do |example|
-    @temp_directory_path = File.expand_path(File.join(File.dirname(__FILE__), 'tmp'))
-    Dir.mkdir @temp_directory_path
+  config.before(:each) do
+    @entropy = Time.now.to_f.to_s
+    @temp_directory_path = File.expand_path(File.join(@base_temp_directory_path, @entropy))
+    FileUtils.mkdir_p @temp_directory_path
+  end
 
-    example.run
-
-    FileUtils.rm_rf @temp_directory_path
+  config.after(:each) do
+    FileUtils.rm_rf @base_temp_directory_path
   end
 end
 

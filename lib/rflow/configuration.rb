@@ -230,6 +230,7 @@ class RFlow
       # complete, i.e. validate the various columns
       begin
         Setting.first
+        Shard.first
         Component.first
         Port.first
         Connection.first

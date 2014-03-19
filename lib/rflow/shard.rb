@@ -19,7 +19,7 @@ class RFlow
     def initialize(uuid, name='UNNAMED', count=1)
       @instance_uuid = uuid
       @name = name
-      @count = 1
+      @count = count
       @components = Hash.new
       @configuration = RFlow.configuration.shard(instance_uuid)
       @logger = RFlow.logger
