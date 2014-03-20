@@ -44,8 +44,10 @@ class RFlow
     end
 
 
-    # Bare superclass for (potential) later methods.  Currently empty
-    class Port; end
+    class Port
+      attr_reader :connected
+      def connected?; @connected; end
+    end
 
 
     # Allows for a list of connections to be assigned to each port/key
@@ -62,6 +64,7 @@ class RFlow
         @instance_uuid = instance_uuid
         @connections_for = Hash.new {|hash, key| hash[key] = Array.new.extend(ConnectionCollection)}
       end
+
 
       # Returns an extended Array of all the connections that should
       # be sent/received on this port.  Merges the nil-keyed port
@@ -122,6 +125,7 @@ class RFlow
         connections_for.each do |port_key, connections|
           connections.each do |connection|
             connection.connect_input!
+            @connected = true
           end
         end
       end
@@ -133,18 +137,14 @@ class RFlow
         connections_for.each do |port_key, keyed_connections|
           keyed_connections.each do |connection|
             connection.connect_output!
+            @connected = true
           end
         end
       end
     end
 
+
     class DisconnectedPort < HashPort; end
 
   end
 end
-
-__END__
-
-out[even] -> a
-out[odd]  -> b
-out[nil]  -> c
