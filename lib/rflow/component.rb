@@ -54,18 +54,61 @@ class RFlow
           disconnected_port
         end
       end
+
+
+      # Attempt to instantiate a component described by the config
+      # specification. This assumes that the specification of a
+      # component is a fully qualified Ruby class that has already
+      # been loaded. It will first attempt to find subclasses of
+      # RFlow::Component (in the available_components hash) and then
+      # attempt to constantize the specification into a different
+      # class. Future releases will support external (i.e. non-managed
+      # components), but the current stuff only supports Ruby classes
+      def build(config)
+        if config.managed?
+          RFlow.logger.debug "Instantiating component '#{config.name}' as '#{config.specification}' (#{config.uuid})"
+          begin
+            RFlow.logger.debug RFlow.configuration.available_components.inspect
+            instantiated_component = if RFlow.configuration.available_components.include? config.specification
+                                       RFlow.logger.debug "Component found in configuration.available_components['#{config.specification}']"
+                                       RFlow.configuration.available_components[config.specification].new(config)
+                                     else
+                                       RFlow.logger.debug "Component not found in configuration.available_components, constantizing component '#{config.specification}'"
+                                       config.specification.constantize.new(config)
+                                     end
+          rescue NameError => e
+            error_message = "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): the class '#{config.specification}' was not found"
+            RFlow.logger.error error_message
+            raise RuntimeError, error_message
+          rescue Exception => e
+            error_message = "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): #{e.class} #{e.message}"
+            RFlow.logger.error error_message
+            raise RuntimeError, error_message
+          end
+        else
+          error_message = "Non-managed components not yet implemented for component '#{config.name}' as '#{config.specification}' (#{config.uuid})"
+          RFlow.logger.error error_message
+          raise NotImplementedError, error_message
+        end
+
+        instantiated_component
+      end
     end
 
     attr_reader :instance_uuid
     attr_reader :name
-    attr_reader :configuration
+    attr_reader :config
     attr_reader :ports
 
-    def initialize(uuid, name=nil, configuration=nil)
-      @instance_uuid = uuid
-      @name = name
+    def initialize(config)
+      @instance_uuid = config.uuid
+      @name = config.name
       @ports = PortCollection.new
-      @configuration = configuration
+      @config = config
+
+      configure_ports!
+      configure_connections!
+      configure!(config.options)
     end
 
 
@@ -89,7 +132,19 @@ class RFlow
     end
 
 
-    # TODO: DRY up the following two methods by factoring out into a meta-method
+    def configure_ports!
+      # Send the port configuration to each component
+      config.input_ports.each do |input_port_config|
+        RFlow.logger.debug "Configuring component '#{name}' (#{instance_uuid}) with input port '#{input_port_config.name}' (#{input_port_config.uuid})"
+        configure_input_port!(input_port_config.name, input_port_config.uuid)
+      end
+
+      config.output_ports.each do |output_port_config|
+        RFlow.logger.debug "Configuring component '#{name}' (#{instance_uuid}) with output port '#{output_port_config.name}' (#{output_port_config.uuid})"
+        configure_output_port!(output_port_config.name, output_port_config.uuid)
+      end
+    end
+
 
     def configure_input_port!(port_name, port_instance_uuid, port_options={})
       unless self.class.defined_input_ports.include? port_name
@@ -104,6 +159,25 @@ class RFlow
         raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
       end
       ports << OutputPort.new(port_name, port_instance_uuid, port_options)
+    end
+
+
+    def configure_connections!
+      config.input_ports.each do |input_port_config|
+        input_port_config.input_connections.each do |input_connection_config|
+          RFlow.logger.debug "Configuring input port '#{input_port_config.name}' (#{input_port_config.uuid}) key '#{input_connection_config.input_port_key}' with #{input_connection_config.type.to_s} connection '#{input_connection_config.name}' (#{input_connection_config.uuid})"
+          configure_connection!(input_port_config.uuid, input_connection_config.input_port_key,
+                                input_connection_config.type, input_connection_config.uuid, input_connection_config.name, input_connection_config.options)
+        end
+      end
+
+      config.output_ports.each do |output_port_config|
+        output_port_config.output_connections.each do |output_connection_config|
+          RFlow.logger.debug "Configuring output port '#{output_port_config.name}' (#{output_port_config.uuid}) key '#{output_connection_config.output_port_key}' with #{output_connection_config.type.to_s} connection '#{output_connection_config.name}' (#{output_connection_config.uuid})"
+          configure_connection!(output_port_config.uuid, output_connection_config.output_port_key,
+                                output_connection_config.type, output_connection_config.uuid, output_connection_config.name, output_connection_config.options)
+        end
+      end
     end
 
 
