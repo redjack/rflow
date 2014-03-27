@@ -31,7 +31,7 @@ end
 
 describe RFlow::Component::OutputPort do
   context ".connect!" do
-    it "should not be connected" do
+    it "shouldbe connected" do
       connection_double = double('connection')
       connection_double.should_receive(:connect_output!)
 
