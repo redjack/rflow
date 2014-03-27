@@ -29,43 +29,40 @@ class RFlow
 
       attr_accessor :input_socket, :output_socket
 
-      REQUIRED_OPTION_SUFFIXES = ['_socket_type', '_address', '_responsibility']
+      def initialize(config)
+        super
+        validate_options!
+        # Cause the ZMQ context to be created before the reactor is running
+        zmq_context
+      end
 
-      def self.configuration_errors(configuration)
+
+      def validate_options!
         # TODO: Normalize/validate configuration
-        missing_config_elements = []
+        missing_options = []
 
         ['input', 'output'].each do |direction_prefix|
-          REQUIRED_OPTION_SUFFIXES.each do |option_suffix|
-            config_element = "#{direction_prefix}#{option_suffix}"
-            unless configuration.include? config_element
-              missing_config_elements << config_element
+          ['_socket_type', '_address', '_responsibility'].each do |option_suffix|
+            option_name = "#{direction_prefix}#{option_suffix}"
+            unless options.include? option_name
+              missing_options << option_name
             end
           end
         end
 
-        missing_config_elements
-      end
-
-
-      def initialize(connection_instance_uuid, connection_name, connection_configuration)
-        configuration_errors = self.class.configuration_errors(connection_configuration)
-        unless configuration_errors.empty?
-          raise ArgumentError, "#{self.class.to_s}: configuration missing elements: #{configuration_errors.join ', '}"
+        unless missing_options.empty?
+          raise ArgumentError, "#{self.class.to_s}: configuration missing options: #{missing_options.join ', '}"
         end
 
-        # Cause the ZMQ context to be created before the reactor is running
-        zmq_context
-
-        super
+        true
       end
 
 
       def connect_input!
-        RFlow.logger.debug "Connecting input #{instance_uuid} with #{configuration.find_all {|k, v| k.to_s =~ /input/}}"
-        self.input_socket = zmq_context.socket(ZMQ.const_get(configuration['input_socket_type'].to_sym))
-        input_socket.send(configuration['input_responsibility'].to_sym,
-                          configuration['input_address'])
+        RFlow.logger.debug "Connecting input #{uuid} with #{options.find_all {|k, v| k.to_s =~ /input/}}"
+        self.input_socket = zmq_context.socket(ZMQ.const_get(options['input_socket_type'].to_sym))
+        input_socket.send(options['input_responsibility'].to_sym,
+                          options['input_address'])
 
         input_socket.on(:message) do |*message_parts|
           message = RFlow::Message.from_avro(message_parts.last.copy_out_string)
@@ -79,10 +76,10 @@ class RFlow
 
 
       def connect_output!
-        RFlow.logger.debug "Connecting output #{instance_uuid} with #{configuration.find_all {|k, v| k.to_s =~ /output/}}"
-        self.output_socket = zmq_context.socket(ZMQ.const_get(configuration['output_socket_type'].to_sym))
-        output_socket.send(configuration['output_responsibility'].to_sym,
-                           configuration['output_address'].to_s)
+        RFlow.logger.debug "Connecting output #{uuid} with #{options.find_all {|k, v| k.to_s =~ /output/}}"
+        self.output_socket = zmq_context.socket(ZMQ.const_get(options['output_socket_type'].to_sym))
+        output_socket.send(options['output_responsibility'].to_sym,
+                           options['output_address'].to_s)
         output_socket
       end
 

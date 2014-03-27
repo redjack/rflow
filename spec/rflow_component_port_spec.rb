@@ -8,7 +8,11 @@ end
 
 describe RFlow::Component::HashPort do
   it "should not be connected" do
-    port = described_class.new('port', '1')
+    port_config = double('Port Config')
+    port_config.should_receive(:name).and_return('port')
+    port_config.should_receive(:uuid).and_return('1')
+
+    port = described_class.new(port_config)
     port.connected?.should be_false
   end
 end
@@ -19,7 +23,11 @@ describe RFlow::Component::InputPort do
       connection_double = double('connection')
       connection_double.should_receive(:connect_input!)
 
-      port = described_class.new('port', '1')
+      port_config = double('Port Config')
+      port_config.should_receive(:name).and_return('port')
+      port_config.should_receive(:uuid).and_return('1')
+
+      port = described_class.new(port_config)
       port.add_connection(nil, connection_double)
 
       port.connected?.should be_false
@@ -35,7 +43,11 @@ describe RFlow::Component::OutputPort do
       connection_double = double('connection')
       connection_double.should_receive(:connect_output!)
 
-      port = described_class.new('port', '1')
+      port_config = double('Port Config')
+      port_config.should_receive(:name).and_return('port')
+      port_config.should_receive(:uuid).and_return('1')
+
+      port = described_class.new(port_config)
       port.add_connection(nil, connection_double)
 
       port.connected?.should be_false

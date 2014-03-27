@@ -1,3 +1,5 @@
+require 'ostruct'
+
 require 'rflow/message'
 require 'rflow/component/port'
 
@@ -47,9 +49,10 @@ class RFlow
           # If the port was not connected, return a port-like object
           # that can respond/log but doesn't send any data.  Note,
           # it won't be available in the 'by_uuid' collection, as it
-          # doesn't have a configured instance_uuid
+          # doesn't have a configured uuid
           RFlow.logger.debug "'#{self.name}##{port_name}' not connected, creating a disconnected port"
-          disconnected_port = DisconnectedPort.new(port_name, 0)
+
+          disconnected_port = DisconnectedPort.new(OpenStruct.new(:name => port_name, :uuid => 0))
           ports << disconnected_port
           disconnected_port
         end
@@ -95,16 +98,13 @@ class RFlow
       end
     end
 
-    attr_reader :instance_uuid
-    attr_reader :name
-    attr_reader :config
-    attr_reader :ports
+    attr_reader :config, :uuid, :name, :ports
 
     def initialize(config)
-      @instance_uuid = config.uuid
+      @config = config
+      @uuid = config.uuid
       @name = config.name
       @ports = PortCollection.new
-      @config = config
 
       configure_ports!
       configure_connections!
@@ -135,30 +135,30 @@ class RFlow
     def configure_ports!
       # Send the port configuration to each component
       config.input_ports.each do |input_port_config|
-        RFlow.logger.debug "Configuring component '#{name}' (#{instance_uuid}) with input port '#{input_port_config.name}' (#{input_port_config.uuid})"
-        configure_input_port!(input_port_config.name, input_port_config.uuid)
+        RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) with input port '#{input_port_config.name}' (#{input_port_config.uuid})"
+        configure_input_port!(input_port_config)
       end
 
       config.output_ports.each do |output_port_config|
-        RFlow.logger.debug "Configuring component '#{name}' (#{instance_uuid}) with output port '#{output_port_config.name}' (#{output_port_config.uuid})"
-        configure_output_port!(output_port_config.name, output_port_config.uuid)
+        RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) with output port '#{output_port_config.name}' (#{output_port_config.uuid})"
+        configure_output_port!(output_port_config)
       end
     end
 
 
-    def configure_input_port!(port_name, port_instance_uuid, port_options={})
-      unless self.class.defined_input_ports.include? port_name
-        raise ArgumentError, "Input port '#{port_name}' not defined on component '#{self.class}'"
+    def configure_input_port!(port_config)
+      unless self.class.defined_input_ports.include? port_config.name
+        raise ArgumentError, "Input port '#{port_config.name}' not defined on component '#{self.class}'"
       end
-      ports << InputPort.new(port_name, port_instance_uuid, port_options)
+      ports << InputPort.new(port_config)
     end
 
 
-    def configure_output_port!(port_name, port_instance_uuid, port_options={})
-      unless self.class.defined_output_ports.include? port_name
-        raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
+    def configure_output_port!(port_config)
+      unless self.class.defined_output_ports.include? port_config.name
+        raise ArgumentError, "Output port '#{port_config.name}' not defined on component '#{self.class}'"
       end
-      ports << OutputPort.new(port_name, port_instance_uuid, port_options)
+      ports << OutputPort.new(port_config)
     end
 
 
@@ -166,35 +166,16 @@ class RFlow
       config.input_ports.each do |input_port_config|
         input_port_config.input_connections.each do |input_connection_config|
           RFlow.logger.debug "Configuring input port '#{input_port_config.name}' (#{input_port_config.uuid}) key '#{input_connection_config.input_port_key}' with #{input_connection_config.type.to_s} connection '#{input_connection_config.name}' (#{input_connection_config.uuid})"
-          configure_connection!(input_port_config.uuid, input_connection_config.input_port_key,
-                                input_connection_config.type, input_connection_config.uuid, input_connection_config.name, input_connection_config.options)
+          ports.by_uuid[input_port_config.uuid].add_connection(input_connection_config.input_port_key, Connection.build(input_connection_config))
         end
       end
 
       config.output_ports.each do |output_port_config|
         output_port_config.output_connections.each do |output_connection_config|
           RFlow.logger.debug "Configuring output port '#{output_port_config.name}' (#{output_port_config.uuid}) key '#{output_connection_config.output_port_key}' with #{output_connection_config.type.to_s} connection '#{output_connection_config.name}' (#{output_connection_config.uuid})"
-          configure_connection!(output_port_config.uuid, output_connection_config.output_port_key,
-                                output_connection_config.type, output_connection_config.uuid, output_connection_config.name, output_connection_config.options)
+          ports.by_uuid[output_port_config.uuid].add_connection(output_connection_config.output_port_key, Connection.build(output_connection_config))
         end
       end
-    end
-
-
-    # Only supports Ruby types.
-    # TODO: figure out how to dynamically load the built-in
-    # connections, or require them at the top of the file and not rely
-    # on rflow.rb requiring 'rflow/connections'
-    def configure_connection!(port_instance_uuid, port_key, connection_type, connection_uuid, connection_name=nil, connection_options={})
-      case connection_type
-      when 'RFlow::Configuration::ZMQConnection'
-        connection = RFlow::Connections::ZMQConnection.new(connection_uuid, connection_name, connection_options)
-      else
-        raise ArgumentError, "Only ZMQConnections currently supported"
-      end
-
-      ports.by_uuid[port_instance_uuid.to_s].add_connection(port_key, connection)
-      connection
     end
 
 
@@ -223,11 +204,11 @@ class RFlow
 
 
     def to_s
-      string = "Component '#{name}' (#{instance_uuid})\n"
+      string = "Component '#{name}' (#{uuid})\n"
       ports.each do |port|
         port.keys.each do |port_key|
           port[port_key].each do |connection|
-            string << "\t#{port.class.to_s} '#{port.name}' (#{port.instance_uuid}) key '#{port_key}' connection '#{connection.name}' (#{connection.instance_uuid})\n"
+            string << "\t#{port.class.to_s} '#{port.name}' (#{port.uuid}) key '#{port_key}' connection '#{connection.name}' (#{connection.uuid})\n"
           end
         end
       end

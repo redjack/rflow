@@ -279,16 +279,16 @@ class RFlow
       Shard.all
     end
 
-    def shard(shard_instance_uuid)
-      Shard.find_by_uuid shard_instance_uuid
+    def shard(shard_uuid)
+      Shard.find_by_uuid shard_uuid
     end
 
     def components
       Component.all
     end
 
-    def component(component_instance_uuid)
-      Component.find_by_uuid component_instance_uuid
+    def component(component_uuid)
+      Component.find_by_uuid component_uuid
     end
 
     def available_components

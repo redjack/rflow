@@ -2,15 +2,26 @@ require 'rflow/message'
 
 class RFlow
   class Connection
-    attr_accessor :instance_uuid, :name, :configuration, :recv_callback
 
-    # Attribute that holds the
+    class << self
+      def build(config)
+        case config.type
+        when 'RFlow::Configuration::ZMQConnection'
+          RFlow::Connections::ZMQConnection.new(config)
+        else
+          raise ArgumentError, "Only ZMQConnections currently supported"
+        end
+      end
+    end
+
+    attr_accessor :config, :uuid, :name, :options
     attr_accessor :recv_callback
 
-    def initialize(connection_instance_uuid, connection_name=nil, connection_configuration={})
-      @instance_uuid = connection_instance_uuid
-      @name = connection_name
-      @configuration = connection_configuration
+    def initialize(config)
+      @config = config
+      @uuid = config.uuid
+      @name = config.name
+      @options = config.options
     end
 
 

@@ -219,7 +219,7 @@ class RFlow
     self.shards = Hash.new
     configuration.shards.each do |shard_config|
       logger.debug "Instantiating shard '#{shard_config.name}' (#{shard_config.uuid}) with #{shard_config.count} workers"
-      shards[shard_config.uuid] = Shard.new(shard_config.uuid, shard_config.name, shard_config.count)
+      shards[shard_config.uuid] = Shard.new(shard_config)
     end
   end
 
@@ -285,14 +285,14 @@ class RFlow
     logger.info "#{configuration['rflow.application_name']} shutting down"
 
     logger.debug "Shutting down shards"
-    shards.each do |shard_instance_uuid, shard|
-      logger.debug "Shutting down shard '#{shard.name}' (#{shard.instance_uuid})"
+    shards.values.each do |shard|
+      logger.debug "Shutting down shard '#{shard.name}' (#{shard.uuid})"
       #shard.shutdown!
     end
 
     logger.debug "Cleaning up shards"
-    shards.each do |shard_instance_uuid, shard|
-      logger.debug "Cleaning up shard '#{shard.name}' (#{shard.instance_uuid})"
+    shards.values.each do |shard|
+      logger.debug "Cleaning up shard '#{shard.name}' (#{shard.uuid})"
       #shard.cleanup!
     end
 

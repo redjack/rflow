@@ -9,19 +9,18 @@ class RFlow
   # return
   class Shard
 
-    attr_reader :instance_uuid, :name, :count
+    attr_reader :config, :uuid, :name, :count
     attr_reader :pids
     attr_accessor :components
-    attr_reader :configuration
     attr_reader :logger
 
 
-    def initialize(uuid, name='UNNAMED', count=1)
-      @instance_uuid = uuid
-      @name = name
-      @count = count
+    def initialize(config)
+      @config = config
+      @uuid = config.uuid
+      @name = config.name
+      @count = config.count
       @components = Hash.new
-      @configuration = RFlow.configuration.shard(instance_uuid)
       @logger = RFlow.logger
 
       # instantiate/configure everything
@@ -35,38 +34,33 @@ class RFlow
 
 
     def run!
-      logger.info "Running shard '#{name}' (#{instance_uuid}) with #{count} workers"
+      logger.info "Running shard '#{name}' (#{uuid}) with #{count} workers"
       @pids = count.times.map do |i|
-        logger.debug "Shard '#{name}' (#{instance_uuid}) forking worker #{i+1} of #{count}"
+        logger.debug "Shard '#{name}' (#{uuid}) forking worker #{i+1} of #{count}"
         # TODO: refactor this to use Process.spawn and add a
         # command-line application to start up a specific shard. Moar
         # portable across OSes.
         pid = Process.fork do
           $0 += " #{name}-#{i+1}"
-          logger.debug "Shard '#{name}' (#{instance_uuid}) worker #{i+1} started"
+          logger.debug "Shard '#{name}' (#{uuid}) worker #{i+1} started"
           EM.run do
             connect_components!
-
-            components.each do |component_uuid, component|
-              RFlow.logger.debug "Shard '#{name}' #{component.to_s}"
-            end
-
             run_components!
           end
         end
 
-        logger.debug "Shard '#{name}' (#{instance_uuid}) worker #{i+1} of #{count} running with pid #{pid}"
+        logger.debug "Shard '#{name}' (#{uuid}) worker #{i+1} of #{count} running with pid #{pid}"
         pid
       end
 
-      logger.debug "Shard '#{name}' (#{instance_uuid}) #{count} workers running with pids #{@pids.join(', ')}"
+      logger.debug "Shard '#{name}' (#{uuid}) #{count} workers running with pids #{@pids.join(', ')}"
       @pids
     end
 
 
     def instantiate_components!
       logger.info "Shard '#{name}' instantiating components"
-      configuration.components.each do |component_config|
+      config.components.each do |component_config|
         components[component_config.uuid] = Component.build(component_config)
       end
     end
@@ -78,7 +72,7 @@ class RFlow
     def connect_components!
       logger.info "Shard '#{name}' connecting components"
       components.each do |component_uuid, component|
-        logger.debug "Shard '#{name}' connecting component '#{component.name}' (#{component.instance_uuid})"
+        logger.debug "Shard '#{name}' connecting component '#{component.name}' (#{component.uuid})"
         component.connect!
       end
     end
@@ -87,7 +81,7 @@ class RFlow
     def run_components!
       logger.info "Shard '#{name}' running components"
       components.each do |component_uuid, component|
-        logger.debug "Shard '#{name}' running component '#{component.name}' (#{component.instance_uuid})"
+        logger.debug "Shard '#{name}' running component '#{component.name}' (#{component.uuid})"
         component.run!
       end
     end

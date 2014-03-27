@@ -25,7 +25,7 @@ class RFlow
       end
 
       def <<(port)
-        by_uuid[port.instance_uuid.to_s] = port
+        by_uuid[port.uuid.to_s] = port
         by_name[port.name.to_s] = port
         by_type[port.class.to_s] << port
         ports << port
@@ -57,11 +57,12 @@ class RFlow
     # result in the same message being sent to all indexed
     # connections.
     class HashPort < Port
-      attr_reader :name, :instance_uuid, :options, :connections_for
+      attr_reader :config, :name, :uuid, :connections_for
 
-      def initialize(name, instance_uuid, options={})
-        @name = name
-        @instance_uuid = instance_uuid
+      def initialize(config)
+        @config = config
+        @name = config.name
+        @uuid = config.uuid
         @connections_for = Hash.new {|hash, key| hash[key] = Array.new.extend(ConnectionCollection)}
       end
 
