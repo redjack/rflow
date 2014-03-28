@@ -9,10 +9,73 @@ class RFlow
   # return
   class Shard
 
+    # An internal class that represents an instance of the running
+    # shard, i.e. a process
+    class Worker
+      attr_accessor :shard, :index, :name, :pid
+      attr_accessor :components
+
+
+      def initialize(shard, index=1)
+        @shard = shard
+        @index = index
+        @name  = "#{shard.name}-#{index}"
+        @components = {}
+
+        instantiate_components!
+      end
+
+
+      def instantiate_components!
+        RFlow.logger.debug "#{name} instantiating components"
+        shard.config.components.each do |component_config|
+          components[component_config.uuid] = Component.build(component_config)
+        end
+      end
+
+
+      def launch
+        @pid = Process.fork do
+          $0 += " #{name}"
+          Log4r::NDC.push name
+          RFlow.logger.info "#{name} started"
+          EM.run do
+            connect_components!
+            # TODO: need to do proper node synchronization for ZMQ to
+            # remove sleep
+            sleep 0.1
+            run_components!
+          end
+        end
+
+        self
+      end
+
+
+      # Send a command to each component to tell them to connect their
+      # ports via their connections
+      def connect_components!
+        RFlow.logger.debug "Shard #{name} connecting components"
+        components.each do |component_uuid, component|
+          RFlow.logger.debug "Shard '#{name}' connecting component '#{component.name}' (#{component.uuid})"
+          component.connect!
+        end
+      end
+
+
+      # Start each component running
+      def run_components!
+        RFlow.logger.debug "Shard #{name} running components"
+        components.each do |component_uuid, component|
+          RFlow.logger.debug "Shard '#{name}' running component '#{component.name}' (#{component.uuid})"
+          component.run!
+        end
+      end
+    end
+
+
     attr_reader :config, :uuid, :name, :count
-    attr_reader :pids
-    attr_accessor :components
-    attr_reader :logger
+    attr_accessor :workers
 
 
     def initialize(config)
@@ -20,72 +83,31 @@ class RFlow
       @uuid = config.uuid
       @name = config.name
       @count = config.count
-      @components = Hash.new
-      @logger = RFlow.logger
 
-      # instantiate/configure everything
-      instantiate_components!
-
-      # At this point, each component should have their entire
-      # configuration for the component-specific stuff and all the
-      # connections and be ready to be connected to the others and start
-      # running
+      @workers = count.times.map do |i|
+        Worker.new(self, i+1)
+      end
     end
 
 
     def run!
-      logger.info "Running shard '#{name}' (#{uuid}) with #{count} workers"
-      @pids = count.times.map do |i|
-        logger.debug "Shard '#{name}' (#{uuid}) forking worker #{i+1} of #{count}"
-        # TODO: refactor this to use Process.spawn and add a
-        # command-line application to start up a specific shard. Moar
-        # portable across OSes.
-        pid = Process.fork do
-          $0 += " #{name}-#{i+1}"
-          logger.debug "Shard '#{name}' (#{uuid}) worker #{i+1} started"
-          EM.run do
-            connect_components!
-            run_components!
-          end
-        end
-
-        logger.debug "Shard '#{name}' (#{uuid}) worker #{i+1} of #{count} running with pid #{pid}"
-        pid
+      RFlow.logger.debug "Running shard #{name} with #{count} workers"
+      workers.each do |worker|
+        worker.launch
       end
 
-      logger.debug "Shard '#{name}' (#{uuid}) #{count} workers running with pids #{@pids.join(', ')}"
-      @pids
+      RFlow.logger.debug "Shard #{name} #{count} workers running with pids #{workers.map(&:pid).join(', ')}"
+      workers
     end
 
 
-    def instantiate_components!
-      logger.info "Shard '#{name}' instantiating components"
-      config.components.each do |component_config|
-        components[component_config.uuid] = Component.build(component_config)
-      end
-    end
-
-    # Stuff after here happens withing the EM reactor
-
-    # Send a command to each component to tell them to connect their
-    # ports via their connections
-    def connect_components!
-      logger.info "Shard '#{name}' connecting components"
-      components.each do |component_uuid, component|
-        logger.debug "Shard '#{name}' connecting component '#{component.name}' (#{component.uuid})"
-        component.connect!
-      end
-    end
-
-    # Start each component running
-    def run_components!
-      logger.info "Shard '#{name}' running components"
-      components.each do |component_uuid, component|
-        logger.debug "Shard '#{name}' running component '#{component.name}' (#{component.uuid})"
-        component.run!
-      end
+    # TODO: Implement
+    def shutdown!
     end
 
 
+    # TODO: Implement
+    def cleanup!
+    end
   end
 end
