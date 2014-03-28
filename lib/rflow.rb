@@ -27,11 +27,6 @@ class RFlow
   DATE_METHOD = 'xmlschema(6)'
   LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_method => DATE_METHOD
 
-  # Might be slightly faster, but also not completely correct XML
-  #schema timestamps due to %z
-  #DATE_PATTERN_FORMAT = '%Y-%m-%dT%H:%M:%S.%9N %z'
-  #LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_pattern => DATE_PATTERN_FORMAT
-
   class << self
     attr_accessor :config_database_path
     attr_accessor :logger
@@ -40,12 +35,6 @@ class RFlow
     attr_accessor :components
   end
 
-#   def self.initialize_config_database(config_database_path, config_file_path=nil)
-#     # To handle relative paths in the config (all relative paths are
-#     # relative to the config database
-#     Dir.chdir File.dirname(config_database_path)
-#     Configuration.new(File.basename(config_database_path), config_file_path)
-#   end
 
   def self.initialize_logger(log_file_path, log_level='INFO', include_stdout=nil)
     log_name = (configuration['rflow.application_name'] rescue File.basename(log_file_path))
@@ -103,12 +92,12 @@ class RFlow
     end
 
     # Reload on HUP
-    ['SIGHUP'].each do |signal|
-      Signal.trap signal do
-        logger.warn "Reload signal (#{signal}) received, reloading"
-        reload
-      end
-    end
+#    ['SIGHUP'].each do |signal|
+#      Signal.trap signal do
+#        logger.warn "Reload signal (#{signal}) received, reloading"
+#        reload
+#      end
+#    end
 
     # Ignore terminal signals
     # TODO: Make sure this is valid for non-daemon (foreground) process

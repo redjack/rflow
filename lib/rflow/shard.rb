@@ -20,25 +20,22 @@ class RFlow
         @shard = shard
         @index = index
         @name  = "#{shard.name}-#{index}"
-        @components = {}
 
-        instantiate_components!
-      end
-
-
-      def instantiate_components!
-        RFlow.logger.debug "#{name} instantiating components"
-        shard.config.components.each do |component_config|
-          components[component_config.uuid] = Component.build(component_config)
+        @components = shard.config.components.map do |component_config|
+          Component.build(component_config)
         end
       end
 
 
+      # Launch another process to execute the shard. The parent
+      # process retains the original worker object (with pid) to allow
+      # for process management
       def launch
         @pid = Process.fork do
           $0 += " #{name}"
           Log4r::NDC.push name
-          RFlow.logger.info "#{name} started"
+
+          RFlow.logger.info "Worker started"
           EM.run do
             connect_components!
             # TODO: need to do proper node synchronization for ZMQ to
@@ -46,6 +43,7 @@ class RFlow
             sleep 0.1
             run_components!
           end
+          # never gets here
         end
 
         self
@@ -55,9 +53,9 @@ class RFlow
       # Send a command to each component to tell them to connect their
       # ports via their connections
       def connect_components!
-        RFlow.logger.debug "Shard #{name} connecting components"
-        components.each do |component_uuid, component|
-          RFlow.logger.debug "Shard '#{name}' connecting component '#{component.name}' (#{component.uuid})"
+        RFlow.logger.debug "Connecting components"
+        components.each do |component|
+          RFlow.logger.debug "Connecting component '#{component.name}' (#{component.uuid})"
           component.connect!
         end
       end
@@ -65,9 +63,9 @@ class RFlow
 
       # Start each component running
       def run_components!
-        RFlow.logger.debug "Shard #{name} running components"
-        components.each do |component_uuid, component|
-          RFlow.logger.debug "Shard '#{name}' running component '#{component.name}' (#{component.uuid})"
+        RFlow.logger.debug "Running components"
+        components.each do |component|
+          RFlow.logger.debug "Running component '#{component.name}' (#{component.uuid})"
           component.run!
         end
       end
@@ -96,7 +94,7 @@ class RFlow
         worker.launch
       end
 
-      RFlow.logger.debug "Shard #{name} #{count} workers running with pids #{workers.map(&:pid).join(', ')}"
+      RFlow.logger.debug "#{count} workers started for #{name}: #{workers.map { |w| "#{w.name} (#{w.pid})" }.join(", ")}"
       workers
     end
 
