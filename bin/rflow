@@ -75,6 +75,7 @@ require 'rflow'
 startup_logger = Log4r::Logger.new 'startup'
 startup_logger.add Log4r::StdoutOutputter.new('startup_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
 startup_logger.level = Log4r::LNAMES.index options[:startup_log_level].to_s
+Log4r::NDC.push('startup')
 
 if options[:startup_log_file_path]
   begin

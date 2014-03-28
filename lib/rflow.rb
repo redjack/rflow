@@ -23,7 +23,7 @@ class RFlow
 
   class Error < StandardError; end
 
-  LOG_PATTERN_FORMAT = '%l [%d] %c (%p) - %M'
+  LOG_PATTERN_FORMAT = '%l [%d] %x (%p) - %M'
   DATE_METHOD = 'xmlschema(6)'
   LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => RFlow::LOG_PATTERN_FORMAT, :date_method => DATE_METHOD
 
@@ -48,7 +48,8 @@ class RFlow
 #   end
 
   def self.initialize_logger(log_file_path, log_level='INFO', include_stdout=nil)
-    rflow_logger = Logger.new((configuration['rflow.application_name'] rescue File.basename(log_file_path)))
+    log_name = (configuration['rflow.application_name'] rescue File.basename(log_file_path))
+    rflow_logger = Logger.new(log_name)
     rflow_logger.level = LNAMES.index log_level
     # TODO: Remove this once all the logging puts in its own
     # Class.Method names.
@@ -65,8 +66,9 @@ class RFlow
       rflow_logger.add StdoutOutputter.new('rflow_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
     end
 
-
     RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
+    Log4r::NDC.clear
+    Log4r::NDC.push(log_name)
     RFlow.logger = rflow_logger
     ActiveRecord::Base.logger = RFlow.logger
 
@@ -215,10 +217,10 @@ class RFlow
   end
 
   def self.instantiate_shards!
-    logger.info "Instantiating shards"
+    logger.debug "Instantiating shards"
     self.shards = Hash.new
     configuration.shards.each do |shard_config|
-      logger.debug "Instantiating shard '#{shard_config.name}' (#{shard_config.uuid}) with #{shard_config.count} workers"
+      logger.debug "Instantiating shard #{shard_config.name} with #{shard_config.count} workers"
       shards[shard_config.uuid] = Shard.new(shard_config)
     end
   end
@@ -286,14 +288,14 @@ class RFlow
 
     logger.debug "Shutting down shards"
     shards.values.each do |shard|
-      logger.debug "Shutting down shard '#{shard.name}' (#{shard.uuid})"
-      #shard.shutdown!
+      logger.debug "Shutting down shard #{shard.name}"
+      shard.shutdown!
     end
 
     logger.debug "Cleaning up shards"
     shards.values.each do |shard|
-      logger.debug "Cleaning up shard '#{shard.name}' (#{shard.uuid})"
-      #shard.cleanup!
+      logger.debug "Cleaning up shard #{shard.name}"
+      shard.cleanup!
     end
 
     remove_pid_file configuration['rflow.pid_file_path']
