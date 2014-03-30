@@ -6,7 +6,7 @@ require 'log4r'
 RSpec.configure do |config|
   config.before(:all) do
     RFlow.logger = Log4r::Logger.new 'test'
-    RFlow.logger.add Log4r::StdoutOutputter.new('test_stdout', :formatter => RFlow::LOG_PATTERN_FORMATTER)
+    RFlow.logger.add Log4r::StdoutOutputter.new('test_stdout', :formatter => RFlow::Logger::LOG_PATTERN_FORMATTER)
     @base_temp_directory_path = File.join(File.dirname(__FILE__), 'tmp')
   end
 

@@ -9,43 +9,6 @@ describe RFlow do
     @extensions_file_name = File.join(File.dirname(__FILE__), 'fixtures', 'extensions_ints.rb')
   end
 
-  describe 'logger' do
-    it "should initialize correctly" do
-      log_file_path = File.join(@temp_directory_path, 'logfile')
-      RFlow.initialize_logger log_file_path
-
-      File.exist?(log_file_path).should_not be_nil
-
-      RFlow.logger.error "TESTTESTTEST"
-      File.read(log_file_path).should match(/TESTTESTTEST/)
-
-      RFlow.close_log_file
-    end
-
-    it "should reopen correctly" do
-      log_file_path = File.join(@temp_directory_path, 'logfile')
-      moved_path = log_file_path + '.old'
-
-      RFlow.initialize_logger log_file_path
-        File.exist?(log_file_path).should be_true
-        File.exist?(moved_path).should be_false
-
-        File.rename log_file_path, moved_path
-
-        RFlow.reopen_log_file
-
-        RFlow.logger.error "TESTTESTTEST"
-        File.read(log_file_path).should match(/TESTTESTTEST/)
-        File.read(moved_path).should_not match(/TESTTESTTEST/)
-
-        RFlow.close_log_file
-      end
-
-      it "should toggle log level" do
-      end
-    end
-
-
   context "when executing from the test script" do
 
     before(:all) do
@@ -112,7 +75,8 @@ describe RFlow do
           c.connect 'generate_ints2#even_odd_out' => 'output_even_odd2#in'
         end
 
-        RFlow.shards.count.should == 1
+        RFlow.master.shards.count.should == 1
+        RFlow.master.shards.first.workers.count.should == 1
 
         output_files = {
           'out'           => [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
@@ -164,8 +128,9 @@ describe RFlow do
           c.connect 'generate_ints3#out' => 'output_all#in'
         end
 
-        RFlow.shards.count.should == 4
-        RFlow.shards.values.map(&:count).should == [1, 3, 2, 2]
+        RFlow.master.shards.count.should == 4
+        RFlow.master.shards.map(&:count).should == [1, 3, 2, 2]
+        RFlow.master.shards.map(&:workers).map(&:count).should == [1, 3, 2, 2]
 
         output_files = {
           'out1'    => [0, 3, 6, 9] * 3,

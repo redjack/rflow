@@ -19,7 +19,7 @@ class RFlow
       def initialize(shard, index=1)
         @shard = shard
         @index = index
-        @name  = "#{shard.name}-#{index}"
+        @name  = "worker #{shard.name}-#{index}"
 
         @components = shard.config.components.map do |component_config|
           Component.build(component_config)
