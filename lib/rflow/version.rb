@@ -1,3 +1,3 @@
 class RFlow
-  VERSION = "0.0.5"
+  VERSION = "1.0.0a1"
 end # class RFlow
