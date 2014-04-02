@@ -28,7 +28,7 @@ processes and/or threads.
 
 Some of the long-term goals of RFlow are to allow for components and
 portions of the workflow to be defined in any language that supports
-Avro and ZeroMQ, which a numerous.
+Avro and ZeroMQ, which are numerous.
 
 
 ## Definitions
