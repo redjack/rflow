@@ -19,7 +19,7 @@ class RFlow
       @log_file_path = config['rflow.log_file_path']
       @log_level = config['rflow.log_level']
 
-      log_name = (config['rflow.application_name'] rescue File.basename(log_file_path))
+      log_name = (config['rflow.application_name'] || File.basename(log_file_path))
       @internal_logger = Log4r::Logger.new(log_name)
 
       internal_logger.level = LNAMES.index log_level
@@ -37,7 +37,7 @@ class RFlow
         internal_logger.add StdoutOutputter.new('rflow_stdout', :formatter => LOG_PATTERN_FORMATTER)
       end
 
-      RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
+      # RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
       Log4r::NDC.clear
       Log4r::NDC.push(log_name)
 
