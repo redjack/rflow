@@ -98,17 +98,17 @@ class RFlow
       end
     end
 
-    attr_reader :config, :uuid, :name, :ports
+    attr_reader :component_config, :uuid, :name, :ports
 
-    def initialize(config)
-      @config = config
-      @uuid = config.uuid
-      @name = config.name
+    def initialize(component_config)
+      @component_config = component_config
+      @uuid = component_config.uuid
+      @name = component_config.name
       @ports = PortCollection.new
 
       configure_ports!
       configure_connections!
-      configure!(config.options)
+      configure!(component_config.options)
     end
 
 
@@ -134,12 +134,12 @@ class RFlow
 
     def configure_ports!
       # Send the port configuration to each component
-      config.input_ports.each do |input_port_config|
+      component_config.input_ports.each do |input_port_config|
         RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) with input port '#{input_port_config.name}' (#{input_port_config.uuid})"
         configure_input_port!(input_port_config)
       end
 
-      config.output_ports.each do |output_port_config|
+      component_config.output_ports.each do |output_port_config|
         RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) with output port '#{output_port_config.name}' (#{output_port_config.uuid})"
         configure_output_port!(output_port_config)
       end
@@ -163,14 +163,14 @@ class RFlow
 
 
     def configure_connections!
-      config.input_ports.each do |input_port_config|
+      component_config.input_ports.each do |input_port_config|
         input_port_config.input_connections.each do |input_connection_config|
           RFlow.logger.debug "Configuring input port '#{input_port_config.name}' (#{input_port_config.uuid}) key '#{input_connection_config.input_port_key}' with #{input_connection_config.type.to_s} connection '#{input_connection_config.name}' (#{input_connection_config.uuid})"
           ports.by_uuid[input_port_config.uuid].add_connection(input_connection_config.input_port_key, Connection.build(input_connection_config))
         end
       end
 
-      config.output_ports.each do |output_port_config|
+      component_config.output_ports.each do |output_port_config|
         output_port_config.output_connections.each do |output_connection_config|
           RFlow.logger.debug "Configuring output port '#{output_port_config.name}' (#{output_port_config.uuid}) key '#{output_connection_config.output_port_key}' with #{output_connection_config.type.to_s} connection '#{output_connection_config.name}' (#{output_connection_config.uuid})"
           ports.by_uuid[output_port_config.uuid].add_connection(output_connection_config.output_port_key, Connection.build(output_connection_config))
