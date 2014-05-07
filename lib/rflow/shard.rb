@@ -73,7 +73,7 @@ class RFlow
           RFlow.logger.info "Worker started"
           EM.run do
             # TODO: Monitor the master
-
+            configure_components!
             connect_components!
             # TODO: need to do proper node synchronization for ZMQ to
             # remove sleep
@@ -86,6 +86,17 @@ class RFlow
 
         @worker_read.close
         self
+      end
+
+      # Configure the components
+      def configure_components!
+        RFlow.logger.debug "Configuring components"
+        components.each do |component|
+          RFlow.logger.debug "Configuring component '#{component.name}' (#{component.uuid})"
+          # TODO: eliminate the passing of internal config info back
+          # into the same object
+          component.configure!(component.component_config.options)
+        end
       end
 
       # Send a command to each component to tell them to connect their
@@ -105,6 +116,12 @@ class RFlow
           RFlow.logger.debug "Running component '#{component.name}' (#{component.uuid})"
           component.run!
         end
+      end
+
+      # TODO: implement
+      def shutdown(signal)
+        RFlow.logger.info "Shutting down #{name} due to #{signal}"
+        EM.stop_event_loop
       end
     end
 

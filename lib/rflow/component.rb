@@ -108,7 +108,6 @@ class RFlow
 
       configure_ports!
       configure_connections!
-      configure!(component_config.options)
     end
 
 
