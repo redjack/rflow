@@ -213,6 +213,7 @@ begin
   RFlow.run options[:config_database_path], options[:daemonize]
 rescue Exception => e
   startup_logger.fatal "Error running rflow: #{e.class}: #{e.message}"
+  exit(1)
 end
 
 __END__
