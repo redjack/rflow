@@ -2,9 +2,6 @@ require 'spec_helper.rb'
 require 'rflow/configuration'
 
 describe RFlow::Configuration do
-  before(:each) do
-  end
-
   describe '.add_available_data_type' do
     context 'if passed a data_serialization that is not avro or xml' do
       it "should throw an exception" do

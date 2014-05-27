@@ -23,9 +23,6 @@ describe RFlow::Message::Data do
     end
   end
 
-  context "if created with a valid avro schema and serialization" do
-  end
-
   context "if created with a valid avro schema" do
     it "should instantiate correctly" do
       expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro')}.to_not raise_error

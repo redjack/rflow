@@ -12,11 +12,11 @@ class RFlow
     # The Component class methods used in the creation of a component
     class << self
       def defined_input_ports
-        @defined_input_ports ||= Hash.new
+        @defined_input_ports ||= {}
       end
 
       def defined_output_ports
-        @defined_output_ports ||= Hash.new
+        @defined_output_ports ||= {}
       end
 
       # TODO: Update the class vs instance stuffs here to be correct

@@ -17,9 +17,9 @@ class RFlow
       attr_reader :ports, :by_uuid, :by_name, :by_type
 
       def initialize
-        @ports = Array.new
-        @by_uuid = Hash.new
-        @by_name = Hash.new
+        @ports = []
+        @by_uuid = {}
+        @by_name = {}
         @by_type = Hash.new {|hash, key| hash[key.to_s] = []}
       end
 
@@ -59,7 +59,7 @@ class RFlow
         @config = config
         @name = config.name
         @uuid = config.uuid
-        @connections_for = Hash.new {|hash, key| hash[key] = Array.new.extend(ConnectionCollection)}
+        @connections_for = Hash.new {|hash, key| hash[key] = [].extend(ConnectionCollection)}
       end
 
       # Returns an extended Array of all the connections that should

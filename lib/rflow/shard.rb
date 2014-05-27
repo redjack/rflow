@@ -145,10 +145,7 @@ class RFlow
       workers
     end
 
-    def shutdown!
-    end
-
-    def cleanup!
-    end
+    def shutdown!; end
+    def cleanup!; end
   end
 end

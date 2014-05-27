@@ -55,20 +55,16 @@ class RFlow::Components::Replicate < RFlow::Component
   output_port :errored
 
   def process_message(input_port, input_port_key, connection, message)
-    puts "Processing message in Replicate"
     out.each do |connections|
-      puts "Replicating"
       begin
         connections.send_message message
       rescue Exception => e
-        puts "Exception #{e.message}"
         errored.send_message message
       end
     end
   end
 end
 
-puts "Before RubyProcFilter"
 class RFlow::Components::RubyProcFilter < RFlow::Component
   input_port :in
   output_port :filtered
@@ -80,7 +76,6 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   end
 
   def process_message(input_port, input_port_key, connection, message)
-    puts "Processing message in RubyProcFilter"
     begin
       if @filter_proc.call(message)
         filtered.send_message message
@@ -88,13 +83,11 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
         dropped.send_message message
       end
     rescue Exception => e
-      puts "Attempting to send message to errored #{e.message}"
       errored.send_message message
     end
   end
 end
 
-puts "Before FileOutput"
 class RFlow::Components::FileOutput < RFlow::Component
   attr_accessor :output_file_path, :output_file
   input_port :in
@@ -105,7 +98,6 @@ class RFlow::Components::FileOutput < RFlow::Component
   end
 
   def process_message(input_port, input_port_key, connection, message)
-    puts "About to output to a file #{output_file_path}"
     output_file.puts message.data.data_object.inspect
     output_file.flush
   end

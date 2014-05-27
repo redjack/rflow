@@ -27,7 +27,7 @@ class RFlow
     class DataExtensionCollection
       def initialize
         # TODO: choose a different data structure ...
-        @hash = Hash.new {|hash, key| hash[key] = Array.new}
+        @hash = Hash.new {|hash, key| hash[key] = []}
       end
 
       # Return an array of all of the values that have keys that are
@@ -55,7 +55,7 @@ class RFlow
       # A collection of data types (schemas) indexed by their name and
       # their schema type ('avro').
       def available_data_types
-        @available_data_types ||= Hash.new {|hash, key| hash[key] = Hash.new}
+        @available_data_types ||= Hash.new {|hash, key| hash[key] = {}}
       end
 
       # A DataExtensionCollection to hold available extensions that
@@ -67,7 +67,7 @@ class RFlow
       # A Hash of defined components, usually automatically populated
       # when a component subclasses RFlow::Component
       def available_components
-        @available_components ||= Hash.new
+        @available_components ||= {}
       end
     end
 
@@ -197,8 +197,8 @@ class RFlow
     attr_accessor :cached_connections
 
     def initialize(config_database_path = nil)
-      @cached_settings = Hash.new
-      @cached_components = Hash.new
+      @cached_settings = {}
+      @cached_components = {}
       @cached_ports = []
       @cached_connections = []
 

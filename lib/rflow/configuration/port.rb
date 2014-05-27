@@ -16,12 +16,12 @@ class RFlow
     end
 
     # STI-based classes
-    class InputPort < Port;
+    class InputPort < Port
       has_many :input_connections, :class_name => 'RFlow::Configuration::Connection', :primary_key => 'uuid', :foreign_key => 'input_port_uuid'
       has_many :connections, :class_name => 'RFlow::Configuration::Connection', :primary_key => 'uuid', :foreign_key => 'input_port_uuid'
     end
 
-    class OutputPort < Port;
+    class OutputPort < Port
       has_many :output_connections, :class_name => 'RFlow::Configuration::Connection', :primary_key => 'uuid', :foreign_key => 'output_port_uuid'
       has_many :connections, :class_name => 'RFlow::Configuration::Connection', :primary_key => 'uuid', :foreign_key => 'output_port_uuid'
     end

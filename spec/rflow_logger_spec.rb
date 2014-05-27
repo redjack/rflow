@@ -43,6 +43,5 @@ describe RFlow::Logger do
     logger.close
   end
 
-  it "should toggle log level" do
-  end
+  it "should toggle log level"
 end

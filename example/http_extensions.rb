@@ -1,6 +1,8 @@
 # This will/should bring in available components and their schemas
 require 'rflow/components'
 require 'rflow/message'
+require 'eventmachine'
+require 'evma_httpserver'
 
 class RFlow::Components::Replicate < RFlow::Component
   input_port :in
@@ -126,9 +128,6 @@ module HTTPResponseExtension
 end
 RFlow::Configuration.add_available_data_extension('HTTPResponse', HTTPResponseExtension)
 
-require 'eventmachine'
-require 'evma_httpserver'
-
 class HTTPServer < RFlow::Component
   input_port :response_port
   output_port :request_port
@@ -138,7 +137,7 @@ class HTTPServer < RFlow::Component
   def configure!(config)
     @listen = config['listen'] ? config['listen'] : '127.0.0.1'
     @port = config['port'] ? config['port'].to_i : 8000
-    @connections = Hash.new
+    @connections = {}
   end
 
   def run!
@@ -225,7 +224,7 @@ class HTTPServer < RFlow::Component
     # Called when a connection is torn down for whatever reason.
     # Remove this connection from the server's list
     def unbind
-      RFlow.logger.debug "Connection to lost"
+      RFlow.logger.debug "Connection lost"
       server.connections.delete(self.signature)
     end
   end
