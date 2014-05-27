@@ -7,8 +7,6 @@ class RFlow
       include UUIDKeyed
       include ActiveModel::Validations
 
-      class PortInvalid < StandardError; end
-
       belongs_to :component,  :primary_key => 'uuid', :foreign_key => 'component_uuid'
 
       # TODO: Make some sort of component/port validation work here

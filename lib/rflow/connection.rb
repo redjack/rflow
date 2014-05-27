@@ -55,10 +55,4 @@ class RFlow
       @recv_callback ||= Proc.new {|message|}
     end
   end
-
-  class Disconnection < Connection
-    def send_message(message)
-      RFlow.logger.debug "Attempting to send without a connection, doing nothing"
-    end
-  end
 end

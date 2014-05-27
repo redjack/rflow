@@ -5,7 +5,7 @@ class RFlow
     # Ruby DSL config file controller.
     # TODO: more docs and examples
     class RubyDSL
-      attr_accessor :setting_specs, :shard_specs, :connection_specs, :allocated_system_ports
+      attr_accessor :setting_specs, :shard_specs, :connection_specs
 
       def initialize
         @setting_specs = []

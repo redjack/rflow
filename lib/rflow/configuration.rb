@@ -1,5 +1,3 @@
-require 'rflow/util'
-
 class RFlow
   # Contains all the configuration data and methods for RFlow.
   # Interacts directly with underlying sqlite database, and keeps a
@@ -12,8 +10,6 @@ class RFlow
   # subclasses, the controllers are things like RubyDSL, and the views
   # are defined relative to the controllers
   class Configuration
-    class ConfigurationInvalid < StandardError; end
-
     # A class to hold DB config and connection information
     class ConfigDB < ActiveRecord::Base
       self.abstract_class = true

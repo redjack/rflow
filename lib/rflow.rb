@@ -14,10 +14,7 @@ require 'rflow/logger'
 class RFlow
   include Log4r
 
-  class Error < StandardError; end
-
   class << self
-    attr_accessor :config_database_path
     attr_accessor :logger
     attr_accessor :configuration
     attr_accessor :master

@@ -7,7 +7,6 @@ class RFlow
       include UUIDKeyed
       include ActiveModel::Validations
 
-      class ComponentInvalid < StandardError; end
       class ComponentNotFound < StandardError; end
 
       serialize :options, Hash

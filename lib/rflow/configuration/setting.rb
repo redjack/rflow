@@ -4,8 +4,6 @@ require 'rflow/configuration/uuid_keyed'
 class RFlow
   class Configuration
     class Setting < ConfigDB
-      class SettingInvalid < StandardError; end
-
       include ActiveModel::Validations
 
       self.primary_key = 'name'
