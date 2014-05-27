@@ -201,7 +201,6 @@ class RFlow
         yield config_file
         config_file.process
       end
-
-    end # class RubyDSL
-  end # class Configuration
-end # class RFlow
+    end
+  end
+end

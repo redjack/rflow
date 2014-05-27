@@ -39,8 +39,8 @@ class RFlow
       Dir.chdir File.dirname(config_database_path)
     end
 
-    # Bail unless you have some of the basic information.  TODO:
-    # rethink this when things get more dynamic
+    # Bail unless you have some of the basic information.
+    # TODO: rethink this when things get more dynamic
     unless configuration['rflow.application_directory_path']
       error_message = "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
       RFlow.logger.error "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
@@ -64,5 +64,4 @@ class RFlow
     logger.fatal "Exception caught: #{e.class} - #{e.message}\n#{e.backtrace.join "\n"}"
     exit 1
   end
-
-end # class RFlow
+end

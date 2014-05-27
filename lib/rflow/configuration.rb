@@ -13,8 +13,6 @@ class RFlow
   # subclasses, the controllers are things like RubyDSL, and the views
   # are defined relative to the controllers
   class Configuration
-
-    # An exception class
     class ConfigurationInvalid < StandardError; end
 
 
@@ -148,7 +146,6 @@ class RFlow
     def self.migrate_database
       RFlow.logger.debug "Applying default migrations to config database"
       migrations_directory_path = File.join(File.dirname(__FILE__), 'configuration', 'migrations')
-#      ActiveRecord::Migration.verbose = RFlow.logger
       ActiveRecord::Migrator.migrate migrations_directory_path
     end
 
@@ -226,8 +223,8 @@ class RFlow
         self.class.establish_config_database_connection(config_database_path)
       end
 
-      # Validate the connected database.  TODO: make this more
-      # complete, i.e. validate the various columns
+      # Validate the connected database.
+      # TODO: make this more complete, i.e. validate the various columns
       begin
         Setting.first
         Shard.first

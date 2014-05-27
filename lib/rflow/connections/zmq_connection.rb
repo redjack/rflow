@@ -18,8 +18,7 @@ class RFlow
           EM::ZeroMQ::Context.new(1)
         end
 
-        # Returns the current ZeroMQ context object or creates it if
-        # it does not exist.
+        # Returns the current ZeroMQ context object or creates it if it does not exist.
         def zmq_context
           @zmq_context ||= create_zmq_context
         end

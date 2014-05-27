@@ -37,7 +37,6 @@ class RFlow
         internal_logger.add StdoutOutputter.new('rflow_stdout', :formatter => LOG_PATTERN_FORMATTER)
       end
 
-      # RFlow.logger.info "Transitioning to running log file #{log_file_path} at level #{log_level}"
       Log4r::NDC.clear
       Log4r::NDC.push(log_name)
 

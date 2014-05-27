@@ -2,8 +2,6 @@
 require 'rflow/components'
 require 'rflow/message'
 
-#RFlow::Configuration.add_available_data_schema RFlow::Message::Data::AvroSchema.new('Integer', long_integer_schema)
-
 # Example of creating and registering a data extension
 module SimpleDataExtension
   # Use this to default/verify the data in data_object
@@ -111,8 +109,6 @@ class RFlow::Components::FileOutput < RFlow::Component
     self.output_file = File.new output_file_path, 'w+'
   end
 
-  #def run!; end
-
   def process_message(input_port, input_port_key, connection, message)
     puts "About to output to a file #{output_file_path}"
     output_file.puts message.data.data_object.inspect
@@ -126,8 +122,6 @@ class RFlow::Components::FileOutput < RFlow::Component
 
 end
 
-# TODO: Ensure that all the following methods work as they are
-# supposed to.  This is the interface that I'm adhering to
 class SimpleComponent < RFlow::Component
   input_port :in
   output_port :out

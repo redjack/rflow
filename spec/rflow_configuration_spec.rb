@@ -5,8 +5,6 @@ require 'rflow/configuration'
 
 describe RFlow::Configuration do
   before(:each) do
-#    RFlow::Configuration.available_data_types.clear
-#    RFlow::Configuration.available_data_extensions.clear
   end
 
 

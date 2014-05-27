@@ -75,8 +75,7 @@ class RFlow
             # TODO: Monitor the master
             configure_components!
             connect_components!
-            # TODO: need to do proper node synchronization for ZMQ to
-            # remove sleep
+            # TODO: need to do proper node synchronization for ZMQ to remove sleep
             sleep 1
             run_components!
           end
@@ -153,12 +152,10 @@ class RFlow
     end
 
 
-    # TODO: Implement
     def shutdown!
     end
 
 
-    # TODO: Implement
     def cleanup!
     end
   end

@@ -22,7 +22,7 @@ class RFlow
       end
 
       # TODO: Update the class vs instance stuffs here to be correct
-      # Port defintions only have names
+      # Port definitions only have names
 
       # TODO: consider class-based UUIDs to identify component types
 
@@ -177,15 +177,14 @@ class RFlow
       end
     end
 
-
-    # Tell the component to establish it's ports' connections, i.e. make
+    # Tell the component to establish its ports' connections, i.e. make
     # the connection.  Uses the underlying connection object.  Also
     # establishes the callbacks for each of the input ports
     def connect!
       input_ports.each do |input_port|
         input_port.connect!
 
-        # Create the callbacks for recieving messages as a proc
+        # Create the callbacks for receiving messages as a proc
         input_port.keys.each do |input_port_key|
           keyed_connections = input_port[input_port_key]
           keyed_connections.each do |connection|
@@ -241,6 +240,5 @@ class RFlow
     # before the global RFlow exit.  Sublcasses should implement to
     # cleanup any leftover state, e.g. flush file handles, etc
     def cleanup!; end
-
-  end # class Component
-end # class RFlow
+  end
+end

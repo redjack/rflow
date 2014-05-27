@@ -67,8 +67,6 @@ class RFlow::Components::FileOutput < RFlow::Component
   end
 end
 
-# TODO: Ensure that all the following methods work as they are
-# supposed to.  This is the interface that I'm adhering to
 class SimpleComponent < RFlow::Component
   input_port :in
   output_port :out

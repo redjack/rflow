@@ -66,8 +66,8 @@ class RFlow
       @data_type_name = data_type_name.to_s
 
       # Turn the provenance array of Hashes into an array of
-      # ProcessingEvents for easier access and time validation.  TODO:
-      # do this lazily so as not to create/destroy objects that are
+      # ProcessingEvents for easier access and time validation.
+      # TODO: do this lazily so as not to create/destroy objects that are
       # never used
       @provenance = (provenance || []).map do |processing_event_hash_or_object|
         if processing_event_hash_or_object.is_a? ProcessingEvent
@@ -81,7 +81,7 @@ class RFlow
       end
 
       # TODO: Make this better.  This check is technically
-      # unnecessary, as we are able to completely desrialize the
+      # unnecessary, as we are able to completely deserialize the
       # message without needing to resort to the registered schema.
       registered_data_schema_string = RFlow::Configuration.available_data_types[@data_type_name][data_serialization_type.to_s]
       unless registered_data_schema_string
