@@ -142,7 +142,7 @@ class RFlow
         end
 
         @schema_string = schema_string
-        @serialization_type = serialization_type
+        @serialization_type = serialization_type.to_s
 
         begin
           @schema = Avro::Schema.parse(schema_string)
