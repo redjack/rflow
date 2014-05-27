@@ -132,6 +132,7 @@ class RFlow
     def self.migrate_database
       RFlow.logger.debug "Applying default migrations to config database"
       migrations_directory_path = File.join(File.dirname(__FILE__), 'configuration', 'migrations')
+      ActiveRecord::Migration.verbose = false
       ActiveRecord::Migrator.migrate migrations_directory_path
     end
 

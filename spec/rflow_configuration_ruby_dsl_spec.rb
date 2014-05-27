@@ -15,8 +15,6 @@ describe RFlow::Configuration::RubyDSL do
     RFlow::Configuration::Component.count.should == 0
     RFlow::Configuration::Port.count.should == 0
     RFlow::Configuration::Connection.count.should == 0
-
-    puts config.to_s
   end
 
   it "should correctly process a component declaration" do
@@ -78,8 +76,6 @@ describe RFlow::Configuration::RubyDSL do
     second_connections.count.should == 4
 
     first_connections.should == second_connections
-
-    puts config.to_s
   end
 
   it "should correctly process shard declarations" do
@@ -124,8 +120,6 @@ describe RFlow::Configuration::RubyDSL do
        'second#out=>third#in2',
        'third#out=>fourth#in',
        'third#out=>fifth#in']
-
-    puts config.to_s
   end
 
   it "should not allow two components with the same name" do

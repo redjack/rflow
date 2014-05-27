@@ -68,7 +68,6 @@ class RFlow
         if config.managed?
           RFlow.logger.debug "Instantiating component '#{config.name}' as '#{config.specification}' (#{config.uuid})"
           begin
-            RFlow.logger.debug RFlow.configuration.available_components.inspect
             instantiated_component = if RFlow.configuration.available_components.include? config.specification
                                        RFlow.logger.debug "Component found in configuration.available_components['#{config.specification}']"
                                        RFlow.configuration.available_components[config.specification].new(config)

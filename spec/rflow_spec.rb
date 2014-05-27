@@ -264,10 +264,6 @@ describe RFlow do
         log_contents = File.read("log/#{@app_name}.log").chomp
         log_lines = log_contents.split("\n")
 
-        puts '++++++++++++++++++++'
-        puts log_contents
-        puts '++++++++++++++++++++'
-
         # Log file testing
         log_lines.each {|line| line.should_not match /^ERROR/ }
         log_lines.each {|line| line.should_not match /^DEBUG/ }

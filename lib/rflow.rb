@@ -45,9 +45,6 @@ class RFlow
 
     master.daemonize! if daemonize
     master.run # Runs EM and doesn't return
-
-    # Should never get here
-    logger.warn "going down"
   rescue SystemExit => e
     # Do nothing, just prevent a normal exit from causing an unsightly
     # error in the logs

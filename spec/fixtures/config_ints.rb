@@ -1,7 +1,7 @@
 RFlow::Configuration::RubyDSL.configure do |config|
   # Configure the settings, which include paths for various files, log
   # levels, and component specific stuffs
-  config.setting('rflow.log_level', 'DEBUG')
+  config.setting('rflow.log_level', 'FATAL')
   config.setting('rflow.application_directory_path', '../tmp')
   config.setting('rflow.application_name', 'testapp')
 

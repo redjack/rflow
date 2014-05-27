@@ -47,8 +47,6 @@ describe RFlow::Message::Data do
       context "if created with a serialized data object" do
         it "should instantiate correctly" do
           expect {RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro', @avro_serialized_string)}.to_not raise_error
-          message = RFlow::Message::Data.new(@valid_avro_string_schema_string, 'avro', @avro_serialized_string)
-          p message
         end
       end
     end
