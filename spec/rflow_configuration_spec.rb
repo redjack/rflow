@@ -1,11 +1,12 @@
-require 'spec_helper.rb'
+require 'spec_helper'
 require 'rflow/configuration'
 
 describe RFlow::Configuration do
   describe '.add_available_data_type' do
-    context 'if passed a data_serialization that is not avro or xml' do
+    context 'if passed a data_serialization that is not avro' do
       it "should throw an exception" do
-        expect { RFlow::Configuration.add_available_data_type('A', 'boom', 'schema') }.to raise_error(ArgumentError)
+        expect { RFlow::Configuration.add_available_data_type('A', 'boom', 'schema') }.to raise_error(
+          ArgumentError, "Data serialization_type must be 'avro' for 'A'")
       end
 
       it "should not update the available_data_types" do
@@ -21,8 +22,8 @@ describe RFlow::Configuration do
       context 'if passed a non-module data extension' do
         it "should throw an exception" do
           expect do
-            RFlow::Configuration.add_available_data_extension('data_type', 'not a Module')
-          end.to raise_error(ArgumentError)
+            RFlow::Configuration.add_available_data_extension('data_type', 'NOTAMODULE')
+          end.to raise_error(ArgumentError, "Invalid data extension NOTAMODULE for data_type.  Only Ruby Modules allowed")
         end
       end
 

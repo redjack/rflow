@@ -1,4 +1,4 @@
-require 'spec_helper.rb'
+require 'spec_helper'
 require 'rflow/components/raw'
 
 describe 'RFlow::Message::Data::Raw Avro Schema' do
@@ -11,7 +11,7 @@ describe 'RFlow::Message::Data::Raw Avro Schema' do
   end
 
   it "should encode and decode an object" do
-    raw = {'raw' => 'rawdata'}
+    raw = {'raw' => Array.new(256) { rand(256) }.pack('c*')}
 
     expect {encode_avro(@schema_string, raw)}.to_not raise_error
     avro_encoded_raw = encode_avro(@schema_string, raw)
@@ -20,5 +20,6 @@ describe 'RFlow::Message::Data::Raw Avro Schema' do
     decoded_raw = decode_avro(@schema_string, avro_encoded_raw)
 
     decoded_raw.should == raw
+    decoded_raw['raw'].should == raw['raw']
   end
 end

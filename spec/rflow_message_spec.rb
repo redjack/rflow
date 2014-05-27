@@ -1,11 +1,12 @@
-require 'spec_helper.rb'
+require 'spec_helper'
 require 'digest/md5'
 require 'rflow/message'
 
 describe RFlow::Message do
   context "if created with an unknown data type" do
     it "should throw an exception" do
-      expect {RFlow::Message.new('non_existant_data_type')}.to raise_error(ArgumentError)
+      expect {RFlow::Message.new('non_existent_data_type')}.to raise_error(
+        ArgumentError, "Data type 'non_existent_data_type' with serialization_type 'avro' not found")
     end
   end
 
@@ -21,20 +22,27 @@ describe RFlow::Message do
 
     context "if created with empty provenance" do
       context "if created with an unknown data serialization" do
-        it "should throw an exception" do
-          expect {RFlow::Message.new('string_type', [], 'unknown')}.to raise_error(ArgumentError)
-          expect {RFlow::Message.new('string_type', [], :unknown)}.to raise_error(ArgumentError)
+        ['unknown', :unknown].each do |it|
+          it "should throw an exception for #{it.inspect}" do
+            expect {RFlow::Message.new('string_type', [], it)}.to raise_error(
+            ArgumentError, "Data type 'string_type' with serialization_type 'unknown' not found")
+          end
         end
       end
 
       context "if created with a known data serialization" do
-        it "should instantiate correctly" do
-          expect {RFlow::Message.new('string_type', [], 'avro')}.to_not raise_error
-          expect {RFlow::Message.new('string_type', [], 'avro')}.to_not raise_error
+        ['avro', :avro].each do |it|
+          it "should instantiate correctly for #{it.inspect}" do
+            expect {RFlow::Message.new('string_type', [], it)}.to_not raise_error
+          end
         end
 
-        context "if created with a mismatched schema"
-        context "if created with a matched schema"
+        context "if created with a mismatched schema" do
+          it
+        end
+        context "if created with a matched schema" do
+          it
+        end
 
         context "if created with a nil schema" do
           context "if created with a serialized data object" do
@@ -45,7 +53,6 @@ describe RFlow::Message do
 
             it "should instantiate correctly" do
               expect {RFlow::Message.new('string_type', [], 'avro', nil, @avro_serialized_string)}.to_not raise_error
-              message = RFlow::Message.new('string_type', [], 'avro', nil, @avro_serialized_string)
             end
           end
         end
@@ -59,7 +66,8 @@ describe RFlow::Message do
       end
 
       it "should throw an exception" do
-        expect {RFlow::Message.new('string_type', @invalid_provenance)}.to raise_error(ArgumentError)
+        expect {RFlow::Message.new('string_type', @invalid_provenance)}.to raise_error(
+          ArgumentError, 'invalid date: "bad time string"')
       end
     end
 
@@ -97,7 +105,7 @@ describe RFlow::Message do
     end
 
     context "if correctly created" do
-      it "should serialize and deserialized correctly to/from avro" do
+      it "should serialize and deserialize correctly to/from avro" do
         message = RFlow::Message.new('string_type')
         message.provenance << RFlow::Message::ProcessingEvent.new('UUID')
         message.data.data_object = 'teh awesome'

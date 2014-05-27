@@ -1,4 +1,4 @@
-require 'spec_helper.rb'
+require 'spec_helper'
 
 describe RFlow::Component::Port do
   it "should not be connected" do

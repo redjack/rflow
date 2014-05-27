@@ -1,4 +1,4 @@
-require 'spec_helper.rb'
+require 'spec_helper'
 require 'rflow/configuration'
 
 describe RFlow::Configuration::RubyDSL do
@@ -8,7 +8,7 @@ describe RFlow::Configuration::RubyDSL do
   end
 
   it "should correctly process an empty DSL" do
-    described_class.configure { |c| }
+    described_class.configure {|c| }
 
     config = RFlow::Configuration.new
     RFlow::Configuration::Shard.count.should == 1
@@ -128,14 +128,14 @@ describe RFlow::Configuration::RubyDSL do
         c.component 'first', 'First'
         c.component 'first', 'First'
       end
-    end.to raise_error
+    end.to raise_error(ActiveRecord::RecordInvalid)
   end
 
   it "should not allow two shards with the same name" do
     expect do
       described_class.configure do |c|
-        c.shard("s1", :process => 2) { |s| }
-        c.shard("s1", :process => 2) { |s| }
+        c.shard("s1", :process => 2) {|s| }
+        c.shard("s1", :process => 2) {|s| }
       end
     end.to raise_error
   end
