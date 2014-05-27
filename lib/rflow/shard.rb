@@ -1,5 +1,4 @@
 class RFlow
-
   # An object implementation shared between two processes. The parent
   # process will instantiate, configure, and run! a shard, at which
   # point the parent will have access to the shard object and be able
@@ -8,16 +7,14 @@ class RFlow
   # start an Eventmachine reactor, connect the components, and not
   # return
   class Shard
-
     # An internal class that represents an instance of the running
     # shard, i.e. a process
     class Worker
-
       attr_accessor :shard, :index, :name, :pid
       attr_accessor :components
       attr_accessor :worker_read, :master_write
 
-      def initialize(shard, index=1)
+      def initialize(shard, index = 1)
         @shard = shard
         @index = index
         @name  = "#{shard.name}-#{index}"
@@ -124,10 +121,8 @@ class RFlow
       end
     end
 
-
     attr_reader :config, :uuid, :name, :count
     attr_accessor :workers
-
 
     def initialize(config)
       @config = config
@@ -140,7 +135,6 @@ class RFlow
       end
     end
 
-
     def run!
       RFlow.logger.debug "Running shard #{name} with #{count} workers"
       workers.each do |worker|
@@ -151,10 +145,8 @@ class RFlow
       workers
     end
 
-
     def shutdown!
     end
-
 
     def cleanup!
     end

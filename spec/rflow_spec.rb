@@ -1,16 +1,13 @@
 require 'spec_helper.rb'
-
 require 'open3'
 require 'rflow'
 
 describe RFlow do
-
   before(:all) do
     @extensions_file_name = File.join(File.dirname(__FILE__), 'fixtures', 'extensions_ints.rb')
   end
 
 #   context "when executing from the test script" do
-#
 #     before(:all) do
 #       load @extensions_file_name
 #     end
@@ -50,9 +47,7 @@ describe RFlow do
 #         rflow_thread.join
 #       end
 #
-#
 #       it "should run a non-sharded workflow" do
-#
 #         run_rflow_with_dsl do |c|
 #           c.setting('rflow.log_level', 'DEBUG')
 #           c.setting('rflow.application_directory_path', @temp_directory_path)
@@ -92,7 +87,6 @@ describe RFlow do
 #           File.readlines(file_name).map(&:to_i).should == expected_contents
 #         end
 #       end
-#
 #
 #       it "should run a sharded workflow" do
 #         run_rflow_with_dsl do |c|
@@ -196,7 +190,7 @@ describe RFlow do
 
       it "should not load a database if the database file already exists" do
         db_file_name = 'outdb'
-        File.open(db_file_name, 'w') { |file| file.write 'boom' }
+        File.open(db_file_name, 'w') {|file| file.write 'boom' }
 
         r = execute_rflow("load -d #{db_file_name} -c #{@config_file_name}")
 
@@ -205,7 +199,6 @@ describe RFlow do
         r[:stderr].should == ''
         r[:stdout].should match /Config database.*#{db_file_name}.*exists/
       end
-
     end
 
     context "with a complex, sharded ruby DSL config file" do
@@ -219,6 +212,7 @@ describe RFlow do
               c.setting('rflow.log_level', 'INFO')
               c.setting('rflow.application_directory_path', '#{@temp_directory_path}')
               c.setting('rflow.application_name', '#{@app_name}')
+
               # Instantiate components
               c.shard 's1', :process => 3 do |s|
                 s.component 'generate_ints1', 'RFlow::Components::GenerateIntegerSequence', 'start' => 0, 'finish' => 10, 'step' => 3
@@ -233,6 +227,7 @@ describe RFlow do
               end
               c.component 'output3', 'RFlow::Components::FileOutput', 'output_file_path' => 'out3'
               c.component 'output_all', 'RFlow::Components::FileOutput', 'output_file_path' => 'out_all'
+
               # Hook components together
               c.connect 'generate_ints1#out' => 'output1#in'
               c.connect 'generate_ints2#out' => 'output2#in'
@@ -274,12 +269,12 @@ describe RFlow do
         puts '++++++++++++++++++++'
 
         # Log file testing
-        log_lines.each { |line| line.should_not match /^ERROR/ }
-        log_lines.each { |line| line.should_not match /^DEBUG/ }
+        log_lines.each {|line| line.should_not match /^ERROR/ }
+        log_lines.each {|line| line.should_not match /^DEBUG/ }
 
         # Grab all the pids from the log, which seems to be the only
         # reliable way to get them
-        log_pids = log_lines.map { |line| /\((\d+)\)/.match(line)[1].to_i }.uniq
+        log_pids = log_lines.map {|line| /\((\d+)\)/.match(line)[1].to_i }.uniq
 
         initial_pid = r[:status].pid
         master_pid = File.read("run/#{@app_name}.pid").chomp.to_i

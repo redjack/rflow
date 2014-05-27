@@ -2,7 +2,6 @@ require 'rflow/configuration'
 
 class RFlow
   class Configuration
-
     # Ruby DSL config file controller.
     # TODO: more docs and examples
     class RubyDSL
@@ -30,7 +29,7 @@ class RFlow
       end
 
       # DSL method to specify a shard block for either a process or thread
-      def shard(shard_name, shard_options={})
+      def shard(shard_name, shard_options = {})
         raise ArgumentError, "Cannot use DEFAULT as a shard name" if shard_name == 'DEFAULT'
         shard_type = if shard_options[:thread] || shard_options[:type] == :thread
                        :thread
@@ -49,7 +48,7 @@ class RFlow
       # DSL method to specify a component.  Expects a name,
       # specification, and set of component specific options, that
       # must be marshallable into the database (i.e. should all be strings)
-      def component(component_name, component_specification, component_options={})
+      def component(component_name, component_specification, component_options = {})
         @current_shard[:components] << {
           :name => component_name,
           :specification => component_specification.to_s, :options => component_options,
@@ -88,13 +87,13 @@ class RFlow
 
       # Splits the connection string into component/port parts
       COMPONENT_PORT_STRING_REGEX = /^(\w+)#(\w+)(?:\[([^\]]+)\])?$/
+
       def parse_connection_string(connection_string)
         matched = COMPONENT_PORT_STRING_REGEX.match(connection_string)
         raise ArgumentError, "Invalid component/port string specification: #{connection_string}" unless matched
         # component_name, port_name, port_key
         [matched[1], matched[2], (matched[3] || nil)]
       end
-
 
       # Method to process the 'DSL' objects into the config database
       # via ActiveRecord
@@ -104,7 +103,6 @@ class RFlow
         process_connection_specs
       end
 
-
       # Iterates through each setting specified in the DSL and
       # creates rows in the database corresponding to the setting
       def process_setting_specs
@@ -113,7 +111,6 @@ class RFlow
           RFlow::Configuration::Setting.create! :name => setting_spec[:name], :value => setting_spec[:value]
         end
       end
-
 
       # Iterates through each shard specified in the DSL and creates
       # rows in the database corresponding to the shard and included
@@ -142,7 +139,6 @@ class RFlow
           end
         end
       end
-
 
       # Iterates through each component specified in the DSL and uses
       # 'process_connection' to insert all the parts of the connection
@@ -193,7 +189,6 @@ class RFlow
         RFlow.logger.error error_message
         raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
       end
-
 
       # Method called within the config file itself
       def self.configure

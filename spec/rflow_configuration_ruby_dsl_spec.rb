@@ -118,11 +118,12 @@ describe RFlow::Configuration::RubyDSL do
 
     RFlow::Configuration::Port.all.map(&:name).should == ['out', 'in', 'out', 'in', 'in2', 'out', 'in', 'in']
 
-    RFlow::Configuration::Connection.all.map(&:name).should == ['first#out=>second#in',
-                                                                'second#out[outkey]=>third#in[inkey]',
-                                                                'second#out=>third#in2',
-                                                                'third#out=>fourth#in',
-                                                                'third#out=>fifth#in']
+    RFlow::Configuration::Connection.all.map(&:name).should ==
+      ['first#out=>second#in',
+       'second#out[outkey]=>third#in[inkey]',
+       'second#out=>third#in2',
+       'third#out=>fourth#in',
+       'third#out=>fifth#in']
 
     puts config.to_s
   end
@@ -144,5 +145,4 @@ describe RFlow::Configuration::RubyDSL do
       end
     end.to raise_error
   end
-
 end

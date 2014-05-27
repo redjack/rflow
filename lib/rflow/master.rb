@@ -3,7 +3,6 @@ require 'rflow/shard'
 
 class RFlow
   class Master
-
     attr_accessor :name, :pid_file, :ready_write
     attr_accessor :shards
 
@@ -122,6 +121,5 @@ class RFlow
       RFlow.logger.info "#{name} exiting"
       exit 0
     end
-
   end
 end

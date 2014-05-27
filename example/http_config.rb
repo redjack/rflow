@@ -18,4 +18,3 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'replicate#out[2]' => 'http_responder#request'
   config.connect 'http_responder#response' => 'http_server#response_port'
 end
-

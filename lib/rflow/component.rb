@@ -1,5 +1,4 @@
 require 'ostruct'
-
 require 'rflow/message'
 require 'rflow/component/port'
 
@@ -9,7 +8,6 @@ class RFlow
     def self.inherited(subclass)
       RFlow::Configuration.add_available_component(subclass)
     end
-
 
     # The Component class methods used in the creation of a component
     class << self
@@ -57,7 +55,6 @@ class RFlow
           disconnected_port
         end
       end
-
 
       # Attempt to instantiate a component described by the config
       # specification. This assumes that the specification of a
@@ -110,13 +107,11 @@ class RFlow
       configure_connections!
     end
 
-
     # Returns a list of connected input ports.  Each port will have
     # one or more keys associated with a particular connection.
     def input_ports
       ports.by_type["RFlow::Component::InputPort"]
     end
-
 
     # Returns a list of connected output ports.  Each port will have
     # one or more keys associated with the particular connection.
@@ -124,12 +119,10 @@ class RFlow
       ports.by_type["RFlow::Component::OutputPort"]
     end
 
-
     # Returns a list of disconnected output ports.
     def disconnected_ports
       ports.by_type["RFlow::Component::DisconnectedPort"]
     end
-
 
     def configure_ports!
       # Send the port configuration to each component
@@ -144,7 +137,6 @@ class RFlow
       end
     end
 
-
     def configure_input_port!(port_config)
       unless self.class.defined_input_ports.include? port_config.name
         raise ArgumentError, "Input port '#{port_config.name}' not defined on component '#{self.class}'"
@@ -152,14 +144,12 @@ class RFlow
       ports << InputPort.new(port_config)
     end
 
-
     def configure_output_port!(port_config)
       unless self.class.defined_output_ports.include? port_config.name
         raise ArgumentError, "Output port '#{port_config.name}' not defined on component '#{self.class}'"
       end
       ports << OutputPort.new(port_config)
     end
-
 
     def configure_connections!
       component_config.input_ports.each do |input_port_config|
@@ -200,7 +190,6 @@ class RFlow
       end
     end
 
-
     def to_s
       string = "Component '#{name}' (#{uuid})\n"
       ports.each do |port|
@@ -212,7 +201,6 @@ class RFlow
       end
       string
     end
-
 
     # Method that should be overridden by a subclass to provide for
     # component-specific configuration.  The subclass should use the

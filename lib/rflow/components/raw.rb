@@ -16,8 +16,6 @@ class RFlow
 
       RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Raw',
                                                         RFlow::Components::Raw::Extensions::RawExtension)
-
-
     end
   end
 end

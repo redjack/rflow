@@ -21,7 +21,6 @@ RSpec.configure do |config|
   end
 end
 
-
 def decode_avro(schema_string, serialized_object)
   schema = Avro::Schema.parse(schema_string)
   serialized_object.force_encoding 'BINARY'

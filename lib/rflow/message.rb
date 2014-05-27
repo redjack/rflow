@@ -1,16 +1,12 @@
 require 'stringio'
 require 'time'
-
 require 'avro'
-
 require 'rflow/configuration'
 
 class RFlow
-
   # TODO: reduce reliance/expectation on avro serialization in method
   # names and such.
   class Message
-
     class << self
       def avro_message_schema; @avro_message_schema ||= Avro::Schema.parse(File.read(File.join(File.dirname(__FILE__), '..', '..', 'schema', 'message.avsc'))); end
 
@@ -29,7 +25,6 @@ class RFlow
                     message_hash['data'])
       end
     end
-
 
     # Serialize the current message object to Avro using the
     # org.rflow.Message Avro schema.  Note that we have to manually
@@ -53,14 +48,12 @@ class RFlow
       avro_serialized_message_bytes
     end
 
-
     attr_reader :data_type_name
     attr_accessor :processing_event
     attr_accessor :provenance
     attr_reader :data, :data_extensions
 
-
-    def initialize(data_type_name, provenance=[], data_serialization_type='avro', data_schema_string=nil, serialized_data_object=nil)
+    def initialize(data_type_name, provenance = [], data_serialization_type = 'avro', data_schema_string = nil, serialized_data_object = nil)
       # Default the values, in case someone puts in a nil instead of
       # the default
       @data_type_name = data_type_name.to_s
@@ -108,11 +101,10 @@ class RFlow
       end
     end
 
-
     class ProcessingEvent
       attr_accessor :component_instance_uuid, :started_at, :completed_at, :context
 
-      def initialize(component_instance_uuid, started_at=nil, completed_at=nil, context=nil)
+      def initialize(component_instance_uuid, started_at = nil, completed_at = nil, context = nil)
         @component_instance_uuid = component_instance_uuid
         @started_at = case started_at
                       when String then Time.xmlschema(started_at)
@@ -142,7 +134,7 @@ class RFlow
       attr_reader :schema_string, :schema, :serialization_type
       attr_accessor :data_object
 
-      def initialize(schema_string, serialization_type='avro', serialized_data_object=nil)
+      def initialize(schema_string, serialization_type= 'avro', serialized_data_object = nil)
         unless serialization_type == 'avro'
           error_message = "Only Avro serialization_type supported at the moment"
           RFlow.logger.error error_message
@@ -186,6 +178,5 @@ class RFlow
         @data_object.send(method_sym, *args, &block)
       end
     end
-
   end
 end

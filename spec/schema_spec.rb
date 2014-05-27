@@ -6,9 +6,7 @@ describe 'RFlow::Message::Data::Raw Avro Schema' do
   end
 
   it "should encode and decode an object" do
-    raw = {
-      'raw' => Array.new(256) { rand(256) }.pack('c*')
-    }
+    raw = {'raw' => Array.new(256) { rand(256) }.pack('c*')}
 
     expect {encode_avro(@schema_string, raw)}.to_not raise_error
     avro_encoded_raw = encode_avro(@schema_string, raw)
@@ -22,7 +20,5 @@ describe 'RFlow::Message::Data::Raw Avro Schema' do
     p raw['raw'].encoding
 
     decoded_raw['raw'].should == raw['raw']
-
   end
-
 end

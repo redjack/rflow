@@ -1,17 +1,13 @@
 require 'spec_helper.rb'
-
 require 'digest/md5'
-
 require 'rflow/message'
 
 describe RFlow::Message do
-
   context "if created with an unknown data type" do
     it "should throw an exception" do
       expect {RFlow::Message.new('non_existant_data_type')}.to raise_error(ArgumentError)
     end
   end
-
 
   context "if created with a known data type" do
     before(:all) do
@@ -42,7 +38,6 @@ describe RFlow::Message do
 
         context "if created with a matched schema" do
         end
-
 
         context "if created with a nil schema" do
           context "if created with a serialized data object" do
@@ -77,15 +72,13 @@ describe RFlow::Message do
         @valid_processing_event_hash = {'component_instance_uuid' => 'uuid', 'started_at' => @valid_xmlschema_time}
         @valid_processing_event = RFlow::Message::ProcessingEvent.new('uuid', @valid_xmlschema_time, @valid_xmlschema_time, 'context')
         @valid_provenance = [
-                             RFlow::Message::ProcessingEvent.new('uuid'),
-                             @valid_processing_event_hash,
-                             @valid_processing_event,
-                            ]
+          RFlow::Message::ProcessingEvent.new('uuid'),
+          @valid_processing_event_hash,
+          @valid_processing_event]
         @valid_provenance_hashes = [
-                                    {"component_instance_uuid"=>"uuid", "started_at"=>nil, "completed_at"=>nil, "context"=>nil},
-                                    {"component_instance_uuid"=>"uuid", "started_at"=>@valid_xmlschema_time, "completed_at"=>nil, "context"=>nil},
-                                    {"component_instance_uuid"=>"uuid", "started_at"=>@valid_xmlschema_time, "completed_at"=>@valid_xmlschema_time, "context"=>"context"},
-                                   ]
+          {"component_instance_uuid" => "uuid", "started_at" => nil, "completed_at" => nil, "context" => nil},
+          {"component_instance_uuid" => "uuid", "started_at" => @valid_xmlschema_time, "completed_at" => nil, "context" => nil},
+          {"component_instance_uuid" => "uuid", "started_at" => @valid_xmlschema_time, "completed_at" => @valid_xmlschema_time, "context" => "context"}]
       end
 
       it "should instantiate correctly" do
@@ -105,7 +98,6 @@ describe RFlow::Message do
         message = RFlow::Message.new('string_type', @valid_provenance)
         message.provenance.map(&:to_hash).should == @valid_provenance_hashes
       end
-
     end
 
     context "if correctly created" do
@@ -130,7 +122,6 @@ describe RFlow::Message do
         RFlow::Configuration.add_available_data_extension('string_type', ExtensionModule)
         message = RFlow::Message.new('string_type')
         message.data.methods.should include(:ext_method)
-
       end
     end
   end
@@ -173,10 +164,8 @@ describe RFlow::Message do
 
     Digest::MD5.hexdigest(message_avro).should == Digest::MD5.hexdigest(processed_message_avro)
 
-
     message_data_avro.should == processed_message_data_avro
     Digest::MD5.hexdigest(message_data_avro).should == Digest::MD5.hexdigest(processed_message_data_avro)
     Digest::MD5.hexdigest(message.data.raw).should == Digest::MD5.hexdigest(processed_message.data.raw)
   end
-
 end

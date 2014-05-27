@@ -1,5 +1,4 @@
 require 'spec_helper.rb'
-
 require 'rflow/components/raw'
 
 describe 'RFlow::Message::Data::Raw Avro Schema' do
@@ -22,5 +21,4 @@ describe 'RFlow::Message::Data::Raw Avro Schema' do
 
     decoded_raw.should == raw
   end
-
 end

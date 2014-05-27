@@ -3,7 +3,6 @@ RFlow::Configuration::RubyDSL.configure do |config|
   # levels, and component specific stuffs
   config.setting('rflow.log_level', 'DEBUG')
   config.setting('rflow.application_directory_path', '../tmp')
-
   config.setting('rflow.application_name', 'testapp')
 
   # Instantiate components
@@ -21,13 +20,8 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'generate_ints#even_odd_out[odd]' => 'output_odd#in'
   config.connect 'generate_ints#even_odd_out' => 'output_even_odd#in'
 
-
-
   config.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', 'start' => 20, 'finish' => 30
   config.component 'output_even_odd2', 'RFlow::Components::FileOutput', 'output_file_path' => '../tmp/out_even_odd2'
 
   config.connect 'generate_ints2#even_odd_out' => 'output_even_odd2#in'
-
 end
-
-

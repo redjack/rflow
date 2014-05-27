@@ -1,7 +1,6 @@
 require 'rflow/util'
 
 class RFlow
-
   # Contains all the configuration data and methods for RFlow.
   # Interacts directly with underlying sqlite database, and keeps a
   # registry of available data types, extensions, and components.
@@ -15,12 +14,10 @@ class RFlow
   class Configuration
     class ConfigurationInvalid < StandardError; end
 
-
     # A class to hold DB config and connection information
     class ConfigDB < ActiveRecord::Base
-        self.abstract_class = true
+      self.abstract_class = true
     end
-
 
     # A collection class for data extensions that supports a naive
     # prefix-based 'inheritance' on lookup.  When looking up a key
@@ -28,7 +25,6 @@ class RFlow
     # existing key is a string prefix of the lookup key. All the
     # results are consolidated into a single, flattened array.
     class DataExtensionCollection
-
       def initialize
         # TODO: choose a different data structure ...
         @hash = Hash.new {|hash, key| hash[key] = Array.new}
@@ -53,12 +49,9 @@ class RFlow
       def clear
         @hash.clear
       end
-
     end
 
-
     class << self
-
       # A collection of data types (schemas) indexed by their name and
       # their schema type ('avro').
       def available_data_types
@@ -117,7 +110,6 @@ class RFlow
       available_data_extensions.add data_type_name, data_extension
     end
 
-
     # Used when RFlow::Component is subclassed to add another
     # available component to the list.
     def self.add_available_component(component)
@@ -129,7 +121,6 @@ class RFlow
       available_components[component.name] = component
     end
 
-
     # Connect to the configuration sqlite database, but use the
     # ConfigDB subclass to protect the connection information from
     # other ActiveRecord apps (i.e. Rails)
@@ -140,7 +131,6 @@ class RFlow
                                     :database  => config_database_path)
     end
 
-
     # Using default ActiveRecord migrations, attempt to migrate the
     # database to the latest version.
     def self.migrate_database
@@ -148,7 +138,6 @@ class RFlow
       migrations_directory_path = File.join(File.dirname(__FILE__), 'configuration', 'migrations')
       ActiveRecord::Migrator.migrate migrations_directory_path
     end
-
 
     # Load the config file, which should load/process/store all the
     # elements.  Only run this after the database has been setup
@@ -160,7 +149,7 @@ class RFlow
 
     # Connect to the configuration database, migrate it to the latest
     # version, and process a config file if provided.
-    def self.initialize_database(config_database_path, config_file_path=nil)
+    def self.initialize_database(config_database_path, config_file_path = nil)
       RFlow.logger.debug "Initializing config database (#{Dir.getwd}) '#{config_database_path}'"
 
       RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{config_database_path}'"
@@ -187,7 +176,6 @@ class RFlow
       self.new(config_database_path)
     end
 
-
     # Make sure that the configuration has all the necessary values set.
     def self.merge_defaults!
       Setting::DEFAULTS.each do |name, default_value_or_proc|
@@ -202,15 +190,13 @@ class RFlow
       end
     end
 
-
     attr_accessor :config_database_path
     attr_accessor :cached_settings
     attr_accessor :cached_components
     attr_accessor :cached_ports
     attr_accessor :cached_connections
 
-
-    def initialize(config_database_path=nil)
+    def initialize(config_database_path = nil)
       @cached_settings = Hash.new
       @cached_components = Hash.new
       @cached_ports = []
@@ -237,7 +223,6 @@ class RFlow
         raise ArgumentError, error_message
       end
     end
-
 
     def to_s
       string = "Configuration:\n"

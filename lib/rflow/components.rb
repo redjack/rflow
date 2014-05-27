@@ -6,5 +6,3 @@ class RFlow
 end
 
 require 'rflow/components/raw'
-
-

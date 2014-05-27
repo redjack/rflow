@@ -15,7 +15,7 @@ class RFlow
     # Delegate log methods to internal logger
     def_delegators :@internal_logger, :fatal, :error, :warn, :info, :debug
 
-    def initialize(config, include_stdout=nil)
+    def initialize(config, include_stdout = nil)
       @log_file_path = config['rflow.log_file_path']
       @log_level = config['rflow.log_level']
 
@@ -61,6 +61,5 @@ class RFlow
       internal_logger.warn "Changing log level from #{original_log_level} to #{new_log_level}"
       internal_logger.level = LNAMES.index new_log_level
     end
-
   end
 end

@@ -2,7 +2,6 @@ require 'rflow/message'
 
 class RFlow
   class Connection
-
     class << self
       def build(config)
         case config.type
@@ -24,7 +23,6 @@ class RFlow
       @options = config.options
     end
 
-
     # Subclass and implement to be able to handle future 'recv'
     # methods.  Will only be called in the context of a running
     # EventMachine reactor
@@ -32,14 +30,12 @@ class RFlow
       raise NotImplementedError, "Raw connections do not support connect_input.  Please subclass and define a connect_output method."
     end
 
-
     # Subclass and implement to be able to handle future 'send'
     # methods.  Will only be called in the context of a running
     # EventMachine reactor
     def connect_output!
       raise NotImplementedError, "Raw connections do not support connect_output.  Please subclass and define a connect_output method."
     end
-
 
     # Subclass and implement to handle outgoing messages.  The message
     # will be a RFlow::Message object and the subclasses are expected

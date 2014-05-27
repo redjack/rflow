@@ -12,12 +12,9 @@ module SimpleDataExtension
 end
 RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Integer', SimpleDataExtension)
 
-
-
 # Example of creating and registering a new schema
 long_integer_schema = '{"type": "long"}'
 RFlow::Configuration.add_available_data_type('RFlow::Message::Data::Integer', 'avro', long_integer_schema)
-
 
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
@@ -48,7 +45,6 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
       timer.cancel if @start > @finish
     end
   end
-
 end
 
 class RFlow::Components::Replicate < RFlow::Component
@@ -76,7 +72,6 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   output_port :filtered
   output_port :dropped
   output_port :errored
-
 
   def configure!(config)
     @filter_proc = eval("lambda {|message| #{config['filter_proc_string']} }")
@@ -113,11 +108,9 @@ class RFlow::Components::FileOutput < RFlow::Component
     output_file.flush
   end
 
-
   def cleanup
     output_file.close
   end
-
 end
 
 class SimpleComponent < RFlow::Component
@@ -130,5 +123,3 @@ class SimpleComponent < RFlow::Component
   def shutdown!; end
   def cleanup!; end
 end
-
-

@@ -26,5 +26,4 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'filter#filtered' => 'replicate#in'
   config.connect 'replicate#out' => 'output1#in'
   config.connect 'replicate#out' => 'output2#in'
-
 end

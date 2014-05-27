@@ -14,8 +14,4 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'generate_ints#even_odd_out' => 'output#in'
   config.connect 'generate_ints#even_odd_out[even]' => 'output_even#in'
   config.connect 'generate_ints#even_odd_out[odd]' => 'output_odd#in'
-
-
 end
-
-

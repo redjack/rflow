@@ -1,10 +1,8 @@
 require 'spec_helper.rb'
-
 require 'open3'
 require 'rflow'
 
 describe RFlow::Logger do
-
   let :log_file_path do
     File.join(@temp_directory_path, 'logfile')
   end

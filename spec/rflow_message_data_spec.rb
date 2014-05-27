@@ -1,5 +1,4 @@
 require 'spec_helper.rb'
-
 require 'rflow/message'
 
 describe RFlow::Message::Data do

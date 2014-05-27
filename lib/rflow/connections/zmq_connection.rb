@@ -1,12 +1,10 @@
 require 'em-zeromq'
-
 require 'rflow/connection'
 require 'rflow/message'
 
 class RFlow
   module Connections
     class ZMQConnection < RFlow::Connection
-
       class << self
         attr_accessor :zmq_context
 
@@ -35,7 +33,6 @@ class RFlow
         zmq_context
       end
 
-
       def validate_options!
         # TODO: Normalize/validate configuration
         missing_options = []
@@ -56,7 +53,6 @@ class RFlow
         true
       end
 
-
       def connect_input!
         RFlow.logger.debug "Connecting input #{uuid} with #{options.find_all {|k, v| k.to_s =~ /input/}}"
         self.input_socket = zmq_context.socket(ZMQ.const_get(options['input_socket_type'].to_sym))
@@ -73,7 +69,6 @@ class RFlow
         input_socket
       end
 
-
       def connect_output!
         RFlow.logger.debug "Connecting output #{uuid} with #{options.find_all {|k, v| k.to_s =~ /output/}}"
         self.output_socket = zmq_context.socket(ZMQ.const_get(options['output_socket_type'].to_sym))
@@ -81,7 +76,6 @@ class RFlow
                            options['output_address'].to_s)
         output_socket
       end
-
 
       # TODO: fix this tight loop of retries
       def send_message(message)
@@ -95,7 +89,6 @@ class RFlow
           retry
         end
       end
-
     end
   end
 end

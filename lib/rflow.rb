@@ -1,20 +1,14 @@
 require "rubygems"
 require "bundler/setup"
-
 require 'time'
-
 require 'active_record'
 require 'eventmachine'
 require 'sqlite3'
-
 require 'rflow/configuration'
-
 require 'rflow/master'
 require 'rflow/message'
-
 require 'rflow/components'
 require 'rflow/connections'
-
 require 'rflow/logger'
 
 class RFlow
@@ -29,7 +23,7 @@ class RFlow
     attr_accessor :master
   end
 
-  def self.run(config_database_path=nil, daemonize=nil)
+  def self.run(config_database_path = nil, daemonize = nil)
     self.configuration = Configuration.new(config_database_path)
 
     if config_database_path
