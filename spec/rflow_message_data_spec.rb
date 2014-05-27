@@ -16,7 +16,7 @@ describe RFlow::Message::Data do
   end
 
   context "if created with an invalid schema for the serialization" do
-    it "should throw and exception" do
+    it "should throw an exception" do
       expect {RFlow::Message::Data.new(@invalid_avro_schema_string)}.to raise_error(ArgumentError)
       expect {RFlow::Message::Data.new(@invalid_avro_schema_string, 'avro')}.to raise_error(ArgumentError)
       expect {RFlow::Message::Data.new(@invalid_avro_schema_string, 'avro')}.to raise_error(ArgumentError)

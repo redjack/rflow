@@ -18,7 +18,7 @@ describe RFlow::Component::HashPort do
 end
 
 describe RFlow::Component::InputPort do
-  context ".connect!" do
+  context "#connect!" do
     it "should be connected" do
       connection_double = double('connection')
       connection_double.should_receive(:connect_input!)
@@ -38,8 +38,8 @@ describe RFlow::Component::InputPort do
 end
 
 describe RFlow::Component::OutputPort do
-  context ".connect!" do
-    it "shouldbe connected" do
+  context "#connect!" do
+    it "should be connected" do
       connection_double = double('connection')
       connection_double.should_receive(:connect_output!)
 

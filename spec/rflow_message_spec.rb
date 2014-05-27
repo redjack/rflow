@@ -33,11 +33,8 @@ describe RFlow::Message do
           expect {RFlow::Message.new('string_type', [], 'avro')}.to_not raise_error
         end
 
-        context "if created with a mismatched schema" do
-        end
-
-        context "if created with a matched schema" do
-        end
+        context "if created with a mismatched schema"
+        context "if created with a matched schema"
 
         context "if created with a nil schema" do
           context "if created with a serialized data object" do

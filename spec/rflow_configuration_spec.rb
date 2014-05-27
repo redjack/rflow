@@ -5,9 +5,7 @@ describe RFlow::Configuration do
   describe '.add_available_data_type' do
     context 'if passed a data_serialization that is not avro or xml' do
       it "should throw an exception" do
-        expect do
-          RFlow::Configuration.add_available_data_type('A', 'boom', 'schema')
-        end.to raise_error(ArgumentError)
+        expect { RFlow::Configuration.add_available_data_type('A', 'boom', 'schema') }.to raise_error(ArgumentError)
       end
 
       it "should not update the available_data_types" do
