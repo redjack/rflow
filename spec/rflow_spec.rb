@@ -12,7 +12,7 @@ describe RFlow do
       load @extensions_file_name
     end
 
-    describe '.run' do
+    describe '.run!' do
       before(:each) do
         @original_directory_path = Dir.getwd
         @run_directory_path = File.join(@temp_directory_path, 'run')
@@ -36,7 +36,7 @@ describe RFlow do
 
           RFlow::Configuration.merge_defaults!
 
-          RFlow.run nil, false
+          RFlow.run! nil, false
         end
 
         # TODO: figure out a way to get rid of this sleep, as there
