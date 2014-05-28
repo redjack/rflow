@@ -44,6 +44,12 @@ class RFlow
       end
     end
 
+    def unhandle_signals
+      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGCHLD', 'SIGUSR1', 'SIGUSR2'].each do |signal|
+        Signal.trap signal, 'DEFAULT'
+      end
+    end
+
     def run
       Log4r::NDC.clear
       Log4r::NDC.push name
@@ -66,7 +72,8 @@ class RFlow
       EM.run do
         # TODO: Monitor the workers
       end
-
+    ensure
+      unhandle_signals
       @pid_file.safe_unlink
     end
 
