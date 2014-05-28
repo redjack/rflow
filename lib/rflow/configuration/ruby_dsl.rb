@@ -177,17 +177,12 @@ class RFlow
         connection.save!
 
       rescue RFlow::Configuration::Component::ComponentNotFound => e
-        error_message = "Component '#{e.message}' not found at #{connection_spec[:config_line]}"
-        RFlow.logger.error error_message
-        raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
+        raise RFlow::Configuration::Connection::ConnectionInvalid, "Component '#{e.message}' not found at #{connection_spec[:config_line]}"
       rescue Exception => e
         # TODO: Figure out why an ArgumentError doesn't put the
         # offending message into e.message, even though it is printed
         # out if not caught
-        error_message = "#{e.class}: #{e.message} at config '#{connection_spec[:config_line]}'"
-        RFlow.logger.debug "Exception #{e.class} - " + error_message
-        RFlow.logger.error error_message
-        raise RFlow::Configuration::Connection::ConnectionInvalid, error_message
+        raise RFlow::Configuration::Connection::ConnectionInvalid, "#{e.class}: #{e.message} at config '#{connection_spec[:config_line]}'"
       end
 
       # Method called within the config file itself

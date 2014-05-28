@@ -33,9 +33,7 @@ class RFlow
     # Bail unless you have some of the basic information.
     # TODO: rethink this when things get more dynamic
     unless configuration['rflow.application_directory_path']
-      error_message = "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
-      RFlow.logger.error "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
-      raise ArgumentError, error_message
+      raise ArgumentError, "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
     end
 
     Dir.chdir configuration['rflow.application_directory_path']
@@ -48,8 +46,5 @@ class RFlow
   rescue SystemExit => e
     # Do nothing, just prevent a normal exit from causing an unsightly
     # error in the logs
-  rescue Exception => e
-    logger.fatal "Exception caught: #{e.class} - #{e.message}\n#{e.backtrace.join "\n"}"
-    exit 1
   end
 end

@@ -11,9 +11,7 @@ class RFlow
         RFlow.logger.warn "Already running #{read.to_s}, not writing PID to file '#{to_s}'"
         return nil
       elsif running?
-        error_message = "Already running #{read.to_s}, possibly stale PID file '#{to_s}'"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Already running #{read.to_s}, possibly stale PID file '#{to_s}'"
       elsif exist?
         RFlow.logger.warn "Found stale PID #{read.to_s} in PID file '#{to_s}', removing"
         unlink

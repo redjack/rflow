@@ -76,18 +76,12 @@ class RFlow
                                        config.specification.constantize.new(config)
                                      end
           rescue NameError => e
-            error_message = "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): the class '#{config.specification}' was not found"
-            RFlow.logger.error error_message
-            raise RuntimeError, error_message
+            raise RuntimeError, "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): the class '#{config.specification}' was not found"
           rescue Exception => e
-            error_message = "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): #{e.class} #{e.message}"
-            RFlow.logger.error error_message
-            raise RuntimeError, error_message
+            raise RuntimeError, "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): #{e.class} #{e.message}"
           end
         else
-          error_message = "Non-managed components not yet implemented for component '#{config.name}' as '#{config.specification}' (#{config.uuid})"
-          RFlow.logger.error error_message
-          raise NotImplementedError, error_message
+          raise NotImplementedError, "Non-managed components not yet implemented for component '#{config.name}' as '#{config.specification}' (#{config.uuid})"
         end
 
         instantiated_component

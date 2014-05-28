@@ -76,15 +76,11 @@ class RFlow
     # data_serialization_type.
     def self.add_available_data_type(data_type_name, data_serialization_type, data_schema)
       unless data_serialization_type == 'avro'
-        error_message = "Data serialization_type must be 'avro' for '#{data_type_name}'"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Data serialization_type must be 'avro' for '#{data_type_name}'"
       end
 
       if available_data_types[data_type_name.to_s].include? data_serialization_type.to_s
-        error_message = "Data type '#{data_type_name}' already defined for serialization_type '#{data_serialization_type}'"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Data type '#{data_type_name}' already defined for serialization_type '#{data_serialization_type}'"
       end
 
       available_data_types[data_type_name.to_s][data_serialization_type.to_s] = data_schema
@@ -98,9 +94,7 @@ class RFlow
     # DataExtensionCollection class
     def self.add_available_data_extension(data_type_name, data_extension)
       unless data_extension.is_a? Module
-        error_message = "Invalid data extension #{data_extension} for #{data_type_name}.  Only Ruby Modules allowed"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Invalid data extension #{data_extension} for #{data_type_name}.  Only Ruby Modules allowed"
       end
 
       available_data_extensions.add data_type_name, data_extension
@@ -110,9 +104,7 @@ class RFlow
     # available component to the list.
     def self.add_available_component(component)
       if available_components.include?(component.name)
-        error_message = "Component already '#{component.name}' already defined"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Component already '#{component.name}' already defined"
       end
       available_components[component.name] = component
     end
@@ -215,9 +207,7 @@ class RFlow
         Port.first
         Connection.first
       rescue ActiveRecord::StatementInvalid => e
-        error_message = "Invalid schema in configuration database: #{e.message}"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Invalid schema in configuration database: #{e.message}"
       end
     end
 

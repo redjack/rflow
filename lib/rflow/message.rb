@@ -78,17 +78,13 @@ class RFlow
       # message without needing to resort to the registered schema.
       registered_data_schema_string = RFlow::Configuration.available_data_types[@data_type_name][data_serialization_type.to_s]
       unless registered_data_schema_string
-        error_message = "Data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}' not found"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}' not found"
       end
 
       # TODO: think about registering the schemas automatically if not
       # found in Configuration
       if data_schema_string && (registered_data_schema_string != data_schema_string)
-        error_message = "Passed schema ('#{data_schema_string}') does not equal registered schema ('#{registered_data_schema_string}') for data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}'"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
+        raise ArgumentError, "Passed schema ('#{data_schema_string}') does not equal registered schema ('#{registered_data_schema_string}') for data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}'"
       end
 
       @data = Data.new(registered_data_schema_string, data_serialization_type.to_s, serialized_data_object)
@@ -136,9 +132,7 @@ class RFlow
 
       def initialize(schema_string, serialization_type= 'avro', serialized_data_object = nil)
         unless serialization_type.to_s == 'avro'
-          error_message = "Only Avro serialization_type supported at the moment"
-          RFlow.logger.error error_message
-          raise ArgumentError, error_message
+          raise ArgumentError, "Only Avro serialization_type supported at the moment"
         end
 
         @schema_string = schema_string
@@ -147,9 +141,7 @@ class RFlow
         begin
           @schema = Avro::Schema.parse(schema_string)
         rescue Exception => e
-          error_message = "Invalid schema '#{@schema_string}': #{e}: #{e.message}"
-          RFlow.logger.error error_message
-          raise ArgumentError, error_message
+          raise ArgumentError, "Invalid schema '#{@schema_string}': #{e}: #{e.message}"
         end
 
         if serialized_data_object
