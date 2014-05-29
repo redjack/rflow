@@ -55,6 +55,6 @@ class RFlow
   def self.start_master_node
     @master = Master.new(configuration)
     master.daemonize! if @daemonize
-    master.run # Runs EM and blocks until EM.stop
+    master.run! # blocks until EventMachine stops
   end
 end
