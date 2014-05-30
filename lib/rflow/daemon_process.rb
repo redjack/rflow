@@ -82,6 +82,14 @@ class RFlow
       Log4r::NDC.push @name
     end
 
+    def clone_logging_context
+      Log4r::NDC.clone_stack
+    end
+
+    def apply_logging_context(context)
+      Log4r::NDC.inherit(context)
+    end
+
     def update_process_name
       # set the visible process name to match the process's name
       $0 = @name
@@ -114,8 +122,12 @@ class RFlow
 
     def trap_signal(signal)
       # Log4r and traps don't mix, so we need to put it in another thread
+      context = clone_logging_context
       Signal.trap signal do
-        Thread.new { yield }.join
+        Thread.new do
+          apply_logging_context context
+          yield
+        end.join
       end
     end
 
