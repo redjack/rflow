@@ -19,9 +19,9 @@ class RFlow
       validates_uniqueness_of :uuid
       validates_presence_of :output_port_uuid, :input_port_uuid
 
-      validate :all_required_options_present
+      validate :all_required_options_present?
 
-      def all_required_options_present
+      def all_required_options_present?
         self.class.required_options.each do |option_name|
           unless self.options.include? option_name.to_s
             errors.add(:options, "must include #{option_name} for #{self.class.to_s}")
@@ -31,8 +31,8 @@ class RFlow
 
       def merge_default_options!
         self.options ||= {}
-        self.class.default_options.each do |option_name, default_value_or_proc|
-          self.options[option_name.to_s] ||= default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call(self) : default_value_or_proc
+        self.class.default_options.each do |name, default_value_or_proc|
+          self.options[name.to_s] ||= default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call(self) : default_value_or_proc
         end
       end
 
