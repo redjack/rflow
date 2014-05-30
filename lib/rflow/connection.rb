@@ -14,7 +14,9 @@ class RFlow
     end
 
     attr_accessor :config, :uuid, :name, :options
-    attr_accessor :recv_callback
+    attr_writer :recv_callback
+    protected
+    attr_reader :recv_callback
 
     def initialize(config)
       @config = config
@@ -27,7 +29,7 @@ class RFlow
     # methods.  Will only be called in the context of a running
     # EventMachine reactor
     def connect_input!
-      raise NotImplementedError, "Raw connections do not support connect_input.  Please subclass and define a connect_output method."
+      raise NotImplementedError, "Raw connections do not support connect_input.  Please subclass and define a connect_input method."
     end
 
     # Subclass and implement to be able to handle future 'send'
