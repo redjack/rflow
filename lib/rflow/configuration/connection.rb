@@ -3,7 +3,7 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
-    class Connection < ConfigDB
+    class Connection < ConfigurationItem
       class ConnectionInvalid < StandardError; end
 
       include UUIDKeyed

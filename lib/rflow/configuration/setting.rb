@@ -3,7 +3,7 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
-    class Setting < ConfigDB
+    class Setting < ConfigurationItem
       include ActiveModel::Validations
 
       self.primary_key = 'name'

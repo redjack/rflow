@@ -10,11 +10,6 @@ class RFlow
   # subclasses, the controllers are things like RubyDSL, and the views
   # are defined relative to the controllers
   class Configuration
-    # A class to hold DB config and connection information
-    class ConfigDB < ActiveRecord::Base
-      self.abstract_class = true
-    end
-
     # A collection class for data extensions that supports a naive
     # prefix-based 'inheritance' on lookup.  When looking up a key
     # with [] all existing keys will be examined to determine if the
@@ -23,28 +18,32 @@ class RFlow
     class DataExtensionCollection
       def initialize
         # TODO: choose a different data structure ...
-        @hash = Hash.new {|hash, key| hash[key] = []}
+        @extensions_for = Hash.new {|hash, key| hash[key] = []}
       end
 
       # Return an array of all of the values that have keys that are
       # prefixes of the lookup key.
       def [](key)
-        key_string = key.to_s
-        @hash.map do |data_type, extensions|
-          key_string.start_with?(data_type) ? extensions : nil
-        end.flatten.compact
+        @extensions_for.
+          find_all {|data_type, _| key.to_s.start_with?(data_type) }.
+          flat_map {|_, extensions| extensions }
       end
 
       # Adds a data extension for a given data type to the collection
       def add(data_type, extension)
-        @hash[data_type.to_s] << extension
+        @extensions_for[data_type.to_s] << extension
       end
 
       # Remove all elements from the collection.  Useful for testing,
       # not much else
       def clear
-        @hash.clear
+        @extensions_for.clear
       end
+    end
+
+    # Base class for persisted RFlow configuration items.
+    class ConfigurationItem < ActiveRecord::Base
+      self.abstract_class = true
     end
 
     class << self
@@ -65,147 +64,121 @@ class RFlow
       def available_components
         @available_components ||= {}
       end
-    end
 
-    # TODO: refactor each of these add_available_* into collections to
-    # make DRYer.  Also figure out what to do with all to to_syms
+      # TODO: refactor each of these add_available_* into collections to
+      # make DRYer.  Also figure out what to do with all to to_syms
 
-    # Add a schema to the available_data_types class attribute.
-    # Schema is indexed by data_type_name and schema/serialization
-    # type.  'avro' is currently the only supported
-    # data_serialization_type.
-    def self.add_available_data_type(data_type_name, data_serialization_type, data_schema)
-      unless data_serialization_type == 'avro'
-        raise ArgumentError, "Data serialization_type must be 'avro' for '#{data_type_name}'"
+      # Add a schema to the available_data_types class attribute.
+      # Schema is indexed by data_type_name and schema/serialization
+      # type.  'avro' is currently the only supported serialization_type.
+      def add_available_data_type(name, serialization_type, schema)
+        raise ArgumentError, "Data serialization_type must be 'avro' for '#{name}'" unless serialization_type == 'avro'
+
+        if available_data_types[name.to_s].include? serialization_type.to_s
+          raise ArgumentError, "Data type '#{name}' already defined for serialization_type '#{serialization_type}'"
+        end
+
+        available_data_types[name.to_s][serialization_type.to_s] = schema
       end
 
-      if available_data_types[data_type_name.to_s].include? data_serialization_type.to_s
-        raise ArgumentError, "Data type '#{data_type_name}' already defined for serialization_type '#{data_serialization_type}'"
+      # Add a data extension to the available_data_extensions class
+      # attributes.  The data_extension parameter should be the name of
+      # a ruby module that will extend RFlow::Message::Data object to
+      # provide additional methods/capability.  Naive, prefix-based
+      # inheritance is possible, see available_data_extensions or the
+      # DataExtensionCollection class
+      def add_available_data_extension(data_type_name, extension)
+        unless extension.is_a? Module
+          raise ArgumentError, "Invalid data extension #{extension} for #{data_type_name}.  Only Ruby Modules allowed"
+        end
+
+        available_data_extensions.add data_type_name, extension
       end
 
-      available_data_types[data_type_name.to_s][data_serialization_type.to_s] = data_schema
-    end
-
-    # Add a data extension to the available_data_extensions class
-    # attributes.  The data_extension parameter should be the name of
-    # a ruby module that will extend RFlow::Message::Data object to
-    # provide additional methods/capability.  Naive, prefix-based
-    # inheritance is possible, see available_data_extensions or the
-    # DataExtensionCollection class
-    def self.add_available_data_extension(data_type_name, data_extension)
-      unless data_extension.is_a? Module
-        raise ArgumentError, "Invalid data extension #{data_extension} for #{data_type_name}.  Only Ruby Modules allowed"
+      # Used when RFlow::Component is subclassed to add another
+      # available component to the list.
+      def add_available_component(component)
+        if available_components.include?(component.name)
+          raise ArgumentError, "Component already '#{component.name}' already defined"
+        end
+        available_components[component.name] = component
       end
 
-      available_data_extensions.add data_type_name, data_extension
-    end
-
-    # Used when RFlow::Component is subclassed to add another
-    # available component to the list.
-    def self.add_available_component(component)
-      if available_components.include?(component.name)
-        raise ArgumentError, "Component already '#{component.name}' already defined"
-      end
-      available_components[component.name] = component
-    end
-
-    # Connect to the configuration sqlite database, but use the
-    # ConfigDB subclass to protect the connection information from
-    # other ActiveRecord apps (i.e. Rails)
-    def self.establish_config_database_connection(config_database_path)
-      RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{config_database_path}'"
-      ActiveRecord::Base.logger = RFlow.logger
-      ConfigDB.establish_connection(:adapter => "sqlite3",
-                                    :database  => config_database_path)
-    end
-
-    # Using default ActiveRecord migrations, attempt to migrate the
-    # database to the latest version.
-    def self.migrate_database
-      RFlow.logger.debug "Applying default migrations to config database"
-      migrations_directory_path = File.join(File.dirname(__FILE__), 'configuration', 'migrations')
-      ActiveRecord::Migration.verbose = false
-      ActiveRecord::Migrator.migrate migrations_directory_path
-    end
-
-    # Load the config file, which should load/process/store all the
-    # elements.  Only run this after the database has been setup
-    def self.process_config_file(config_file_path)
-      RFlow.logger.info "Processing config file (#{Dir.getwd}) '#{config_file_path}'"
-      load config_file_path
-    end
-
-
-    # Connect to the configuration database, migrate it to the latest
-    # version, and process a config file if provided.
-    def self.initialize_database(config_database_path, config_file_path = nil)
-      RFlow.logger.debug "Initializing config database (#{Dir.getwd}) '#{config_database_path}'"
-
-      RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{config_database_path}'"
-      ActiveRecord::Base.logger = RFlow.logger
-      ActiveRecord::Base.establish_connection(:adapter => "sqlite3",
-                                              :database  => config_database_path)
-
-      migrate_database
-
-      expanded_config_file_path = File.expand_path config_file_path if config_file_path
-
-      working_dir = Dir.getwd
-      Dir.chdir File.dirname(config_database_path)
-
-      if config_file_path
-        process_config_file(expanded_config_file_path)
+      # Connect to the configuration sqlite database, but use the
+      # ConfigurationItem class to protect the connection information from
+      # other ActiveRecord apps (i.e. Rails)
+      def establish_config_database_connection(database_path)
+        RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{database_path}'"
+        ActiveRecord::Base.logger = RFlow.logger
+        ConfigurationItem.establish_connection(:adapter => "sqlite3", :database => database_path)
       end
 
-      RFlow.logger.debug "Defaulting non-existing config values"
-      merge_defaults!
+      # Using default ActiveRecord migrations, attempt to migrate the
+      # database to the latest version.
+      def migrate_database
+        RFlow.logger.debug "Applying default migrations to config database"
+        migrations_path = File.join(File.dirname(__FILE__), 'configuration', 'migrations')
+        ActiveRecord::Migration.verbose = false
+        ActiveRecord::Migrator.migrate migrations_path
+      end
 
-      Dir.chdir working_dir
+      # Load the config file, which should load/process/store all the
+      # elements.  Only run this after the database has been setup
+      def process_config_file(path)
+        RFlow.logger.info "Processing config file (#{Dir.getwd}) '#{path}'"
+        load path
+      end
 
-      self.new(config_database_path)
-    end
+      # Connect to the configuration database, migrate it to the latest
+      # version, and process a config file if provided.
+      def initialize_database(database_path, config_file_path = nil)
+        RFlow.logger.debug "Initializing config database (#{Dir.getwd}) '#{database_path}'"
 
-    # Make sure that the configuration has all the necessary values set.
-    def self.merge_defaults!
-      Setting::DEFAULTS.each do |name, default_value_or_proc|
-        setting = Setting.find_or_create_by_name(:name => name,
-                                                 :value => default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call() : default_value_or_proc)
-        unless setting.valid?
-          error_message = setting.errors.map do |attribute, error_string|
-            error_string
-          end.join ', '
-          raise RuntimeError, error_message
+        # TODO should not need this line
+        ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => database_path)
+
+        establish_config_database_connection database_path
+        migrate_database
+
+        working_dir = Dir.getwd
+        Dir.chdir File.dirname(database_path)
+
+        if config_file_path
+          process_config_file File.expand_path(config_file_path)
+        end
+
+        RFlow.logger.debug "Defaulting non-existing config values"
+        merge_defaults!
+
+        Dir.chdir working_dir
+
+        self.new(database_path)
+      end
+
+      # Make sure that the configuration has all the necessary values set.
+      def merge_defaults!
+        Setting::DEFAULTS.each do |name, default_value_or_proc|
+          value = default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call() : default_value_or_proc
+          setting = Setting.find_or_create_by_name(:name => name, :value => value)
+          unless setting.valid?
+            raise RuntimeError, setting.errors.map {|_, msg| msg }.join(', ')
+          end
         end
       end
     end
 
-    attr_accessor :config_database_path
-    attr_accessor :cached_settings
-    attr_accessor :cached_components
-    attr_accessor :cached_ports
-    attr_accessor :cached_connections
-
-    def initialize(config_database_path = nil)
-      @cached_settings = {}
-      @cached_components = {}
-      @cached_ports = []
-      @cached_connections = []
-
+    def initialize(database_path = nil)
       # If there is not a config DB path, assume that an AR
-      # conncection has already been established
-      if config_database_path
-        @config_database_path = config_database_path
-        self.class.establish_config_database_connection(config_database_path)
+      # connection has already been established
+      if database_path
+        @database_path = database_path
+        Configuration.establish_config_database_connection(database_path)
       end
 
       # Validate the connected database.
       # TODO: make this more complete, i.e. validate the various columns
       begin
-        Setting.first
-        Shard.first
-        Component.first
-        Port.first
-        Connection.first
+        [Setting, Shard, Component, Port, Connection].each(&:first)
       rescue ActiveRecord::StatementInvalid => e
         raise ArgumentError, "Invalid schema in configuration database: #{e.message}"
       end
@@ -235,34 +208,13 @@ class RFlow
       string
     end
 
-    # Helper method to access settings with minimal syntax
-    def [](setting_name)
-      Setting.find_by_name(setting_name).value rescue nil
-    end
-
-    def settings
-      Setting.all
-    end
-
-    def shards
-      Shard.all
-    end
-
-    def shard(shard_uuid)
-      Shard.find_by_uuid shard_uuid
-    end
-
-    def components
-      Component.all
-    end
-
-    def component(component_uuid)
-      Component.find_by_uuid component_uuid
-    end
-
-    def available_components
-      self.class.available_components
-    end
+    def [](name); Setting.find_by_name(name).value rescue nil; end
+    def settings; Setting.all; end
+    def shards; Shard.all; end
+    def shard(uuid); Shard.find_by_uuid uuid; end
+    def components; Component.all; end
+    def component(uuid); Component.find_by_uuid uuid; end
+    def available_components; Configuration.available_components; end
   end
 end
 

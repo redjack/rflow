@@ -3,7 +3,7 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
-    class Component < ConfigDB
+    class Component < ConfigurationItem
       include UUIDKeyed
       include ActiveModel::Validations
 
