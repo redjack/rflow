@@ -117,6 +117,16 @@ class RFlow
           end
         end
       end
+
+      def recv_callback=(callback)
+        connections_for.each do |port_key, connections|
+          connections.each do |connection|
+            connection.recv_callback = Proc.new do |message|
+              callback.call self, port_key, connection, message
+            end
+          end
+        end
+      end
     end
 
     class OutputPort < HashPort
