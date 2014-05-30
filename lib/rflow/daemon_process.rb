@@ -20,8 +20,8 @@ class RFlow
     def run!
       register_logging_context
       update_process_name
-      spawn_subprocesses
       handle_signals
+      spawn_subprocesses
       signal_successful_start
 
       RFlow.logger.info "#{@role} started"
