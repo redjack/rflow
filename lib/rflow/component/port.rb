@@ -5,9 +5,7 @@ class RFlow
     # adding two together
     module ConnectionCollection
       def send_message(message)
-        each do |connection|
-          connection.send_message(message)
-        end
+        each {|connection| connection.send_message(message) }
       end
     end
 
@@ -35,15 +33,13 @@ class RFlow
       # referenced) port
       # TODO: simplify with enumerators and procs
       def each
-        ports.each do |port|
-          yield port
-        end
+        ports.each {|port| yield port }
       end
     end
 
     class Port
       attr_reader :connected
-      def connected?; @connected; end
+      def connected?; connected; end
     end
 
     # Allows for a list of connections to be assigned to each port/key
@@ -53,8 +49,12 @@ class RFlow
     # result in the same message being sent to all indexed
     # connections.
     class HashPort < Port
-      attr_reader :config, :name, :uuid, :connections_for
+      attr_reader :config, :name, :uuid
 
+      protected
+      attr_reader :connections_for
+
+      public
       def initialize(config)
         @config = config
         @name = config.name
@@ -85,9 +85,7 @@ class RFlow
       # Enumerate through all the ConnectionCollections
       # TODO: simplify with enumerators and procs
       def each
-        connections_for.values.each do |connections|
-          yield connections
-        end
+        connections_for.values.each {|connections| yield connections }
       end
 
       # Send a message to all connections on all keys for this port,
@@ -102,15 +100,13 @@ class RFlow
 
       private
       def all_connections
-        @all_connections ||= connections_for.map do |port_key, connections|
-          connections
-        end.flatten.uniq.extend(ConnectionCollection)
+        @all_connections ||= connections_for.values.flatten.uniq.extend(ConnectionCollection)
       end
     end
 
     class InputPort < HashPort
       def connect!
-        connections_for.each do |port_key, connections|
+        connections_for.each do |key, connections|
           connections.each do |connection|
             connection.connect_input!
             @connected = true
@@ -119,10 +115,10 @@ class RFlow
       end
 
       def recv_callback=(callback)
-        connections_for.each do |port_key, connections|
+        connections_for.each do |key, connections|
           connections.each do |connection|
             connection.recv_callback = Proc.new do |message|
-              callback.call self, port_key, connection, message
+              callback.call self, key, connection, message
             end
           end
         end
@@ -131,8 +127,8 @@ class RFlow
 
     class OutputPort < HashPort
       def connect!
-        connections_for.each do |port_key, keyed_connections|
-          keyed_connections.each do |connection|
+        connections_for.each do |key, connections|
+          connections.each do |connection|
             connection.connect_output!
             @connected = true
           end
