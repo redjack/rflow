@@ -129,6 +129,11 @@ class RFlow
         shard_specs.each do |spec|
           RFlow.logger.debug "Found #{spec[:type]} shard '#{spec[:name]}', creating"
 
+          if spec[:components].empty?
+            RFlow.logger.warn "Skipping shard '#{spec[:name]}' because it has no components"
+            next
+          end
+
           clazz = case spec[:type]
                   when :process; RFlow::Configuration::ProcessShard
                   when :thread; RFlow::Configuration::ThreadShard
