@@ -35,7 +35,8 @@ describe RFlow do
         # should be a better way to figure out when RFlow is done
         sleep(5)
 
-        # Shut down the reactor and the thread
+        # Shut down the workers, the reactor, and the thread
+        RFlow.master.shutdown! 'SIGQUIT'
         EM.run { EM.stop }
         rflow_thread.join
       end
@@ -228,58 +229,63 @@ describe RFlow do
       end
 
       it "should daemonize and run in the background" do
-        r = execute_rflow("start -d #{db_file_name} -e #{@extensions_file_name}")
+        begin
+          r = execute_rflow("start -d #{db_file_name} -e #{@extensions_file_name}")
 
-        r[:status].exitstatus.should == 0
-        r[:stderr].should == ''
-        r[:stdout].should_not match /error/i
+          r[:status].exitstatus.should == 0
+          r[:stderr].should == ''
+          r[:stdout].should_not match /error/i
 
-        sleep 1 # give the daemon a chance to finish
+          sleep 2 # give the daemon a chance to finish
 
-        log_contents = File.read("log/#{app_name}.log").chomp
-        log_lines = log_contents.split("\n")
+          log_contents = File.read("log/#{app_name}.log").chomp
+          log_lines = log_contents.split("\n")
 
-        log_lines.each {|line| line.should_not match /^ERROR/ }
-        log_lines.each {|line| line.should_not match /^DEBUG/ }
+          log_lines.each {|line| line.should_not match /^ERROR/ }
+          log_lines.each {|line| line.should_not match /^DEBUG/ }
 
-        # Grab all the pids from the log, which seems to be the only
-        # reliable way to get them
-        log_pids = log_lines.map {|line| /\((\d+)\)/.match(line)[1].to_i }.uniq
+          # Grab all the pids from the log, which seems to be the only
+          # reliable way to get them
+          log_pids = log_lines.map {|line| /\((\d+)\)/.match(line)[1].to_i }.uniq
 
-        initial_pid = r[:status].pid
-        master_pid = File.read("run/#{app_name}.pid").chomp.to_i
-        worker_pids = log_pids - [initial_pid, master_pid]
+          initial_pid = r[:status].pid
+          master_pid = File.read("run/#{app_name}.pid").chomp.to_i
+          worker_pids = log_pids - [initial_pid, master_pid]
 
-        log_pids.should include initial_pid
-        log_pids.should include master_pid
+          log_pids.should include initial_pid
+          log_pids.should include master_pid
 
-        worker_pids.should have(8).pids
-        worker_pids.should_not include 0
+          worker_pids.should have(8).pids
+          worker_pids.should_not include 0
 
-        expect { Process.kill(0, initial_pid) }.to raise_error(Errno::ESRCH)
-        ([master_pid] + worker_pids).each do |pid|
-          Process.kill(0, pid).should == 1
-        end
+          expect { Process.kill(0, initial_pid) }.to raise_error(Errno::ESRCH)
+          ([master_pid] + worker_pids).each do |pid|
+            Process.kill(0, pid).should == 1
+          end
 
-        output_files = {
-          'out1'    => [0, 3, 6, 9] * 3,
-          'out2'    => (20..30).to_a * 2,
-          'out3'    => (100..105).to_a,
-          'out_all' => [0, 3, 6, 9] * 3 + (20..30).to_a * 2 + (100..105).to_a
-        }
+          output_files = {
+            'out1'    => [0, 3, 6, 9] * 3,
+            'out2'    => (20..30).to_a * 2,
+            'out3'    => (100..105).to_a,
+            'out_all' => [0, 3, 6, 9] * 3 + (20..30).to_a * 2 + (100..105).to_a
+          }
 
-        output_files.each do |file_name, expected_contents|
-          File.exist?(File.join(@temp_directory_path, file_name)).should be_true
-          File.readlines(file_name).map(&:to_i).sort.should == expected_contents.sort
-        end
+          output_files.each do |file_name, expected_contents|
+            File.exist?(File.join(@temp_directory_path, file_name)).should be_true
+            File.readlines(file_name).map(&:to_i).sort.should == expected_contents.sort
+          end
 
-        # Terminate the master
-        Process.kill("TERM", master_pid).should == 1
+          # Terminate the master
+          Process.kill("TERM", master_pid).should == 1
 
-        # Make sure everything is dead after a second
-        sleep 1
-        ([master_pid] + worker_pids).each do |pid|
-          expect { Process.kill(0, pid) }.to raise_error(Errno::ESRCH)
+          # Make sure everything is dead after a second
+          sleep 1
+          ([master_pid] + worker_pids).each do |pid|
+            expect { Process.kill(0, pid) }.to raise_error(Errno::ESRCH)
+          end
+        rescue Exception => e
+          Process.kill("TERM", master_pid) if master_pid
+          raise
         end
       end
     end

@@ -36,7 +36,7 @@ class RFlow
 
     def shutdown!(signal)
       RFlow.logger.info "Shutting down #{@name} due to #{signal}"
-      exit 0
+      unhandle_signals
     end
 
     private
@@ -62,7 +62,10 @@ class RFlow
 
     def handle_signals
       ['SIGTERM', 'SIGINT', 'SIGQUIT'].each do |signal|
-        trap_signal(signal) { shutdown! signal }
+        trap_signal(signal) do
+          shutdown! signal
+          exit! 0
+        end
       end
 
       trap_signal 'SIGUSR1' do
