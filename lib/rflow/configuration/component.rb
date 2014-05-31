@@ -7,8 +7,6 @@ class RFlow
       include UUIDKeyed
       include ActiveModel::Validations
 
-      class ComponentNotFound < StandardError; end
-
       serialize :options, Hash
 
       belongs_to :shard, :primary_key => 'uuid', :foreign_key => 'shard_uuid'
