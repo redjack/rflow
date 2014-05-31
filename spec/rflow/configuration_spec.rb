@@ -11,9 +11,9 @@ class RFlow
         end
 
         it "should not update the available_data_types" do
-          num_types = Configuration.available_data_types.size
-          Configuration.add_available_data_type('A', 'boom', 'schema') rescue nil
-          Configuration.available_data_types.should have(num_types).items
+          expect {
+            Configuration.add_available_data_type('A', 'boom', 'schema') rescue nil
+          }.not_to change { Configuration.available_data_types.size }
         end
       end
     end
@@ -22,19 +22,17 @@ class RFlow
       describe ".add_available_data_extension" do
         context 'if passed a non-module data extension' do
           it "should throw an exception" do
-            expect do
+            expect {
               Configuration.add_available_data_extension('data_type', 'NOTAMODULE')
-            end.to raise_error(ArgumentError, "Invalid data extension NOTAMODULE for data_type.  Only Ruby Modules allowed")
+            }.to raise_error(ArgumentError, "Invalid data extension NOTAMODULE for data_type.  Only Ruby Modules allowed")
           end
         end
 
         context "if passed a valid Module as a data extension" do
           it "should update the available_data_extensions" do
-            num_extensions = Configuration.available_data_extensions['data_type'].size
-            expect do
+            expect {
               Configuration.add_available_data_extension('data_type', Module.new)
-            end.to_not raise_error
-            Configuration.available_data_extensions['data_type'].should have(num_extensions+1).items
+            }.to change { Configuration.available_data_extensions['data_type'].size }.by(1)
           end
         end
       end
@@ -45,19 +43,10 @@ class RFlow
         Configuration.add_available_data_extension('A::B::C', C = Module.new)
         Configuration.add_available_data_extension('A::B::C::D', D = Module.new)
 
-        Configuration.available_data_extensions['A'].should have(1).item
         Configuration.available_data_extensions['A'].should == [A]
-
-        Configuration.available_data_extensions['A::B'].should have(2).item
         Configuration.available_data_extensions['A::B'].should == [A, B]
-
-        Configuration.available_data_extensions['A::B::C'].should have(3).item
         Configuration.available_data_extensions['A::B::C'].should == [A, B, C]
-
-        Configuration.available_data_extensions['A::B::C::D'].should have(4).item
         Configuration.available_data_extensions['A::B::C::D'].should == [A, B, C, D]
-
-        Configuration.available_data_extensions['A::B::C::D::E'].should have(4).item
         Configuration.available_data_extensions['A::B::C::D::E'].should == [A, B, C, D]
       end
     end

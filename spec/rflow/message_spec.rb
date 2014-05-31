@@ -6,26 +6,26 @@ class RFlow
   describe Message do
     context "if created with an unknown data type" do
       it "should throw an exception" do
-        expect {Message.new('non_existent_data_type')}.to raise_error(
+        expect { Message.new('non_existent_data_type') }.to raise_error(
           ArgumentError, "Data type 'non_existent_data_type' with serialization_type 'avro' not found")
       end
     end
 
     context "if created with a known data type" do
       before(:all) do
-        @avro_string_schema_string = '{"type": "string"}'
-        Configuration.add_available_data_type(:string_type, 'avro', @avro_string_schema_string)
+        @schema = '{"type": "string"}'
+        Configuration.add_available_data_type(:string_type, 'avro', @schema)
       end
 
       it "should instantiate correctly" do
-        expect {Message.new('string_type')}.to_not raise_error
+        expect { Message.new('string_type') }.to_not raise_error
       end
 
       context "if created with empty provenance" do
         context "if created with an unknown data serialization" do
           ['unknown', :unknown].each do |it|
             it "should throw an exception for #{it.inspect}" do
-              expect {Message.new('string_type', [], it)}.to raise_error(
+              expect { Message.new('string_type', [], it) }.to raise_error(
                 ArgumentError, "Data type 'string_type' with serialization_type 'unknown' not found")
             end
           end
@@ -34,7 +34,7 @@ class RFlow
         context "if created with a known data serialization" do
           ['avro', :avro].each do |it|
             it "should instantiate correctly for #{it.inspect}" do
-              expect {Message.new('string_type', [], it)}.to_not raise_error
+              expect { Message.new('string_type', [], it) }.to_not raise_error
             end
           end
 
@@ -47,13 +47,10 @@ class RFlow
 
           context "if created with a nil schema" do
             context "if created with a serialized data object" do
-              before(:all) do
-                @string = 'this is a string to be serialized'
-                @avro_serialized_string = encode_avro(@avro_string_schema_string, @string)
-              end
+              let(:serialized_string) { encode_avro(@schema, 'this is a string to be serialized') }
 
               it "should instantiate correctly" do
-                expect {Message.new('string_type', [], 'avro', nil, @avro_serialized_string)}.to_not raise_error
+                expect { Message.new('string_type', [], 'avro', nil, serialized_string) }.to_not raise_error
               end
             end
           end
@@ -61,59 +58,57 @@ class RFlow
       end
 
       context "if created with invalid provenance" do
-        before(:all) do
-          @invalid_processing_event_hash = {'started_at' => 'bad time string'}
-          @invalid_provenance = [@invalid_processing_event_hash]
-        end
+        let(:invalid_processing_event_hash) { {'started_at' => 'bad time string'} }
+        let(:invalid_provenance) { [invalid_processing_event_hash] }
 
         it "should throw an exception" do
-          expect {Message.new('string_type', @invalid_provenance)}.to raise_error(
+          expect { Message.new('string_type', invalid_provenance) }.to raise_error(
             ArgumentError, 'invalid date: "bad time string"')
         end
       end
 
       context "if created with valid provenance" do
-        before(:all) do
-          @valid_xmlschema_time = '2001-01-01T01:01:01.000001Z'
-          @valid_processing_event_hash = {'component_instance_uuid' => 'uuid', 'started_at' => @valid_xmlschema_time}
-          @valid_processing_event = Message::ProcessingEvent.new('uuid', @valid_xmlschema_time, @valid_xmlschema_time, 'context')
-          @valid_provenance = [
-            Message::ProcessingEvent.new('uuid'),
-            @valid_processing_event_hash,
-            @valid_processing_event]
-          @valid_provenance_hashes = [
-            {"component_instance_uuid" => "uuid", "started_at" => nil, "completed_at" => nil, "context" => nil},
-            {"component_instance_uuid" => "uuid", "started_at" => @valid_xmlschema_time, "completed_at" => nil, "context" => nil},
-            {"component_instance_uuid" => "uuid", "started_at" => @valid_xmlschema_time, "completed_at" => @valid_xmlschema_time, "context" => "context"}]
+        let(:valid_xmlschema_time) { '2001-01-01T01:01:01.000001Z' }
+        let(:valid_processing_event_hash) { {'component_instance_uuid' => 'uuid', 'started_at' => valid_xmlschema_time } }
+        let(:valid_processing_event) { Message::ProcessingEvent.new('uuid', valid_xmlschema_time, valid_xmlschema_time, 'context') }
+        let(:valid_provenance) do
+          [Message::ProcessingEvent.new('uuid'),
+           valid_processing_event_hash,
+           valid_processing_event]
         end
 
         it "should instantiate correctly" do
-          expect {Message.new('string_type', @valid_provenance)}.to_not raise_error
+          expect { Message.new('string_type', valid_provenance) }.to_not raise_error
         end
 
         it "should correctly set the provenance processing events" do
-          message = Message.new('string_type', @valid_provenance)
-          message.provenance[1].component_instance_uuid.should == 'uuid'
-          message.provenance[1].started_at.should == Time.xmlschema(@valid_xmlschema_time)
-          message.provenance[1].completed_at.should == nil
-          message.provenance[1].context.should == nil
+          Message.new('string_type', valid_provenance).provenance[1].tap do |p|
+            p.component_instance_uuid.should == 'uuid'
+            p.started_at.should == Time.xmlschema(valid_xmlschema_time)
+            p.completed_at.should be_nil
+            p.context.should be_nil
+          end
         end
 
         it "should to_hash its provenance correctly" do
-          message = Message.new('string_type', @valid_provenance)
-          message.provenance.map(&:to_hash).should == @valid_provenance_hashes
+          Message.new('string_type', valid_provenance).provenance.map(&:to_hash).should == [
+            {"component_instance_uuid" => "uuid", "started_at" => nil, "completed_at" => nil, "context" => nil},
+            {"component_instance_uuid" => "uuid", "started_at" => valid_xmlschema_time, "completed_at" => nil, "context" => nil},
+            {"component_instance_uuid" => "uuid", "started_at" => valid_xmlschema_time, "completed_at" => valid_xmlschema_time, "context" => "context"}]
         end
       end
 
       context "if correctly created" do
         it "should serialize and deserialize correctly to/from avro" do
-          message = Message.new('string_type')
-          message.provenance << Message::ProcessingEvent.new('UUID')
-          message.data.data_object = 'teh awesome'
+          message = Message.new('string_type').tap do |m|
+            m.provenance << Message::ProcessingEvent.new('UUID')
+            m.data.data_object = 'teh awesome'
+          end
 
-          processed_message = Message.from_avro(message.to_avro)
-          message.data.to_avro.should == processed_message.data.to_avro
-          message.data.data_object.should == processed_message.data.data_object
+          Message.from_avro(message.to_avro).tap do |processed|
+            processed.data.to_avro.should == message.data.to_avro
+            processed.data.data_object.should == message.data.data_object
+          end
         end
       end
 
@@ -132,8 +127,9 @@ class RFlow
     end
 
     it "should correctly handle large raw types" do
-      message = Message.new('RFlow::Message::Data::Raw')
-      message.data.raw = Array.new(101) { rand(256) }.pack('c*')
+      message = Message.new('RFlow::Message::Data::Raw').tap do |m|
+        m.data.raw = Array.new(101) { rand(256) }.pack('c*')
+      end
 
       message_avro = message.to_avro.force_encoding('BINARY')
 

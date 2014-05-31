@@ -10,13 +10,12 @@ class RFlow
       end
 
       it "should correctly process an empty DSL" do
-        described_class.configure {|c| }
+        described_class.configure {}
 
-        config = Configuration.new
-        Shard.count.should == 1
-        Component.count.should == 0
-        Port.count.should == 0
-        Connection.count.should == 0
+        Shard.should have(1).shard
+        Component.should have(0).components
+        Port.should have(0).ports
+        Connection.should have(0).connections
       end
 
       it "should correctly process a component declaration" do
@@ -24,16 +23,16 @@ class RFlow
           c.component 'boom', 'town', 'opt1' => 'OPT1', 'opt2' => 'OPT2'
         end
 
-        config = Configuration.new
-        Shard.count.should == 1
-        Component.count.should == 1
-        Port.count.should == 0
-        Connection.count.should == 0
+        Shard.should have(1).shard
+        Component.should have(1).component
+        Port.should have(0).ports
+        Connection.should have(0).connections
 
-        component = Component.all.first
-        component.name.should == 'boom'
-        component.specification.should == 'town'
-        component.options.should == {'opt1' => 'OPT1', 'opt2' => 'OPT2'}
+        Component.first.tap do |c|
+          c.name.should == 'boom'
+          c.specification.should == 'town'
+          c.options.should == {'opt1' => 'OPT1', 'opt2' => 'OPT2'}
+        end
       end
 
       it "should correctly process a connect declaration" do
@@ -46,38 +45,39 @@ class RFlow
           c.connect 'first#out[outkey]' => 'second#in[inkey]'
         end
 
-        config = Configuration.new
-        Shard.count.should == 1
-        Component.count.should == 2
-        Port.count.should == 2
-        Connection.count.should == 4
+        Shard.should have(1).shard
+        Component.should have(2).components
+        Port.should have(2).ports
+        Connection.should have(4).connections
 
-        first_component = Component.where(name: 'first').first
-        second_component = Component.where(name: 'second').first
+        first_component = Component.where(name: 'first').first.tap do |component|
+          component.specification.should == 'First'
+          component.should have(0).input_ports
+          component.should have(1).output_port
+          component.output_ports.first.name.should == 'out'
 
-        first_component.specification.should == 'First'
-        first_component.input_ports.count.should == 0
-        first_component.output_ports.count.should == 1
-        first_component.output_ports.first.name.should == 'out'
-        first_connections = first_component.output_ports.first.connections.all
-        first_connections.count.should == 4
-        first_connections[0].input_port_key.should be_nil
-        first_connections[0].output_port_key.should be_nil
-        first_connections[1].input_port_key.should == 'inkey'
-        first_connections[1].output_port_key.should be_nil
-        first_connections[2].input_port_key.should be_nil
-        first_connections[2].output_port_key.should == 'outkey'
-        first_connections[3].input_port_key.should == 'inkey'
-        first_connections[3].output_port_key.should == 'outkey'
+          component.output_ports.first.should have(4).connections
+          component.output_ports.first.connections.tap do |connections|
+            connections[0].input_port_key.should be_nil
+            connections[0].output_port_key.should be_nil
+            connections[1].input_port_key.should == 'inkey'
+            connections[1].output_port_key.should be_nil
+            connections[2].input_port_key.should be_nil
+            connections[2].output_port_key.should == 'outkey'
+            connections[3].input_port_key.should == 'inkey'
+            connections[3].output_port_key.should == 'outkey'
+          end
+        end
 
-        second_component.specification.should == 'Second'
-        second_component.input_ports.count.should == 1
-        second_component.output_ports.count.should == 0
-        second_component.input_ports.first.name.should == 'in'
-        second_connections = second_component.input_ports.first.connections.all
-        second_connections.count.should == 4
+        Component.where(name: 'second').first.tap do |component|
+          component.specification.should == 'Second'
+          component.should have(1).input_port
+          component.input_ports.first.name.should == 'in'
+          component.should have(0).output_ports
 
-        first_connections.should == second_connections
+          component.input_ports.first.should have(4).connections
+          component.input_ports.first.connections.should == first_component.output_ports.first.connections
+        end
       end
 
       it "should correctly process shard declarations" do
@@ -102,17 +102,17 @@ class RFlow
           c.connect 'third#out' => 'fifth#in'
         end
 
-        config = Configuration.new
-        Shard.count.should == 3
-        Component.count.should == 5
-        Port.count.should == 8
-        Connection.count.should == 5
+        Shard.should have(3).shards
+        Component.should have(5).components
+        Port.should have(8).ports
+        Connection.should have(5).connections
 
-        shards = Shard.all
-        shards.map(&:name).should == ['DEFAULT', 's1', 's2']
-        shards.first.components.all.map(&:name).should == ['first', 'fifth']
-        shards.second.components.all.map(&:name).should == ['second']
-        shards.third.components.all.map(&:name).should == ['third', 'fourth']
+        Shard.all.tap do |shards|
+          shards.map(&:name).should == ['DEFAULT', 's1', 's2']
+          shards.first.components.all.map(&:name).should == ['first', 'fifth']
+          shards.second.components.all.map(&:name).should == ['second']
+          shards.third.components.all.map(&:name).should == ['third', 'fourth']
+        end
 
         Port.all.map(&:name).should == ['out', 'in', 'out', 'in', 'in2', 'out', 'in', 'in']
 
@@ -125,21 +125,21 @@ class RFlow
       end
 
       it "should not allow two components with the same name" do
-        expect do
+        expect {
           described_class.configure do |c|
             c.component 'first', 'First'
             c.component 'first', 'First'
           end
-        end.to raise_error(ActiveRecord::RecordInvalid)
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
 
       it "should not allow two shards with the same name" do
-        expect do
+        expect {
           described_class.configure do |c|
-            c.shard("s1", :process => 2) {|s| }
-            c.shard("s1", :process => 2) {|s| }
+            c.shard("s1", :process => 2) {}
+            c.shard("s1", :process => 2) {}
           end
-        end.to raise_error
+        }.to raise_error
       end
     end
   end

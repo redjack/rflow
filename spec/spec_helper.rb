@@ -24,18 +24,11 @@ RSpec.configure do |config|
   end
 end
 
-def decode_avro(schema_string, serialized_object)
+def decode_avro(schema_string, bytes)
   schema = Avro::Schema.parse(schema_string)
-  serialized_object.force_encoding 'BINARY'
-  sio = StringIO.new(serialized_object)
-  Avro::IO::DatumReader.new(schema, schema).read Avro::IO::BinaryDecoder.new(sio)
+  RFlow::Avro.decode(Avro::IO::DatumReader.new(schema, schema), bytes)
 end
 
-def encode_avro(schema_string, object)
-  encoded_string = ''
-  encoded_string.force_encoding 'BINARY'
-  schema = Avro::Schema.parse(schema_string)
-  sio = StringIO.new(encoded_string)
-  Avro::IO::DatumWriter.new(schema).write object, Avro::IO::BinaryEncoder.new(sio)
-  encoded_string
+def encode_avro(schema_string, message)
+  RFlow::Avro.encode(Avro::IO::DatumWriter.new(Avro::Schema.parse(schema_string)), message)
 end
