@@ -28,6 +28,8 @@ class RFlow
       # DSL method to specify a shard block for either a process or thread
       def shard(name, options = {})
         raise ArgumentError, "Cannot use DEFAULT as a shard name" if name == 'DEFAULT'
+        raise ArgumentError, "Cannot nest shards" if @current_shard != default_shard
+
         type = if options[:thread] || options[:type] == :thread; :thread
                else :process
                end
