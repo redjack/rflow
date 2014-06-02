@@ -12,29 +12,6 @@ module SimpleDataExtension
 end
 RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Integer', SimpleDataExtension)
 
-class RFlow::Components::RubyProcFilter < RFlow::Component
-  input_port :in
-  output_port :filtered
-  output_port :dropped
-  output_port :errored
-
-  def configure!(config)
-    @filter_proc = eval("lambda {|message| #{config['filter_proc_string']} }")
-  end
-
-  def process_message(input_port, input_port_key, connection, message)
-    begin
-      if @filter_proc.call(message)
-        filtered.send_message message
-      else
-        dropped.send_message message
-      end
-    rescue Exception => e
-      errored.send_message message
-    end
-  end
-end
-
 class RFlow::Components::FileOutput < RFlow::Component
   attr_accessor :output_file_path, :output_file
   input_port :in
