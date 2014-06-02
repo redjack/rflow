@@ -12,7 +12,7 @@ class RFlow
       it "should correctly process an empty DSL" do
         described_class.configure {}
 
-        Shard.should have(1).shard
+        Shard.should have(0).shards
         Component.should have(0).components
         Port.should have(0).ports
         Connection.should have(0).connections
@@ -93,6 +93,10 @@ class RFlow
             s.component 'fourth', 'Fourth'
           end
 
+          c.shard "s-ignored", :type => :process, :count => 10 do
+            # ignored because there are no components
+          end
+
           c.component 'fifth', 'Fifth'
 
           c.connect 'first#out' => 'second#in'
@@ -136,8 +140,8 @@ class RFlow
       it "should not allow two shards with the same name" do
         expect {
           described_class.configure do |c|
-            c.shard("s1", :process => 2) {}
-            c.shard("s1", :process => 2) {}
+            c.shard("s1", :process => 2) {|c| c.component 'x', 'y' }
+            c.shard("s1", :process => 2) {|c| c.component 'z', 'q' }
           end
         }.to raise_error
       end
