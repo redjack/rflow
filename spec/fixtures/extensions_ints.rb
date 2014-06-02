@@ -12,22 +12,6 @@ module SimpleDataExtension
 end
 RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Integer', SimpleDataExtension)
 
-class RFlow::Components::Replicate < RFlow::Component
-  input_port :in
-  output_port :out
-  output_port :errored
-
-  def process_message(input_port, input_port_key, connection, message)
-    out.each do |connections|
-      begin
-        connections.send_message message
-      rescue Exception => e
-        errored.send_message message
-      end
-    end
-  end
-end
-
 class RFlow::Components::RubyProcFilter < RFlow::Component
   input_port :in
   output_port :filtered
