@@ -11,11 +11,10 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.component 'file_output', 'RFlow::Components::FileOutput', 'output_file_path' => '/tmp/http_crap'
   config.component 'http_responder', 'HTTPResponder', 'response_code' => 200, 'content' => 'Hi, this teh awesome'
 
-#  config.connect 'http_server#request_port' => 'filter#in'
-#  config.connect 'filter#filtered' => 'replicate#in'
+  #config.connect 'http_server#request_port' => 'filter#in'
+  #config.connect 'filter#filtered' => 'replicate#in'
   config.connect 'http_server#request_port' => 'replicate#in'
   config.connect 'replicate#out[1]' => 'file_output#in'
   config.connect 'replicate#out[2]' => 'http_responder#request'
   config.connect 'http_responder#response' => 'http_server#response_port'
 end
-

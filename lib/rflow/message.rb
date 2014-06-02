@@ -1,35 +1,80 @@
 require 'stringio'
 require 'time'
-
 require 'avro'
-
 require 'rflow/configuration'
 
 class RFlow
+  class Avro
+    def self.decode(reader, bytes)
+      reader.read ::Avro::IO::BinaryDecoder.new(StringIO.new(bytes.force_encoding('BINARY')))
+    end
 
-  # TODO: reduce reliance/expectation on avro serialization in method
-  # names and such.
+    def self.encode(writer, message)
+      String.new.force_encoding('BINARY').tap do |result|
+        writer.write message, ::Avro::IO::BinaryEncoder.new(StringIO.new(result, 'w'))
+      end
+    end
+  end
+
   class Message
-
     class << self
-      def avro_message_schema; @avro_message_schema ||= Avro::Schema.parse(File.read(File.join(File.dirname(__FILE__), '..', '..', 'schema', 'message.avsc'))); end
-
-      def avro_reader;  @avro_reader  ||= Avro::IO::DatumReader.new(avro_message_schema, avro_message_schema); end
-      def avro_writer;  @avro_writer  ||= Avro::IO::DatumWriter.new(avro_message_schema); end
-      def avro_decoder(io_object); Avro::IO::BinaryDecoder.new(io_object); end
-      def avro_encoder(io_object); Avro::IO::BinaryEncoder.new(io_object); end
+      def schema; @schema ||= ::Avro::Schema.parse(File.read(File.join(File.dirname(__FILE__), '..', '..', 'schema', 'message.avsc'))); end
+      def message_reader; @message_reader ||= ::Avro::IO::DatumReader.new(schema, schema); end
+      def message_writer; @message_writer ||= ::Avro::IO::DatumWriter.new(schema); end
+      def encode(message); RFlow::Avro.encode(message_writer, message); end
 
       # Take in an Avro serialization of a message and return a new
       # Message object.  Assumes the org.rflow.Message Avro schema.
-      def from_avro(avro_serialized_message_byte_string)
-        avro_serialized_message_byte_stringio = StringIO.new(avro_serialized_message_byte_string)
-        message_hash = avro_reader.read avro_decoder(avro_serialized_message_byte_stringio)
-        Message.new(message_hash['data_type_name'], message_hash['provenance'],
-                    message_hash['data_serialization_type'], message_hash['data_schema'],
-                    message_hash['data'])
+      def from_avro(bytes)
+        message = RFlow::Avro.decode(message_reader, bytes)
+        Message.new(message['data_type_name'], message['provenance'],
+                    message['data_serialization_type'], message['data_schema'],
+                    message['data'])
       end
     end
 
+    attr_reader :data_type_name, :data
+    attr_accessor :provenance
+
+    def initialize(data_type_name, provenance = [], serialization_type = 'avro', schema = nil, serialized_data = nil)
+      @data_type_name = data_type_name.to_s
+
+      # TODO: Make this better.  This check is technically
+      # unnecessary, as we are able to completely deserialize the
+      # message without needing to resort to the registered schema.
+      registered_schema = RFlow::Configuration.available_data_types[@data_type_name][serialization_type.to_s]
+      unless registered_schema
+        raise ArgumentError, "Data type '#{@data_type_name}' with serialization_type '#{serialization_type}' not found"
+      end
+
+      # TODO: think about registering the schemas automatically if not
+      # found in Configuration
+      if schema && (registered_schema != schema)
+        raise ArgumentError, "Passed schema ('#{schema}') does not equal registered schema ('#{registered_schema}') for data type '#{@data_type_name}' with serialization_type '#{serialization_type}'"
+      end
+
+      # Turn the provenance array of Hashes into an array of
+      # ProcessingEvents for easier access and time validation.
+      # TODO: do this lazily so as not to create/destroy objects that are
+      # never used
+      @provenance = (provenance || []).map do |event|
+        if event.is_a? ProcessingEvent
+          event
+        else
+          ProcessingEvent.new(event['component_instance_uuid'],
+                              event['started_at'], event['completed_at'],
+                              event['context'])
+        end
+      end
+
+      @data = Data.new(registered_schema, serialization_type.to_s, serialized_data)
+
+      # Get the extensions and apply them to the data object to add capability
+      RFlow::Configuration.available_data_extensions[@data_type_name].each do |e|
+        RFlow.logger.debug "Extending '#{data_type_name}' with extension '#{e}'"
+        @data.extend e
+      end
+    end
 
     # Serialize the current message object to Avro using the
     # org.rflow.Message Avro schema.  Note that we have to manually
@@ -37,91 +82,27 @@ class RFlow
     # UTF-8 by default, which would not work correctly, as a serialize
     # avro string is BINARY, not UTF-8
     def to_avro
-      avro_serialized_message_bytes = ''
-      avro_serialized_message_bytes.force_encoding 'BINARY'
-      avro_serialized_message_bytes_stringio = StringIO.new(avro_serialized_message_bytes, 'w')
-
-      deserialized_avro_object = {
-        'data_type_name' => self.data_type_name.to_s,
-        'provenance' => self.provenance.map(&:to_hash),
-        'data_serialization_type' => self.data.serialization_type.to_s,
-        'data_schema' => self.data.schema_string,
-        'data' => self.data.to_avro
-      }
-
-      self.class.avro_writer.write deserialized_avro_object, self.class.avro_encoder(avro_serialized_message_bytes_stringio)
-      avro_serialized_message_bytes
+      Message.encode('data_type_name' => data_type_name.to_s,
+                     'provenance' => provenance.map(&:to_hash),
+                     'data_serialization_type' => data.serialization_type.to_s,
+                     'data_schema' => data.schema_string,
+                     'data' => data.to_avro)
     end
-
-
-    attr_reader :data_type_name
-    attr_accessor :processing_event
-    attr_accessor :provenance
-    attr_reader :data, :data_extensions
-
-
-    def initialize(data_type_name, provenance=[], data_serialization_type='avro', data_schema_string=nil, serialized_data_object=nil)
-      # Default the values, in case someone puts in a nil instead of
-      # the default
-      @data_type_name = data_type_name.to_s
-
-      # Turn the provenance array of Hashes into an array of
-      # ProcessingEvents for easier access and time validation.  TODO:
-      # do this lazily so as not to create/destroy objects that are
-      # never used
-      @provenance = (provenance || []).map do |processing_event_hash_or_object|
-        if processing_event_hash_or_object.is_a? ProcessingEvent
-          processing_event_hash_or_object
-        else
-          ProcessingEvent.new(processing_event_hash_or_object['component_instance_uuid'],
-                              processing_event_hash_or_object['started_at'],
-                              processing_event_hash_or_object['completed_at'],
-                              processing_event_hash_or_object['context'])
-        end
-      end
-
-      # TODO: Make this better.  This check is technically
-      # unnecessary, as we are able to completely desrialize the
-      # message without needing to resort to the registered schema.
-      registered_data_schema_string = RFlow::Configuration.available_data_types[@data_type_name][data_serialization_type.to_s]
-      unless registered_data_schema_string
-        error_message = "Data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}' not found"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
-      end
-
-      # TODO: think about registering the schemas automatically if not
-      # found in Configuration
-      if data_schema_string && (registered_data_schema_string != data_schema_string)
-        error_message = "Passed schema ('#{data_schema_string}') does not equal registered schema ('#{registered_data_schema_string}') for data type '#{@data_type_name}' with serialization_type '#{data_serialization_type}'"
-        RFlow.logger.error error_message
-        raise ArgumentError, error_message
-      end
-
-      @data = Data.new(registered_data_schema_string, data_serialization_type.to_s, serialized_data_object)
-
-      # Get the extensions and apply them to the data object to add capability
-      @data_extensions = RFlow::Configuration.available_data_extensions[@data_type_name]
-      @data_extensions.each do |data_extension|
-        RFlow.logger.debug "Extending '#{data_type_name}' with extension '#{data_extension}'"
-        @data.extend data_extension
-      end
-    end
-
 
     class ProcessingEvent
-      attr_accessor :component_instance_uuid, :started_at, :completed_at, :context
+      attr_reader :component_instance_uuid, :started_at
+      attr_accessor :completed_at, :context
 
-      def initialize(component_instance_uuid, started_at=nil, completed_at=nil, context=nil)
+      def initialize(component_instance_uuid, started_at = nil, completed_at = nil, context = nil)
         @component_instance_uuid = component_instance_uuid
         @started_at = case started_at
-                      when String then Time.xmlschema(started_at)
-                      when Time   then started_at
-                      else; nil; end
+                      when String; Time.xmlschema(started_at)
+                      when Time; started_at
+                      else nil; end
         @completed_at = case completed_at
-                        when String then Time.xmlschema(completed_at)
-                        when Time   then completed_at
-                        else; nil; end
+                        when String; Time.xmlschema(completed_at)
+                        when Time; completed_at
+                        else nil; end
         @context = context
       end
 
@@ -142,41 +123,31 @@ class RFlow
       attr_reader :schema_string, :schema, :serialization_type
       attr_accessor :data_object
 
-      def initialize(schema_string, serialization_type='avro', serialized_data_object=nil)
-        unless serialization_type == 'avro'
-          error_message = "Only Avro serialization_type supported at the moment"
-          RFlow.logger.error error_message
-          raise ArgumentError, error_message
-        end
+      def initialize(schema_string, serialization_type = 'avro', serialized_data = nil)
+        raise ArgumentError, "Only Avro serialization_type supported at the moment" unless serialization_type.to_s == 'avro'
 
         @schema_string = schema_string
-        @serialization_type = serialization_type
+        @serialization_type = serialization_type.to_s
 
         begin
-          @schema = Avro::Schema.parse(schema_string)
+          @schema = ::Avro::Schema.parse(schema_string)
+          @writer = ::Avro::IO::DatumWriter.new(@schema)
         rescue Exception => e
-          error_message = "Invalid schema '#{@schema_string}': #{e}: #{e.message}"
-          RFlow.logger.error error_message
-          raise ArgumentError, error_message
+          raise ArgumentError, "Invalid schema '#{@schema_string}': #{e}: #{e.message}"
         end
 
-        if serialized_data_object
-          serialized_data_object.force_encoding 'BINARY'
-          avro_decoder = Avro::IO::BinaryDecoder.new StringIO.new(serialized_data_object)
-          @data_object = Avro::IO::DatumReader.new(schema, schema).read avro_decoder
+        if serialized_data
+          serialized_data.force_encoding 'BINARY'
+          @data_object = RFlow::Avro.decode(::Avro::IO::DatumReader.new(schema, schema), serialized_data)
         end
       end
 
       def valid?
-        Avro::Schema.validate @schema, @data_object
+        ::Avro::Schema.validate @schema, @data_object
       end
 
       def to_avro
-        serialized_data_object_bytes = ''
-        serialized_data_object_bytes.force_encoding 'BINARY'
-        serialized_data_object_bytes_stringio = StringIO.new(serialized_data_object_bytes)
-        Avro::IO::DatumWriter.new(@schema).write @data_object, Avro::IO::BinaryEncoder.new(serialized_data_object_bytes_stringio)
-        serialized_data_object_bytes
+        RFlow::Avro.encode @writer, @data_object
       end
 
       # Proxy methods down to the underlying data_object, probably a
@@ -186,6 +157,5 @@ class RFlow
         @data_object.send(method_sym, *args, &block)
       end
     end
-
   end
 end

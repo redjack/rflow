@@ -1,8 +1,5 @@
-# This will/should bring in available components and their schemas
 require 'rflow/components'
 require 'rflow/message'
-
-#RFlow::Configuration.add_available_data_schema RFlow::Message::Data::AvroSchema.new('Integer', long_integer_schema)
 
 # Example of creating and registering a data extension
 module SimpleDataExtension
@@ -15,12 +12,9 @@ module SimpleDataExtension
 end
 RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Integer', SimpleDataExtension)
 
-
-
 # Example of creating and registering a new schema
 long_integer_schema = '{"type": "long"}'
 RFlow::Configuration.add_available_data_type('RFlow::Message::Data::Integer', 'avro', long_integer_schema)
-
 
 class RFlow::Components::GenerateIntegerSequence < RFlow::Component
   output_port :out
@@ -51,7 +45,6 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
       timer.cancel if @start > @finish
     end
   end
-
 end
 
 class RFlow::Components::Replicate < RFlow::Component
@@ -60,33 +53,27 @@ class RFlow::Components::Replicate < RFlow::Component
   output_port :errored
 
   def process_message(input_port, input_port_key, connection, message)
-    puts "Processing message in Replicate"
     out.each do |connections|
-      puts "Replicating"
       begin
         connections.send_message message
       rescue Exception => e
-        puts "Exception #{e.message}"
         errored.send_message message
       end
     end
   end
 end
 
-puts "Before RubyProcFilter"
 class RFlow::Components::RubyProcFilter < RFlow::Component
   input_port :in
   output_port :filtered
   output_port :dropped
   output_port :errored
 
-
   def configure!(config)
     @filter_proc = eval("lambda {|message| #{config['filter_proc_string']} }")
   end
 
   def process_message(input_port, input_port_key, connection, message)
-    puts "Processing message in RubyProcFilter"
     begin
       if @filter_proc.call(message)
         filtered.send_message message
@@ -94,13 +81,11 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
         dropped.send_message message
       end
     rescue Exception => e
-      puts "Attempting to send message to errored #{e.message}"
       errored.send_message message
     end
   end
 end
 
-puts "Before FileOutput"
 class RFlow::Components::FileOutput < RFlow::Component
   attr_accessor :output_file_path, :output_file
   input_port :in
@@ -110,23 +95,16 @@ class RFlow::Components::FileOutput < RFlow::Component
     self.output_file = File.new output_file_path, 'w+'
   end
 
-  #def run!; end
-
   def process_message(input_port, input_port_key, connection, message)
-    puts "About to output to a file #{output_file_path}"
     output_file.puts message.data.data_object.inspect
     output_file.flush
   end
 
-
   def cleanup
     output_file.close
   end
-
 end
 
-# TODO: Ensure that all the following methods work as they are
-# supposed to.  This is the interface that I'm adhering to
 class SimpleComponent < RFlow::Component
   input_port :in
   output_port :out
@@ -137,5 +115,3 @@ class SimpleComponent < RFlow::Component
   def shutdown!; end
   def cleanup!; end
 end
-
-

@@ -30,6 +30,11 @@ Some of the long-term goals of RFlow are to allow for components and
 portions of the workflow to be defined in any language that supports
 Avro and ZeroMQ, which are numerous.
 
+## Developer Notes
+
+You will need ZeroMQ preinstalled. Currently, EventMachine only supports
+v3.2.4, not v4.x, so install that version. Older versions like 2.2 will not
+work.
 
 ## Definitions
 

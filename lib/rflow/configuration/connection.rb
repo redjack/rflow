@@ -3,7 +3,7 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
-    class Connection < ConfigDB
+    class Connection < ConfigurationItem
       class ConnectionInvalid < StandardError; end
 
       include UUIDKeyed
@@ -19,10 +19,9 @@ class RFlow
       validates_uniqueness_of :uuid
       validates_presence_of :output_port_uuid, :input_port_uuid
 
-      validate :all_required_options_present
+      validate :all_required_options_present?
 
-
-      def all_required_options_present
+      def all_required_options_present?
         self.class.required_options.each do |option_name|
           unless self.options.include? option_name.to_s
             errors.add(:options, "must include #{option_name} for #{self.class.to_s}")
@@ -30,19 +29,16 @@ class RFlow
         end
       end
 
-
       def merge_default_options!
         self.options ||= {}
-        self.class.default_options.each do |option_name, default_value_or_proc|
-          self.options[option_name.to_s] ||= default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call(self) : default_value_or_proc
+        self.class.default_options.each do |name, default_value_or_proc|
+          self.options[name.to_s] ||= default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call(self) : default_value_or_proc
         end
       end
-
 
       # Should return a list of require option names which will be
       # used in validations.  To be overridden.
       def self.required_options; []; end
-
 
       # Should return a hash of default options, where the keys are
       # the option names and the values are either default option
@@ -50,29 +46,24 @@ class RFlow
       # allow defaults to use other parameters in the connection to
       # construct the appropriate default value.
       def self.default_options; {}; end
-
     end
-
 
     # STI Subclass for ZMQ connections and their required options
     class ZMQConnection < Connection
-
       def self.default_options
         {
           'output_socket_type'    => 'PUSH',
-          'output_address'       => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
+          'output_address'        => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
           'output_responsibility' => 'connect',
           'input_socket_type'     => 'PULL',
-          'input_address'        => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
+          'input_address'         => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
           'input_responsibility'  => 'bind',
         }
       end
     end
 
-
     # STI Subclass for AMQP connections and their required options
     class AMQPConnection < Connection
-
       def self.default_options
         {
           'host'     => 'localhost',
@@ -91,7 +82,6 @@ class RFlow
           'queue_nowait'      => true,
         }
       end
-
     end
   end
 end

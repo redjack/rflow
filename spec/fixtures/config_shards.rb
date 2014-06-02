@@ -1,5 +1,5 @@
 RFlow::Configuration::RubyDSL.configure do |config|
-  config.setting('rflow.log_level', 'DEBUG')
+  config.setting('rflow.log_level', 'FATAL')
   config.setting('rflow.application_directory_path', '.')
   config.setting('rflow.application_name', 'shardapp')
 
@@ -26,5 +26,4 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'filter#filtered' => 'replicate#in'
   config.connect 'replicate#out' => 'output1#in'
   config.connect 'replicate#out' => 'output2#in'
-
 end

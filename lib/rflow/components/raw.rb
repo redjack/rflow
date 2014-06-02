@@ -1,10 +1,17 @@
-require 'rflow/components/raw/extensions'
-
 class RFlow
   module Components
     module Raw
+      module Extensions
+        module RawExtension
+          def self.extended(base_data)
+            base_data.data_object ||= {'raw' => ''}
+          end
 
-      # Load the schemas
+          def raw; data_object['raw']; end
+          def raw=(new_raw); data_object['raw'] = new_raw; end
+        end
+      end
+
       SCHEMA_DIRECTORY = ::File.expand_path(::File.join(::File.dirname(__FILE__), '..', '..', '..', 'schema'))
 
       SCHEMA_FILES = {
@@ -16,11 +23,8 @@ class RFlow
         RFlow::Configuration.add_available_data_type data_type_name, 'avro', schema_string
       end
 
-      # Load the data extensions
       RFlow::Configuration.add_available_data_extension('RFlow::Message::Data::Raw',
                                                         RFlow::Components::Raw::Extensions::RawExtension)
-
-
     end
   end
 end

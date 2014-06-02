@@ -97,12 +97,10 @@ if options[:config_file_path] && command != 'load'
   exit 1
 end
 
-
 unless options[:config_database_path]
   startup_logger.warn "Config database not specified, using default 'config.sqlite'"
   options[:config_database_path] = File.expand_path(File.join(Dir.getwd, 'config.sqlite'))
 end
-
 
 # Set the standard logger to the startup one in the case that we need
 # to call into RFlow to check on or setup things, like the config
@@ -110,7 +108,6 @@ end
 # setting up.  The running log will transition to what is specified in
 # the config database
 RFlow.logger = startup_logger
-
 
 case command
 when 'load'
@@ -146,7 +143,6 @@ when 'load'
   exit 0
 end
 
-
 # Load the database config and start setting up environment
 begin
   config = RFlow::Configuration.new(options[:config_database_path])
@@ -158,7 +154,6 @@ end
 Dir.chdir(File.dirname(options[:config_database_path]))
 Dir.chdir(config['rflow.application_directory_path'])
 pid_file = RFlow::PIDFile.new(config['rflow.pid_file_path'])
-
 
 case command
 when 'stop'
@@ -187,7 +182,6 @@ when 'start'
   end
 end
 
-
 # We should have eliminated all commands but 'start' at this point
 
 # require all the gem extensions
@@ -195,7 +189,6 @@ options[:gems].each do |extension_gem|
   startup_logger.info "Requiring #{extension_gem}"
   require extension_gem
 end
-
 
 # load all the file extensions
 options[:extensions_file_paths].each do |extensions_file_path|
@@ -207,10 +200,9 @@ options[:extensions_file_paths].each do |extensions_file_path|
   load extensions_file_path
 end
 
-
 # Start the flow
 begin
-  RFlow.run options[:config_database_path], options[:daemonize]
+  RFlow.run! options[:config_database_path], options[:daemonize]
 rescue Exception => e
   startup_logger.fatal "Error running rflow: #{e.class}: #{e.message}"
   exit(1)

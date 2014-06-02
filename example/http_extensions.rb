@@ -1,7 +1,8 @@
 # This will/should bring in available components and their schemas
 require 'rflow/components'
 require 'rflow/message'
-
+require 'eventmachine'
+require 'evma_httpserver'
 
 class RFlow::Components::Replicate < RFlow::Component
   input_port :in
@@ -20,13 +21,11 @@ class RFlow::Components::Replicate < RFlow::Component
   end
 end
 
-
 class RFlow::Components::RubyProcFilter < RFlow::Component
   input_port :in
   output_port :filtered
   output_port :dropped
   output_port :errored
-
 
   def configure!(config)
     @filter_proc = eval("lambda {|message| #{config['filter_proc_string']} }")
@@ -47,7 +46,6 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
   end
 end
 
-
 class RFlow::Components::FileOutput < RFlow::Component
   attr_accessor :output_file_path, :output_file
   input_port :in
@@ -67,8 +65,6 @@ class RFlow::Components::FileOutput < RFlow::Component
   end
 end
 
-# TODO: Ensure that all the following methods work as they are
-# supposed to.  This is the interface that I'm adhering to
 class SimpleComponent < RFlow::Component
   input_port :in
   output_port :out
@@ -79,7 +75,6 @@ class SimpleComponent < RFlow::Component
   def shutdown!; end
   def cleanup!; end
 end
-
 
 http_request_schema =<<EOS
 {
@@ -108,7 +103,6 @@ http_response_schema =<<EOS
 EOS
 RFlow::Configuration.add_available_data_type('HTTPResponse', 'avro', http_response_schema)
 
-
 # Need to be careful when extending to not clobber data already in data_object
 module HTTPRequestExtension
   def self.extended(base_data)
@@ -119,7 +113,6 @@ module HTTPRequestExtension
   def path=(new_path); data_object['path'] = new_path; end
 end
 RFlow::Configuration.add_available_data_extension('HTTPRequest', HTTPRequestExtension)
-
 
 # Need to be careful when extending to not clobber data already in data_object
 module HTTPResponseExtension
@@ -135,10 +128,6 @@ module HTTPResponseExtension
 end
 RFlow::Configuration.add_available_data_extension('HTTPResponse', HTTPResponseExtension)
 
-
-require 'eventmachine'
-require 'evma_httpserver'
-
 class HTTPServer < RFlow::Component
   input_port :response_port
   output_port :request_port
@@ -148,7 +137,7 @@ class HTTPServer < RFlow::Component
   def configure!(config)
     @listen = config['listen'] ? config['listen'] : '127.0.0.1'
     @port = config['port'] ? config['port'].to_i : 8000
-    @connections = Hash.new
+    @connections = {}
   end
 
   def run!
@@ -169,6 +158,7 @@ class HTTPServer < RFlow::Component
     RFlow.logger.debug "Received a HTTPResponse message, determining if its mine"
     my_events = message.provenance.find_all {|processing_event| processing_event.component_instance_uuid == instance_uuid}
     RFlow.logger.debug "Found #{my_events.size} processing events from me"
+
     # Attempt to send the data to each context match
     my_events.each do |processing_event|
       RFlow.logger.debug "Inspecting #{processing_event.context}"
@@ -192,12 +182,10 @@ class HTTPServer < RFlow::Component
       no_environment_strings
     end
 
-
     def receive_data(data)
       RFlow.logger.debug "Received #{data.bytesize} data from #{client_ip}:#{client_port}"
       super
     end
-
 
     def process_http_request
       RFlow.logger.debug "Received a full HTTP request from #{client_ip}:#{client_port}"
@@ -214,8 +202,7 @@ class HTTPServer < RFlow::Component
       server.request_port.send_message request_message
     end
 
-
-    def send_http_response(response_message=nil)
+    def send_http_response(response_message = nil)
       RFlow.logger.debug "Sending an HTTP response to #{client_ip}:#{client_port}"
       resp = EventMachine::DelegatedHttpResponse.new(self)
 
@@ -234,11 +221,10 @@ class HTTPServer < RFlow::Component
       close_connection_after_writing
     end
 
-
     # Called when a connection is torn down for whatever reason.
     # Remove this connection from the server's list
     def unbind
-      RFlow.logger.debug "Connection to lost"
+      RFlow.logger.debug "Connection lost"
       server.connections.delete(self.signature)
     end
   end
@@ -259,4 +245,3 @@ class HTTPResponder < RFlow::Component
     response.send_message response_message
   end
 end
-
