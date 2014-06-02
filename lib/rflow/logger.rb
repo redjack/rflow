@@ -15,8 +15,13 @@ class RFlow
 
     public
 
+    # make sure Log4r is initialized; ignored if custom levels are already set
+    Log4r.define_levels(*Log4rConfig::LogLevels)
+
     # Delegate log methods to internal logger
-    def_delegators :@internal_logger, :fatal, :error, :warn, :info, :debug
+    def_delegators :@internal_logger,
+      *Log4r::LNAMES.map(&:downcase).map(&:to_sym),
+      *Log4r::LNAMES.map(&:downcase).map {|n| "#{n}?".to_sym }
 
     def initialize(config, include_stdout = false)
       @log_file_path = config['rflow.log_file_path']

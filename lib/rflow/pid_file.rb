@@ -59,10 +59,9 @@ class RFlow
     private
     def validate?
       if current_process?
-        RFlow.logger.warn "Already running #{read.to_s}, not writing PID to file '#{to_s}'"
         return nil
       elsif running?
-        raise ArgumentError, "Already running #{read.to_s}, possibly stale PID file '#{to_s}'"
+        raise ArgumentError, "Process #{read.to_s} referenced in stale PID file '#{to_s}' still exists; probably attempting to run duplicate RFlow instances"
       elsif exist?
         RFlow.logger.warn "Found stale PID #{read.to_s} in PID file '#{to_s}', removing"
         unlink
