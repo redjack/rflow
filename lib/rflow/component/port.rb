@@ -69,7 +69,10 @@ class RFlow
       # connections, not to add new ones.  Use add_connection to add a
       # new connection for a given key.
       def [](key)
-        (connections_for[key] + connections_for[nil]).extend(ConnectionCollection)
+        case key
+        when nil; connections_for[nil]
+        else connections_for[key] + connections_for[nil]
+        end.extend(ConnectionCollection)
       end
 
       # Adds a connection for a given key
