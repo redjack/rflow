@@ -83,5 +83,10 @@ class RFlow
         }
       end
     end
+
+    # for testing purposes
+    class NullConfiguration
+      attr_accessor :name, :uuid, :options
+    end
   end
 end

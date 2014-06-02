@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "Tick",
+  "namespace": "org.rflow.message.clock",
+  "aliases": [],
+  "fields": [
+    {"name": "name", "type": ["string", "null"]},
+    {"name": "timestamp", "type": ["long", "null"]}
+  ]
+}

@@ -57,4 +57,18 @@ class RFlow
       @recv_callback ||= Proc.new {|message|}
     end
   end
+
+  # Primarily for testing purposes. Captures whatever messages are sent on it.
+  class MessageCollectingConnection < Connection
+    attr_accessor :messages
+
+    def initialize
+      super(RFlow::Configuration::NullConfiguration.new)
+      @messages = []
+    end
+
+    def send_message(message)
+      @messages << message
+    end
+  end
 end
