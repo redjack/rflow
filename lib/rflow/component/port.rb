@@ -91,10 +91,8 @@ class RFlow
         connections_for.values.each {|connections| yield connections }
       end
 
-      # Send a message to all connections on all keys for this port,
-      # but only once per connection.
       def send_message(message)
-        all_connections.send_message(message)
+        def connect!; raise NotImplementedError, "Raw ports do not know how to send messages"; end
       end
 
       # Should be overridden.  Called when it is time to actually
@@ -136,6 +134,12 @@ class RFlow
             @connected = true
           end
         end
+      end
+
+      # Send a message to all connections on all keys for this port,
+      # but only once per connection.
+      def send_message(message)
+        all_connections.send_message(message)
       end
     end
 
