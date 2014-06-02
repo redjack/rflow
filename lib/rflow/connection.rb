@@ -71,4 +71,20 @@ class RFlow
       @messages << message
     end
   end
+
+  # Manually shuffle messages in-process from one output port to another output
+  # port. Can be used to get a Facade pattern effect - to have one component
+  # contain other components within it, shuttling messages in and out without
+  # making the internal component visible to the larger RFlow network.
+  class ForwardToOutputPort < Connection
+    def initialize(receiver, port_name)
+      super(RFlow::Configuration::NullConfiguration.new)
+      @receiver = receiver
+      @port_name = port_name.to_sym
+    end
+
+    def send_message(message)
+      @receiver.send(@port_name).send_message(message)
+    end
+  end
 end
