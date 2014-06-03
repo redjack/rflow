@@ -2,6 +2,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'rflow')
 
 require 'fileutils'
 require 'log4r'
+require 'rspec/collection_matchers'
 
 I18n.enforce_available_locales = true
 

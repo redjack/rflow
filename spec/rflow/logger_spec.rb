@@ -18,7 +18,7 @@ class RFlow
     before(:each) { initialize_logger }
 
     it "should initialize correctly" do
-      File.exist?(log_file_path).should be_true
+      File.exist?(log_file_path).should be true
 
       logger.error "TESTTESTTEST"
       File.read(log_file_path).should match(/TESTTESTTEST/)
@@ -29,8 +29,8 @@ class RFlow
     it "should reopen correctly" do
       moved_path = log_file_path + '.old'
 
-      File.exist?(log_file_path).should be_true
-      File.exist?(moved_path).should be_false
+      File.exist?(log_file_path).should be true
+      File.exist?(moved_path).should be false
 
       File.rename log_file_path, moved_path
 

@@ -77,7 +77,7 @@ describe RFlow do
         }
 
         output_files.each do |file_name, expected_contents|
-          File.exist?(File.join(@temp_directory_path, file_name)).should be_true
+          File.exist?(File.join(@temp_directory_path, file_name)).should be true
           File.readlines(file_name).map(&:to_i).should == expected_contents
         end
       end
@@ -126,7 +126,7 @@ describe RFlow do
         }
 
         output_files.each do |file_name, expected_contents|
-          File.exist?(File.join(@temp_directory_path, file_name)).should be_true
+          File.exist?(File.join(@temp_directory_path, file_name)).should be true
           File.readlines(file_name).map(&:to_i).sort.should == expected_contents.sort
         end
       end
@@ -271,7 +271,7 @@ describe RFlow do
           }
 
           output_files.each do |file_name, expected_contents|
-            File.exist?(File.join(@temp_directory_path, file_name)).should be_true
+            File.exist?(File.join(@temp_directory_path, file_name)).should be true
             File.readlines(file_name).map(&:to_i).sort.should == expected_contents.sort
           end
 

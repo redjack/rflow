@@ -29,7 +29,8 @@ Gem::Specification.new do |s|
   s.add_dependency "em-zeromq", "~> 0.4.2"
 
   s.add_development_dependency "bundler", "~> 1.5"
-  s.add_development_dependency "rspec", "~> 2.6"
+  s.add_development_dependency "rspec", "~> 2.99"
+  s.add_development_dependency "rspec-collection_matchers", "~> 0.0.4"
   s.add_development_dependency "rake", ">= 0.8.7"
   s.add_development_dependency "yard", "~> 0.8.7"
 end
