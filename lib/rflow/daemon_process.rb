@@ -8,6 +8,7 @@ class RFlow
     def daemonize!
       RFlow.logger.info "#{@name} daemonizing"
       establish_daemon_pipe
+      drop_database_connections
 
       parent = fork
       if parent
@@ -44,6 +45,12 @@ class RFlow
     def establish_daemon_pipe
       @daemon_pipe_r, @daemon_pipe_w = IO.pipe
       [@daemon_pipe_r, @daemon_pipe_w].each {|io| io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC) }
+    end
+
+    # Holding database connections over the fork causes problems. Instead,
+    # let them be automatically restored after the fork.
+    def drop_database_connections
+      ::ActiveRecord::Base.clear_all_connections!
     end
 
     def exit_after_daemon_starts
