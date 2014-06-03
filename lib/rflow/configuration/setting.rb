@@ -13,8 +13,8 @@ class RFlow
       DEFAULTS = {
         'rflow.application_name'           => 'rflow',
         'rflow.application_directory_path' => '.',
-        'rflow.pid_directory_path'         => lambda {File.join(Setting['rflow.application_directory_path'], 'run')},
-        'rflow.log_directory_path'         => lambda {File.join(Setting['rflow.application_directory_path'], 'log')},
+        'rflow.pid_directory_path'         => 'run', # relative to rflow.application_directory_path
+        'rflow.log_directory_path'         => 'log', # relative to rflow.application_directory_path
         'rflow.log_file_path' => lambda {File.join(Setting['rflow.log_directory_path'], Setting['rflow.application_name'] + '.log')},
         'rflow.pid_file_path' => lambda {File.join(Setting['rflow.pid_directory_path'], Setting['rflow.application_name'] + '.pid')},
         'rflow.log_level' => 'INFO',
