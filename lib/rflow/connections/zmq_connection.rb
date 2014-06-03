@@ -40,10 +40,14 @@ class RFlow
         input_socket.send(options['input_responsibility'].to_sym, options['input_address'])
 
         input_socket.on(:message) do |*message_parts|
-          message = RFlow::Message.from_avro(message_parts.last.copy_out_string)
-          RFlow.logger.debug "#{name}: Received message of type '#{message_parts.first.copy_out_string}'"
-          message_parts.each(&:close) # avoid memory leaks
-          recv_callback.call(message)
+          begin
+            message = RFlow::Message.from_avro(message_parts.last.copy_out_string)
+            RFlow.logger.debug "#{name}: Received message of type '#{message_parts.first.copy_out_string}'"
+            message_parts.each(&:close) # avoid memory leaks
+            recv_callback.call(message)
+          rescue Exception => e
+            RFlow.logger.error "#{name}: Exception processing message of type '#{message.data_type_name}': #{e.message}, because: #{e.backtrace}"
+          end
         end
 
         input_socket
