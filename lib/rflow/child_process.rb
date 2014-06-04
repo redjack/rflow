@@ -12,6 +12,7 @@ class RFlow
     # pipe) to allow for process management
     def spawn!
       establish_child_pipe
+      drop_database_connections
 
       @pid = fork
       if @pid
@@ -43,6 +44,12 @@ class RFlow
     def establish_child_pipe
       @child_pipe_r, @child_pipe_w = IO.pipe
       [@child_pipe_r, @child_pipe_w].each {|io| io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC) }
+    end
+
+    # Holding database connections over the fork causes problems. Instead,
+    # let them be automatically restored after the fork.
+    def drop_database_connections
+      ::ActiveRecord::Base.clear_all_connections!
     end
 
     def return_after_child_starts
