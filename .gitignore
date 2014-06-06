@@ -6,3 +6,4 @@ pkg/*
 .\#*
 spec/tmp/
 *.swp
+/.vagrant
