@@ -141,7 +141,7 @@ class RFlow
     private
     def configure_ports!
       @config.input_ports.each do |p|
-        RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) with input port '#{p.name}' (#{p.uuid})"
+        RFlow.logger.debug "Realizing component '#{name}' (#{uuid}) input port '#{p.name}' (#{p.uuid})"
         unless self.class.defined_input_ports.include? p.name
           raise ArgumentError, "Input port '#{p.name}' not defined on component '#{self.class}'"
         end
@@ -149,7 +149,7 @@ class RFlow
       end
 
       @config.output_ports.each do |p|
-        RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) with output port '#{p.name}' (#{p.uuid})"
+        RFlow.logger.debug "Realizing component '#{name}' (#{uuid}) output port '#{p.name}' (#{p.uuid})"
         unless self.class.defined_output_ports.include? p.name
           raise ArgumentError, "Output port '#{p.name}' not defined on component '#{self.class}'"
         end
