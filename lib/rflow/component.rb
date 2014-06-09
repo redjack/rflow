@@ -160,14 +160,14 @@ class RFlow
     def configure_connections!
       @config.input_ports.each do |p|
         p.input_connections.each do |c|
-          RFlow.logger.debug "Configuring input port '#{p.name}' (#{p.uuid}) key '#{c.input_port_key}' with #{c.type.to_s} connection '#{c.name}' (#{c.uuid})"
+          RFlow.logger.debug "Attaching #{c.type} connection '#{c.name}' (#{c.uuid}) to input port '#{p.name}' (#{p.uuid}), key '#{c.input_port_key}'"
           ports.by_uuid[p.uuid].add_connection c.input_port_key, Connection.build(c)
         end
       end
 
       @config.output_ports.each do |p|
         p.output_connections.each do |c|
-          RFlow.logger.debug "Configuring output port '#{p.name}' (#{p.uuid}) key '#{c.output_port_key}' with #{c.type.to_s} connection '#{c.name}' (#{c.uuid})"
+          RFlow.logger.debug "Attaching #{c.type} connection '#{c.name}' (#{c.uuid}) to output port '#{p.name}' (#{p.uuid}), key '#{c.output_port_key}'"
           ports.by_uuid[p.uuid].add_connection c.output_port_key, Connection.build(c)
         end
       end
