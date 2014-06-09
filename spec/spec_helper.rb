@@ -3,6 +3,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'rflow')
 require 'fileutils'
 require 'log4r'
 require 'rspec/collection_matchers'
+require 'tmpdir'
 
 I18n.enforce_available_locales = true
 
@@ -11,17 +12,14 @@ RSpec.configure do |config|
     RFlow.logger = Log4r::Logger.new 'test'
     RFlow.logger.add Log4r::StdoutOutputter.new('test_stdout', :formatter => RFlow::Logger::LOG_PATTERN_FORMATTER)
     RFlow.logger.level = 5
-    @base_temp_directory_path = File.join(File.dirname(__FILE__), 'tmp')
   end
 
   config.before(:each) do
-    @entropy = Time.now.to_f.to_s
-    @temp_directory_path = File.expand_path(File.join(@base_temp_directory_path, @entropy))
-    FileUtils.mkdir_p @temp_directory_path
+    @temp_directory_path = Dir.mktmpdir('rflow')
   end
 
   config.after(:each) do
-    FileUtils.rm_rf @base_temp_directory_path
+    FileUtils.rm_rf @temp_directory_path
   end
 end
 
