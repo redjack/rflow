@@ -9,7 +9,7 @@ class RFlow
         attr_accessor :zmq_context
 
         def create_zmq_context
-          RFlow.logger.debug "Creating a new ZeroMQ context"
+          RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is %d.%d.%d" % ZMQ::Util.version }
           if EM.reactor_running?
             raise RuntimeError, "EventMachine reactor is running when attempting to create a ZeroMQ context"
           end
