@@ -35,6 +35,8 @@ class RFlow
       unhandle_signals
     end
 
+    def run_process; end
+
     def shutdown!(signal)
       RFlow.logger.info "Shutting down #{@name} due to #{signal}"
       unhandle_signals
