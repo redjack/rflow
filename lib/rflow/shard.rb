@@ -19,12 +19,16 @@ class RFlow
 
       def run_process
         EM.run do
-          # TODO: Monitor the master
-          configure_components!
-          connect_components!
-          # TODO: need to do proper node synchronization for ZMQ to remove sleep
-          sleep 1
-          run_components!
+          begin
+            # TODO: Monitor the master
+            configure_components!
+            connect_components!
+            # TODO: need to do proper node synchronization for ZMQ to remove sleep
+            sleep 1
+            run_components!
+          rescue Exception => e
+            RFlow.logger.error "Error in worker, shutting down: #{e.class.name}: #{e.message}, because: #{e.backtrace.inspect}"
+          end
         end
 
         RFlow.logger.info "Shutting down worker after EM stopped"

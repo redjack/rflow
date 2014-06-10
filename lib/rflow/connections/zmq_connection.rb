@@ -6,6 +6,7 @@ end
 require 'rflow/connection'
 require 'rflow/message'
 require 'rflow/broker'
+require 'sys/filesystem'
 
 class RFlow
   module Connections
@@ -42,6 +43,8 @@ class RFlow
 
       def connect_input!
         RFlow.logger.debug "Connecting input #{uuid} with #{options.find_all {|k, v| k.to_s =~ /input/}}"
+        check_address(options['input_address'])
+
         self.input_socket = zmq_context.socket(ZMQ.const_get(options['input_socket_type']))
         input_socket.send(options['input_responsibility'].to_sym, options['input_address'])
         if config.delivery == 'broadcast'
@@ -64,6 +67,8 @@ class RFlow
 
       def connect_output!
         RFlow.logger.debug "Connecting output #{uuid} with #{options.find_all {|k, v| k.to_s =~ /output/}}"
+        check_address(options['output_address'])
+
         self.output_socket = zmq_context.socket(ZMQ.const_get(options['output_socket_type']))
         output_socket.send(options['output_responsibility'].to_sym, options['output_address'].to_s)
         output_socket
@@ -101,6 +106,23 @@ class RFlow
         end
 
         true
+      end
+
+      def check_address(address)
+        # make sure we're not trying to create IPC sockets in an NFS share
+        # because that works poorly
+        if address.start_with?('ipc://')
+          filename = address[6..-1]
+          mount_point = Sys::Filesystem.mount_point(File.dirname(filename))
+          return unless mount_point
+          mount_type = Sys::Filesystem.mounts.find {|m| m.mount_point == mount_point }.mount_type
+          return unless mount_type
+
+          case mount_type
+          when 'vmhgfs', 'vboxsf', 'nfs' # vmware, virtualbox, nfs
+            raise ArgumentError, "Cannot safely create IPC sockets in network filesystem '#{mount_point}' of type #{mount_type}"
+          end
+        end
       end
     end
 

@@ -119,7 +119,7 @@ describe RFlow do
 
       it "should run a non-sharded workflow" do
         run_rflow_with_dsl do |c|
-          c.setting 'rflow.log_level', 'FATAL'
+          c.setting 'rflow.log_level', 'ERROR'
           c.setting 'rflow.application_directory_path', @temp_directory_path
           c.setting 'rflow.application_name', 'nonsharded_test'
 
@@ -160,7 +160,7 @@ describe RFlow do
 
       it "should run a sharded workflow" do
         run_rflow_with_dsl do |c|
-          c.setting 'rflow.log_level', 'FATAL'
+          c.setting 'rflow.log_level', 'ERROR'
           c.setting 'rflow.application_directory_path', @temp_directory_path
           c.setting 'rflow.application_name', 'sharded_test'
 
