@@ -10,6 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # (that is, avoid NFS)
   # run 'vagrant rsync-auto' to get syncing to happen automatically
   config.vm.synced_folder '../rflow_examples', '/rflow_examples', type: 'rsync', rsync__exclude: '.git/'
+  config.vm.synced_folder '../rflow-components-http', '/rflow-components-http'
 
   # forward http for rflow testing
   config.vm.network "forwarded_port", guest: 8000, host: 8000
