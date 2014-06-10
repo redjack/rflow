@@ -5,6 +5,12 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "chef/centos-6.5"
 
+  config.vm.synced_folder '.', '/rflow'
+  # bring over rflow examples; use rsync so it's safe to create IPCs in the rflow-examples directory
+  # (that is, avoid NFS)
+  # run 'vagrant rsync-auto' to get syncing to happen automatically
+  config.vm.synced_folder '../rflow_examples', '/rflow_examples', type: 'rsync', rsync__exclude: '.git/'
+
   # forward http for rflow testing
   config.vm.network "forwarded_port", guest: 8000, host: 8000
 
