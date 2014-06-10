@@ -19,7 +19,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", privileged: true, inline: <<-EOS
     curl -O https://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
     rpm -ivh epel-release-6-8.noarch.rpm
-    yum -y install libyaml-devel patch libffi-devel glibc-headers autoconf gcc-c++ glibc-devel readline-devel zlib-devel openssl-devel automake libtool bison git sqlite-devel rpm-build libuuid-devel
+    yum -y install libyaml-devel patch libffi-devel glibc-headers autoconf gcc-c++ glibc-devel readline-devel zlib-devel openssl-devel automake libtool bison git sqlite-devel rpm-build libuuid-devel vim
   EOS
 
   # build zeromq as vagrant user
