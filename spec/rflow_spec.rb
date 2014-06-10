@@ -36,7 +36,7 @@ describe RFlow do
         sleep(5)
 
         # Shut down the workers, the reactor, and the thread
-        RFlow.master.shutdown! 'SIGQUIT'
+        RFlow.master.shutdown! 'SIGQUIT' if RFlow.master
         EM.run { EM.stop }
         rflow_thread.join
       end
