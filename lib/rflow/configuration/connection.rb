@@ -62,28 +62,6 @@ class RFlow
       end
     end
 
-    # STI Subclass for AMQP connections and their required options
-    class AMQPConnection < Connection
-      def self.default_options
-        {
-          'host'     => 'localhost',
-          'port'     => 5672,
-          'insist'   => true,
-          'vhost'    => '/',
-          'username' => 'guest',
-          'password' => 'guest',
-
-          # If a queue is created, these are the default parameters
-          # for said queue type
-          'queue_passive'     => false,
-          'queue_durable'     => true,
-          'queue_exclusive'   => false,
-          'queue_auto_delete' => false,
-          'queue_nowait'      => true,
-        }
-      end
-    end
-
     # for testing purposes
     class NullConfiguration
       attr_accessor :name, :uuid, :options

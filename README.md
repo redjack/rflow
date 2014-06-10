@@ -339,8 +339,8 @@ identify specific components.
 
 * connections - a connection between two ports via foriegn keys
   `input_port_uuid` and `output_port_uuid`. Like ports, connections
-  are typed via AR STI (`RFlow::Configuration::ZMQConnection` or
-  `RFlow::Configuration::AMQPConnection`) and have a YAML serialized
+  are typed via AR STI (`RFlow::Configuration::ZMQConnection` is
+  the only supported value for now) and have a YAML serialized
   `options` hash. A connection also (potentially) defines the port
   keys.
 
