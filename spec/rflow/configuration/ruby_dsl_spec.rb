@@ -128,7 +128,7 @@ class RFlow
            'third#out=>fifth#in']
       end
 
-      it "should generate PUSH-PULL ZeroMQ connections for in-shard connections" do
+      it "should generate PUSH-PULL inproc ZeroMQ connections for in-shard connections" do
         described_class.configure do |c|
 
           c.shard "s1", :process => 1 do |s|
@@ -151,16 +151,16 @@ class RFlow
           conn.input_port_key.should be_nil
           conn.options.tap do |opts|
             opts['output_socket_type'].should == 'PUSH'
-            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['output_address'].should == "inproc://rflow.#{conn.uuid}"
             opts['output_responsibility'].should == 'connect'
             opts['input_socket_type'].should == 'PULL'
-            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['input_address'].should == "inproc://rflow.#{conn.uuid}"
             opts['input_responsibility'].should == 'bind'
           end
         end
       end
 
-      it "should generate PUSH-PULL ZeroMQ connections for one-to-one inter-shard connections" do
+      it "should generate PUSH-PULL ipc ZeroMQ connections for one-to-one inter-shard connections" do
         described_class.configure do |c|
 
           c.shard "s1", :process => 1 do |s|
@@ -195,7 +195,7 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL ZeroMQ connections for one-to-many inter-shard connections" do
+      it "should generate PUSH-PULL ipc ZeroMQ connections for one-to-many inter-shard connections" do
         described_class.configure do |c|
 
           c.shard "s1", :process => 1 do |s|
@@ -230,7 +230,7 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL ZeroMQ connections for many-to-one inter-shard connections" do
+      it "should generate PUSH-PULL ipc ZeroMQ connections for many-to-one inter-shard connections" do
         described_class.configure do |c|
 
           c.shard "s1", :process => 3 do |s|
@@ -265,7 +265,7 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL ZeroMQ connections for many-to-many inter-shard connections" do
+      it "should generate PUSH-PULL ipc ZeroMQ connections for many-to-many inter-shard connections" do
         described_class.configure do |c|
 
           c.shard "s1", :process => 3 do |s|

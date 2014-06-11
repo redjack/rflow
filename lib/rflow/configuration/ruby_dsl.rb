@@ -154,8 +154,8 @@ class RFlow
 
       # For each given connection, break up each input/output
       # component/port specification, ensure that the component
-      # already exists in the database (by name).  Also, only supports
-      # ZeroMQ ipc sockets
+      # already exists in the database (by name). Chooses the best
+      # connection type for any pair of components.
       def process_connection_specs
         connection_specs.each do |spec|
           begin
@@ -175,11 +175,19 @@ class RFlow
             input_port = input_component.input_ports.find_or_initialize_by_name :name => spec[:input_port_name]
             input_port.save!
 
-            RFlow::Configuration::ZMQConnection.create!(:name => spec[:name],
-                                                        :output_port_key => spec[:output_port_key],
-                                                        :input_port_key => spec[:input_port_key],
-                                                        :output_port => output_port,
-                                                        :input_port => input_port)
+            conn = RFlow::Configuration::ZMQConnection.create!(:name => spec[:name],
+                                                               :output_port_key => spec[:output_port_key],
+                                                               :input_port_key => spec[:input_port_key],
+                                                               :output_port => output_port,
+                                                               :input_port => input_port)
+            if output_component.shard == input_component.shard
+              conn.options['output_responsibility'] = 'connect'
+              conn.options['input_responsibility'] = 'bind'
+              conn.options['output_address'] = "inproc://rflow.#{conn.uuid}"
+              conn.options['input_address'] = "inproc://rflow.#{conn.uuid}"
+              conn.save!
+            end
+            conn
           rescue Exception => e
             # TODO: Figure out why an ArgumentError doesn't put the
             # offending message into e.message, even though it is printed
