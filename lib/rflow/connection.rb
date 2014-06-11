@@ -7,6 +7,8 @@ class RFlow
         case config.type
         when 'RFlow::Configuration::ZMQConnection'
           RFlow::Connections::ZMQConnection.new(config)
+        when 'RFlow::Configuration::BrokeredZMQConnection'
+          RFlow::Connections::BrokeredZMQConnection.new(config)
         else
           raise ArgumentError, "Only ZMQConnections currently supported"
         end

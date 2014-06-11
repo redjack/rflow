@@ -265,7 +265,7 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL ipc ZeroMQ connections for many-to-many inter-shard connections" do
+      it "should generate PUSH-PULL brokered ZeroMQ connections for many-to-many inter-shard connections" do
         described_class.configure do |c|
 
           c.shard "s1", :process => 3 do |s|
@@ -285,17 +285,17 @@ class RFlow
         Connection.should have(1).connections
 
         Connection.first.tap do |conn|
-          conn.type.should == 'RFlow::Configuration::ZMQConnection'
+          conn.type.should == 'RFlow::Configuration::BrokeredZMQConnection'
           conn.name.should == 'first#out=>second#in'
           conn.output_port_key.should be_nil
           conn.input_port_key.should be_nil
           conn.options.tap do |opts|
             opts['output_socket_type'].should == 'PUSH'
-            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['output_address'].should == "ipc://rflow.#{conn.uuid}.in"
             opts['output_responsibility'].should == 'connect'
             opts['input_socket_type'].should == 'PULL'
-            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['input_responsibility'].should == 'bind'
+            opts['input_address'].should == "ipc://rflow.#{conn.uuid}.out"
+            opts['input_responsibility'].should == 'connect'
           end
         end
       end

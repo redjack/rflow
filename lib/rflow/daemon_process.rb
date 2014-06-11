@@ -146,7 +146,7 @@ class RFlow
     end
 
     def signal_subprocesses(signal)
-      subprocesses.each do |p|
+      subprocesses.reject {|p| p.pid.nil? }.each do |p|
         RFlow.logger.info "Signaling #{p.name} with #{signal}"
         Process.kill(signal, p.pid)
       end

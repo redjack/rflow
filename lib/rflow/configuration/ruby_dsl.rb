@@ -175,28 +175,35 @@ class RFlow
             input_port = input_component.input_ports.find_or_initialize_by_name :name => spec[:input_port_name]
             input_port.save!
 
-            conn = RFlow::Configuration::ZMQConnection.create!(:name => spec[:name],
-                                                               :output_port_key => spec[:output_port_key],
-                                                               :input_port_key => spec[:input_port_key],
-                                                               :output_port => output_port,
-                                                               :input_port => input_port)
+            output_shards = output_component.shard.count
+            input_shards = input_component.shard.count
+
+            in_shard_connection = output_component.shard == input_component.shard
+            one_to_one = output_shards == 1 && input_shards == 1
+            one_to_many = output_shards == 1 && input_shards > 1
+            many_to_one = output_shards > 1 && input_shards == 1
+            many_to_many = output_shards > 1 && input_shards > 1
+
+            connection_type = many_to_many ? RFlow::Configuration::BrokeredZMQConnection : RFlow::Configuration::ZMQConnection
+
+            conn = connection_type.create!(:name => spec[:name],
+                                           :output_port_key => spec[:output_port_key],
+                                           :input_port_key => spec[:input_port_key],
+                                           :output_port => output_port,
+                                           :input_port => input_port)
 
             # bind on the cardinality-1 side, connect on the cardinality-n side
-            if output_component.shard == input_component.shard
+            if in_shard_connection
               conn.options['output_responsibility'] = 'connect'
               conn.options['input_responsibility'] = 'bind'
               conn.options['output_address'] = "inproc://rflow.#{conn.uuid}"
               conn.options['input_address'] = "inproc://rflow.#{conn.uuid}"
-            elsif input_component.shard.count == 1
+            elsif many_to_one
               conn.options['output_responsibility'] = 'connect'
               conn.options['input_responsibility'] = 'bind'
-              conn.options['output_address'] = "ipc://rflow.#{conn.uuid}"
-              conn.options['input_address'] = "ipc://rflow.#{conn.uuid}"
-            elsif output_component.shard.count == 1
+            elsif one_to_many
               conn.options['output_responsibility'] = 'bind'
               conn.options['input_responsibility'] = 'connect'
-              conn.options['output_address'] = "ipc://rflow.#{conn.uuid}"
-              conn.options['input_address'] = "ipc://rflow.#{conn.uuid}"
             end
 
             conn.save!

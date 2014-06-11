@@ -1,15 +1,18 @@
 require 'rflow/daemon_process'
 require 'rflow/pid_file'
 require 'rflow/shard'
+require 'rflow/broker'
 
 class RFlow
   class Master < DaemonProcess
     attr_reader :shards
+    attr_reader :brokers
 
     def initialize(config)
       super(config['rflow.application_name'], 'Master')
       @pid_file = PIDFile.new(config['rflow.pid_file_path'])
       @shards = config.shards.map {|config| Shard.new(config) }
+      @brokers = config.connections.flat_map(&:brokers).map {|config| Broker.build(config) }
     end
 
     def run!
@@ -20,11 +23,12 @@ class RFlow
     end
 
     def spawn_subprocesses
+      brokers.each(&:spawn!)
       shards.each(&:run!)
     end
 
     def subprocesses
-      shards.flat_map(&:workers)
+      brokers + shards.flat_map(&:workers)
     end
 
     def run_process

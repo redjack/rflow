@@ -255,7 +255,7 @@ describe RFlow do
           log_pids.should include initial_pid
           log_pids.should include master_pid
 
-          worker_pids.should have(8).pids
+          worker_pids.should have(10).pids # 1+3+2+2 workers, 2 brokers
           worker_pids.should_not include 0
 
           expect { Process.kill(0, initial_pid) }.to raise_error(Errno::ESRCH)
