@@ -5,21 +5,20 @@ require 'eventmachine'
 require 'evma_httpserver'
 
 class RFlow::Components::FileOutput < RFlow::Component
-  attr_accessor :output_file_path, :output_file
+  attr_accessor :output_file_path
   input_port :in
 
   def configure!(config)
     self.output_file_path = config['output_file_path']
-    self.output_file = File.new output_file_path, 'w+'
   end
 
   def process_message(input_port, input_port_key, connection, message)
-    output_file.puts message.data.data_object.inspect
-    output_file.flush
-  end
-
-  def cleanup!
-    output_file.close
+    File.open(output_file_path, 'a') do |f|
+      f.flock(File::LOCK_EX)
+      f.puts message.data.data_object.inspect
+      f.flush
+      f.flock(File::LOCK_UN)
+    end
   end
 end
 
