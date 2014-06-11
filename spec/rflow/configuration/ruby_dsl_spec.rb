@@ -222,10 +222,10 @@ class RFlow
           conn.options.tap do |opts|
             opts['output_socket_type'].should == 'PUSH'
             opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['output_responsibility'].should == 'connect'
+            opts['output_responsibility'].should == 'bind'
             opts['input_socket_type'].should == 'PULL'
             opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['input_responsibility'].should == 'bind'
+            opts['input_responsibility'].should == 'connect'
           end
         end
       end

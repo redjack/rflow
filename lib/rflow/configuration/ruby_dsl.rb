@@ -180,13 +180,26 @@ class RFlow
                                                                :input_port_key => spec[:input_port_key],
                                                                :output_port => output_port,
                                                                :input_port => input_port)
+
+            # bind on the cardinality-1 side, connect on the cardinality-n side
             if output_component.shard == input_component.shard
               conn.options['output_responsibility'] = 'connect'
               conn.options['input_responsibility'] = 'bind'
               conn.options['output_address'] = "inproc://rflow.#{conn.uuid}"
               conn.options['input_address'] = "inproc://rflow.#{conn.uuid}"
-              conn.save!
+            elsif input_component.shard.count == 1
+              conn.options['output_responsibility'] = 'connect'
+              conn.options['input_responsibility'] = 'bind'
+              conn.options['output_address'] = "ipc://rflow.#{conn.uuid}"
+              conn.options['input_address'] = "ipc://rflow.#{conn.uuid}"
+            elsif output_component.shard.count == 1
+              conn.options['output_responsibility'] = 'bind'
+              conn.options['input_responsibility'] = 'connect'
+              conn.options['output_address'] = "ipc://rflow.#{conn.uuid}"
+              conn.options['input_address'] = "ipc://rflow.#{conn.uuid}"
             end
+
+            conn.save!
             conn
           rescue Exception => e
             # TODO: Figure out why an ArgumentError doesn't put the
