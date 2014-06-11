@@ -38,7 +38,7 @@ class RFlow
     def run_process; end
 
     def shutdown!(signal)
-      RFlow.logger.info "Shutting down #{@name} due to #{signal}"
+      RFlow.logger.info "Shutting down due to #{signal}"
       unhandle_signals
     end
 
