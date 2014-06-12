@@ -3,7 +3,12 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = "chef/centos-6.5"
+  config.vm.define 'centos64' do |c|
+    c.vm.box = "box-cutter/centos64"
+  end
+  config.vm.define 'centos65' do |c|
+    c.vm.box = "chef/centos-6.5"
+  end
 
   config.vm.synced_folder '.', '/rflow'
   # bring over rflow examples; use rsync so it's safe to create IPCs in the rflow-examples directory
@@ -35,7 +40,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # set up RVM and bundler
   config.vm.provision "shell", privileged: false, inline: <<-EOS
-    rm .profile
+    rm -f .profile
     curl -sSL https://get.rvm.io | bash -s stable
     source .rvm/scripts/rvm
     rvm install `cat /vagrant/.ruby-version`
