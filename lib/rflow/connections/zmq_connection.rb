@@ -118,7 +118,8 @@ class RFlow
       end
 
       def run_process
-        RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is %d.%d.%d" % ZMQ::Util.version }
+        version = LibZMQ::version
+        RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is #{version[:major]}.#{version[:minor]}.#{version[:patch]}" }
         @context = ZMQ::Context.new
         RFlow.logger.debug { "Connecting message broker to route from #{connection.options['output_address']} to #{connection.options['input_address']}" }
         @back = context.socket(ZMQ::PULL)
