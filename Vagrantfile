@@ -46,8 +46,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     rm -f .profile
     curl -sSL https://get.rvm.io | bash -s stable
     source .rvm/scripts/rvm
-    rvm install `cat /vagrant/.ruby-version`
-    cd /vagrant
+    rvm install `cat /rflow/.ruby-version`
+    cd /rflow
     bundle update
   EOS
 end
