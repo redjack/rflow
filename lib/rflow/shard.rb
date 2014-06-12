@@ -43,11 +43,11 @@ class RFlow
       def connect_components!
         RFlow.logger.debug "Connecting components"
         @components.each do |component|
-          RFlow.logger.debug "Connecting component inputs '#{component.name}' (#{component.uuid})"
+          RFlow.logger.debug "Connecting inputs for component '#{component.name}' (#{component.uuid})"
           component.connect_inputs!
         end
         @components.each do |component|
-          RFlow.logger.debug "Connecting component outputs '#{component.name}' (#{component.uuid})"
+          RFlow.logger.debug "Connecting outputs for component '#{component.name}' (#{component.uuid})"
           component.connect_outputs!
         end
       end
