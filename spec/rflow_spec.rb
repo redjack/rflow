@@ -279,7 +279,7 @@ describe RFlow do
           Process.kill("TERM", master_pid).should == 1
 
           # Make sure everything is dead after a second
-          sleep 1
+          sleep 2
           ([master_pid] + worker_pids).each do |pid|
             expect { Process.kill(0, pid) }.to raise_error(Errno::ESRCH)
           end
