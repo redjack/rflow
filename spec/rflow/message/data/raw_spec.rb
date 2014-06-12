@@ -8,7 +8,7 @@ class RFlow
         let(:schema) { Configuration.available_data_types['RFlow::Message::Data::Raw']['avro'] }
 
         it "should load the schema" do
-          schema.should_not be_nil
+          expect(schema).not_to be_nil
         end
 
         it "should encode and decode an object" do
@@ -20,8 +20,8 @@ class RFlow
           expect { decode_avro(schema, encoded) }.to_not raise_error
           decoded = decode_avro(schema, encoded)
 
-          decoded.should == raw
-          decoded['raw'].should == raw['raw']
+          expect(decoded).to eq(raw)
+          expect(decoded['raw']).to eq(raw['raw'])
         end
       end
     end

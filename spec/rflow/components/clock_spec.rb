@@ -26,44 +26,44 @@ class RFlow
 
       it 'defaults configuration nicely' do
         clock.tap do |c|
-          c.clock_name.should == 'Clock'
-          c.tick_interval.should == 1
+          expect(c.clock_name).to eq('Clock')
+          expect(c.tick_interval).to eq(1)
         end
       end
 
       it 'supports name overrides' do
         clock('name' => 'testname').tap do |c|
-          c.clock_name.should == 'testname'
+          expect(c.clock_name).to eq('testname')
         end
       end
 
       it 'supports interval overrides for floats' do
         clock('tick_interval' => 1.5).tap do |c|
-          c.tick_interval.should == 1.5
+          expect(c.tick_interval).to eq(1.5)
         end
       end
 
       it 'supports interval overrides for strings' do
         clock('tick_interval' => '1.5').tap do |c|
-          c.tick_interval.should == 1.5
+          expect(c.tick_interval).to eq(1.5)
         end
       end
 
       it 'should register a timer' do
-        EventMachine::PeriodicTimer.should_receive(:new).with(1)
+        expect(EventMachine::PeriodicTimer).to receive(:new).with(1)
         clock.run!
       end
 
       it 'should generate a tick message when asked' do
         clock.tap do |c|
           now = Integer(Time.now.to_f * 1000)
-          messages.should be_empty
+          expect(messages).to be_empty
           c.tick
-          messages.should have(1).message
+          expect(messages).to have(1).message
           messages.first.tap do |m|
-            m.data_type_name.should == 'RFlow::Message::Clock::Tick'
-            m.data.name.should == 'Clock'
-            m.data.timestamp.should >= now
+            expect(m.data_type_name).to eq('RFlow::Message::Clock::Tick')
+            expect(m.data.name).to eq('Clock')
+            expect(m.data.timestamp).to be >= now
           end
         end
       end

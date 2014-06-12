@@ -12,10 +12,10 @@ class RFlow
       it "should correctly process an empty DSL" do
         described_class.configure {}
 
-        Shard.should have(0).shards
-        Component.should have(0).components
-        Port.should have(0).ports
-        Connection.should have(0).connections
+        expect(Shard).to have(0).shards
+        expect(Component).to have(0).components
+        expect(Port).to have(0).ports
+        expect(Connection).to have(0).connections
       end
 
       it "should correctly process a component declaration" do
@@ -23,15 +23,15 @@ class RFlow
           c.component 'boom', 'town', 'opt1' => 'OPT1', 'opt2' => 'OPT2'
         end
 
-        Shard.should have(1).shard
-        Component.should have(1).component
-        Port.should have(0).ports
-        Connection.should have(0).connections
+        expect(Shard).to have(1).shard
+        expect(Component).to have(1).component
+        expect(Port).to have(0).ports
+        expect(Connection).to have(0).connections
 
         Component.first.tap do |c|
-          c.name.should == 'boom'
-          c.specification.should == 'town'
-          c.options.should == {'opt1' => 'OPT1', 'opt2' => 'OPT2'}
+          expect(c.name).to eq('boom')
+          expect(c.specification).to eq('town')
+          expect(c.options).to eq('opt1' => 'OPT1', 'opt2' => 'OPT2')
         end
       end
 
@@ -45,38 +45,38 @@ class RFlow
           c.connect 'first#out[outkey]' => 'second#in[inkey]'
         end
 
-        Shard.should have(1).shard
-        Component.should have(2).components
-        Port.should have(2).ports
-        Connection.should have(4).connections
+        expect(Shard).to have(1).shard
+        expect(Component).to have(2).components
+        expect(Port).to have(2).ports
+        expect(Connection).to have(4).connections
 
         first_component = Component.where(name: 'first').first.tap do |component|
-          component.specification.should == 'First'
-          component.should have(0).input_ports
-          component.should have(1).output_port
-          component.output_ports.first.name.should == 'out'
+          expect(component.specification).to eq('First')
+          expect(component).to have(0).input_ports
+          expect(component).to have(1).output_port
+          expect(component.output_ports.first.name).to eq('out')
 
-          component.output_ports.first.should have(4).connections
+          expect(component.output_ports.first).to have(4).connections
           component.output_ports.first.connections.tap do |connections|
-            connections[0].input_port_key.should be_nil
-            connections[0].output_port_key.should be_nil
-            connections[1].input_port_key.should == 'inkey'
-            connections[1].output_port_key.should be_nil
-            connections[2].input_port_key.should be_nil
-            connections[2].output_port_key.should == 'outkey'
-            connections[3].input_port_key.should == 'inkey'
-            connections[3].output_port_key.should == 'outkey'
+            expect(connections[0].input_port_key).to be_nil
+            expect(connections[0].output_port_key).to be_nil
+            expect(connections[1].input_port_key).to eq('inkey')
+            expect(connections[1].output_port_key).to be_nil
+            expect(connections[2].input_port_key).to be_nil
+            expect(connections[2].output_port_key).to eq('outkey')
+            expect(connections[3].input_port_key).to eq('inkey')
+            expect(connections[3].output_port_key).to eq('outkey')
           end
         end
 
         Component.where(name: 'second').first.tap do |component|
-          component.specification.should == 'Second'
-          component.should have(1).input_port
-          component.input_ports.first.name.should == 'in'
-          component.should have(0).output_ports
+          expect(component.specification).to eq('Second')
+          expect(component).to have(1).input_port
+          expect(component.input_ports.first.name).to eq('in')
+          expect(component).to have(0).output_ports
 
-          component.input_ports.first.should have(4).connections
-          component.input_ports.first.connections.should == first_component.output_ports.first.connections
+          expect(component.input_ports.first).to have(4).connections
+          expect(component.input_ports.first.connections).to eq(first_component.output_ports.first.connections)
         end
       end
 
@@ -119,29 +119,29 @@ class RFlow
           c.connect 'third#out' => 'sixth#in'
         end
 
-        Shard.should have(6).shards
-        Component.should have(8).components
-        Port.should have(9).ports
-        Connection.should have(6).connections
+        expect(Shard).to have(6).shards
+        expect(Component).to have(8).components
+        expect(Port).to have(9).ports
+        expect(Connection).to have(6).connections
 
         Shard.all.tap do |shards|
-          shards.map(&:name).should == ['DEFAULT', 's1', 's2', 's3', 's4', 's5']
-          shards.map(&:type).should == (['RFlow::Configuration::ProcessShard'] * 4) + (['RFlow::Configuration::ThreadShard'] * 2)
-          shards.first.components.all.map(&:name).should == ['first', 'eighth']
-          shards.second.components.all.map(&:name).should == ['second']
-          shards.third.components.all.map(&:name).should == ['third', 'fourth']
-          shards.fourth.components.all.map(&:name).should == ['fifth']
+          expect(shards.map(&:name)).to eq(['DEFAULT', 's1', 's2', 's3', 's4', 's5'])
+          expect(shards.map(&:type)).to eq((['RFlow::Configuration::ProcessShard'] * 4) + (['RFlow::Configuration::ThreadShard'] * 2))
+          expect(shards.first.components.all.map(&:name)).to eq(['first', 'eighth'])
+          expect(shards.second.components.all.map(&:name)).to eq(['second'])
+          expect(shards.third.components.all.map(&:name)).to eq(['third', 'fourth'])
+          expect(shards.fourth.components.all.map(&:name)).to eq(['fifth'])
         end
 
-        Port.all.map(&:name).should == ['out', 'in', 'out', 'in', 'in2', 'out', 'in', 'in', 'in']
+        expect(Port.all.map(&:name)).to eq(['out', 'in', 'out', 'in', 'in2', 'out', 'in', 'in', 'in'])
 
-        Connection.all.map(&:name).should ==
+        expect(Connection.all.map(&:name)).to eq(
           ['first#out=>second#in',
            'second#out[outkey]=>third#in[inkey]',
            'second#out=>third#in2',
            'third#out=>fourth#in',
            'third#out=>fifth#in',
-           'third#out=>sixth#in']
+           'third#out=>sixth#in'])
       end
 
       it "should generate PUSH-PULL inproc ZeroMQ connections for in-shard connections" do
@@ -155,23 +155,23 @@ class RFlow
           c.connect 'first#out' => 'second#in'
         end
 
-        Shard.should have(1).shards
-        Component.should have(2).components
-        Port.should have(2).ports
-        Connection.should have(1).connections
+        expect(Shard).to have(1).shards
+        expect(Component).to have(2).components
+        expect(Port).to have(2).ports
+        expect(Connection).to have(1).connections
 
         Connection.first.tap do |conn|
-          conn.type.should == 'RFlow::Configuration::ZMQConnection'
-          conn.name.should == 'first#out=>second#in'
-          conn.output_port_key.should be_nil
-          conn.input_port_key.should be_nil
+          expect(conn.type).to eq('RFlow::Configuration::ZMQConnection')
+          expect(conn.name).to eq('first#out=>second#in')
+          expect(conn.output_port_key).to be_nil
+          expect(conn.input_port_key).to be_nil
           conn.options.tap do |opts|
-            opts['output_socket_type'].should == 'PUSH'
-            opts['output_address'].should == "inproc://rflow.#{conn.uuid}"
-            opts['output_responsibility'].should == 'connect'
-            opts['input_socket_type'].should == 'PULL'
-            opts['input_address'].should == "inproc://rflow.#{conn.uuid}"
-            opts['input_responsibility'].should == 'bind'
+            expect(opts['output_socket_type']).to eq('PUSH')
+            expect(opts['output_address']).to eq("inproc://rflow.#{conn.uuid}")
+            expect(opts['output_responsibility']).to eq('connect')
+            expect(opts['input_socket_type']).to eq('PULL')
+            expect(opts['input_address']).to eq("inproc://rflow.#{conn.uuid}")
+            expect(opts['input_responsibility']).to eq('bind')
           end
         end
       end
@@ -190,23 +190,23 @@ class RFlow
           c.connect 'first#out' => 'second#in'
         end
 
-        Shard.should have(2).shards
-        Component.should have(2).components
-        Port.should have(2).ports
-        Connection.should have(1).connections
+        expect(Shard).to have(2).shards
+        expect(Component).to have(2).components
+        expect(Port).to have(2).ports
+        expect(Connection).to have(1).connections
 
         Connection.first.tap do |conn|
-          conn.type.should == 'RFlow::Configuration::ZMQConnection'
-          conn.name.should == 'first#out=>second#in'
-          conn.output_port_key.should be_nil
-          conn.input_port_key.should be_nil
+          expect(conn.type).to eq('RFlow::Configuration::ZMQConnection')
+          expect(conn.name).to eq('first#out=>second#in')
+          expect(conn.output_port_key).to be_nil
+          expect(conn.input_port_key).to be_nil
           conn.options.tap do |opts|
-            opts['output_socket_type'].should == 'PUSH'
-            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['output_responsibility'].should == 'connect'
-            opts['input_socket_type'].should == 'PULL'
-            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['input_responsibility'].should == 'bind'
+            expect(opts['output_socket_type']).to eq('PUSH')
+            expect(opts['output_address']).to eq("ipc://rflow.#{conn.uuid}")
+            expect(opts['output_responsibility']).to eq('connect')
+            expect(opts['input_socket_type']).to eq('PULL')
+            expect(opts['input_address']).to eq("ipc://rflow.#{conn.uuid}")
+            expect(opts['input_responsibility']).to eq('bind')
           end
         end
       end
@@ -225,23 +225,23 @@ class RFlow
           c.connect 'first#out' => 'second#in'
         end
 
-        Shard.should have(2).shards
-        Component.should have(2).components
-        Port.should have(2).ports
-        Connection.should have(1).connections
+        expect(Shard).to have(2).shards
+        expect(Component).to have(2).components
+        expect(Port).to have(2).ports
+        expect(Connection).to have(1).connections
 
         Connection.first.tap do |conn|
-          conn.type.should == 'RFlow::Configuration::ZMQConnection'
-          conn.name.should == 'first#out=>second#in'
-          conn.output_port_key.should be_nil
-          conn.input_port_key.should be_nil
+          expect(conn.type).to eq('RFlow::Configuration::ZMQConnection')
+          expect(conn.name).to eq('first#out=>second#in')
+          expect(conn.output_port_key).to be_nil
+          expect(conn.input_port_key).to be_nil
           conn.options.tap do |opts|
-            opts['output_socket_type'].should == 'PUSH'
-            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['output_responsibility'].should == 'bind'
-            opts['input_socket_type'].should == 'PULL'
-            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['input_responsibility'].should == 'connect'
+            expect(opts['output_socket_type']).to eq('PUSH')
+            expect(opts['output_address']).to eq("ipc://rflow.#{conn.uuid}")
+            expect(opts['output_responsibility']).to eq('bind')
+            expect(opts['input_socket_type']).to eq('PULL')
+            expect(opts['input_address']).to eq("ipc://rflow.#{conn.uuid}")
+            expect(opts['input_responsibility']).to eq('connect')
           end
         end
       end
@@ -260,23 +260,23 @@ class RFlow
           c.connect 'first#out' => 'second#in'
         end
 
-        Shard.should have(2).shards
-        Component.should have(2).components
-        Port.should have(2).ports
-        Connection.should have(1).connections
+        expect(Shard).to have(2).shards
+        expect(Component).to have(2).components
+        expect(Port).to have(2).ports
+        expect(Connection).to have(1).connections
 
         Connection.first.tap do |conn|
-          conn.type.should == 'RFlow::Configuration::ZMQConnection'
-          conn.name.should == 'first#out=>second#in'
-          conn.output_port_key.should be_nil
-          conn.input_port_key.should be_nil
+          expect(conn.type).to eq('RFlow::Configuration::ZMQConnection')
+          expect(conn.name).to eq('first#out=>second#in')
+          expect(conn.output_port_key).to be_nil
+          expect(conn.input_port_key).to be_nil
           conn.options.tap do |opts|
-            opts['output_socket_type'].should == 'PUSH'
-            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['output_responsibility'].should == 'connect'
-            opts['input_socket_type'].should == 'PULL'
-            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
-            opts['input_responsibility'].should == 'bind'
+            expect(opts['output_socket_type']).to eq('PUSH')
+            expect(opts['output_address']).to eq("ipc://rflow.#{conn.uuid}")
+            expect(opts['output_responsibility']).to eq('connect')
+            expect(opts['input_socket_type']).to eq('PULL')
+            expect(opts['input_address']).to eq("ipc://rflow.#{conn.uuid}")
+            expect(opts['input_responsibility']).to eq('bind')
           end
         end
       end
@@ -295,23 +295,23 @@ class RFlow
           c.connect 'first#out' => 'second#in'
         end
 
-        Shard.should have(2).shards
-        Component.should have(2).components
-        Port.should have(2).ports
-        Connection.should have(1).connections
+        expect(Shard).to have(2).shards
+        expect(Component).to have(2).components
+        expect(Port).to have(2).ports
+        expect(Connection).to have(1).connections
 
         Connection.first.tap do |conn|
-          conn.type.should == 'RFlow::Configuration::BrokeredZMQConnection'
-          conn.name.should == 'first#out=>second#in'
-          conn.output_port_key.should be_nil
-          conn.input_port_key.should be_nil
+          expect(conn.type).to eq('RFlow::Configuration::BrokeredZMQConnection')
+          expect(conn.name).to eq('first#out=>second#in')
+          expect(conn.output_port_key).to be_nil
+          expect(conn.input_port_key).to be_nil
           conn.options.tap do |opts|
-            opts['output_socket_type'].should == 'PUSH'
-            opts['output_address'].should == "ipc://rflow.#{conn.uuid}.in"
-            opts['output_responsibility'].should == 'connect'
-            opts['input_socket_type'].should == 'PULL'
-            opts['input_address'].should == "ipc://rflow.#{conn.uuid}.out"
-            opts['input_responsibility'].should == 'connect'
+            expect(opts['output_socket_type']).to eq('PUSH')
+            expect(opts['output_address']).to eq("ipc://rflow.#{conn.uuid}.in")
+            expect(opts['output_responsibility']).to eq('connect')
+            expect(opts['input_socket_type']).to eq('PULL')
+            expect(opts['input_address']).to eq("ipc://rflow.#{conn.uuid}.out")
+            expect(opts['input_responsibility']).to eq('connect')
           end
         end
       end

@@ -64,8 +64,8 @@ describe RFlow do
           c.connect 'generate_ints2#even_odd_out' => 'output_even_odd2#in'
         end
 
-        RFlow.master.should have(1).shard
-        RFlow.master.shards.first.should have(1).worker
+        expect(RFlow.master).to have(1).shard
+        expect(RFlow.master.shards.first).to have(1).worker
 
         output_files = {
           'out'           => [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
@@ -77,8 +77,8 @@ describe RFlow do
         }
 
         output_files.each do |file_name, expected_contents|
-          File.exist?(File.join(@temp_directory_path, file_name)).should be true
-          File.readlines(file_name).map(&:to_i).should == expected_contents
+          expect(File.exist?(File.join(@temp_directory_path, file_name))).to be true
+          expect(File.readlines(file_name).map(&:to_i)).to eq(expected_contents)
         end
       end
 
@@ -114,9 +114,9 @@ describe RFlow do
           c.connect 'generate_ints3#out' => 'output_all#in'
         end
 
-        RFlow.master.should have(4).shards
-        RFlow.master.shards.map(&:count).should == [1, 3, 2, 2]
-        RFlow.master.shards.map(&:workers).map(&:count).should == [1, 3, 2, 2]
+        expect(RFlow.master).to have(4).shards
+        expect(RFlow.master.shards.map(&:count)).to eq([1, 3, 2, 2])
+        expect(RFlow.master.shards.map(&:workers).map(&:count)).to eq([1, 3, 2, 2])
 
         output_files = {
           'out1'    => [0, 3, 6, 9] * 3,
@@ -126,8 +126,8 @@ describe RFlow do
         }
 
         output_files.each do |file_name, expected_contents|
-          File.exist?(File.join(@temp_directory_path, file_name)).should be true
-          File.readlines(file_name).map(&:to_i).sort.should == expected_contents.sort
+          expect(File.exist?(File.join(@temp_directory_path, file_name))).to be true
+          expect(File.readlines(file_name).map(&:to_i).sort).to eq(expected_contents.sort)
         end
       end
     end
@@ -157,13 +157,13 @@ describe RFlow do
         r = execute_rflow("load -d #{db_file_name} -c #{config_file_name}")
 
         # Make sure that the process execution worked
-        r[:status].exitstatus.should == 0
-        r[:stderr].should == ''
-        r[:stdout].should match /Successfully initialized database.*#{db_file_name}/
+        expect(r[:status].exitstatus).to eq(0)
+        expect(r[:stderr]).to eq('')
+        expect(r[:stdout]).to match /Successfully initialized database.*#{db_file_name}/
 
         # Make sure the config actually got loaded
         ActiveRecord::Base.establish_connection adapter: "sqlite3", database: db_file_name
-        RFlow::Configuration::Setting.where(:name => 'mysetting').first.value.should == 'myvalue'
+        expect(RFlow::Configuration::Setting.where(:name => 'mysetting').first.value).to eq('myvalue')
       end
 
       it "should not load a database if the database file already exists" do
@@ -172,9 +172,9 @@ describe RFlow do
         r = execute_rflow("load -d #{db_file_name} -c #{config_file_name}")
 
         # Make sure that the process execution worked
-        r[:status].exitstatus.should == 1
-        r[:stderr].should == ''
-        r[:stdout].should match /Config database.*#{db_file_name}.*exists/
+        expect(r[:status].exitstatus).to eq(1)
+        expect(r[:stderr]).to eq('')
+        expect(r[:stdout]).to match /Config database.*#{db_file_name}.*exists/
       end
     end
 
@@ -215,34 +215,34 @@ describe RFlow do
           EOF
         end
         r = execute_rflow("load -d #{db_file_name} -c #{config_file_name}")
-        r[:status].exitstatus.should == 0
-        r[:stderr].should == ''
-        r[:stdout].should match /Successfully initialized database.*#{db_file_name}/
+        expect(r[:status].exitstatus).to eq(0)
+        expect(r[:stderr]).to eq('')
+        expect(r[:stdout]).to match /Successfully initialized database.*#{db_file_name}/
       end
 
       it "should not start if the components aren't loaded" do
         r = execute_rflow("start -d #{db_file_name} -f")
 
-        r[:status].exitstatus.should == 1
-        r[:stderr].should == ''
-        r[:stdout].should match /error/i
+        expect(r[:status].exitstatus).to eq(1)
+        expect(r[:stderr]).to eq('')
+        expect(r[:stdout]).to match /error/i
       end
 
       it "should daemonize and run in the background" do
         begin
           r = execute_rflow("start -d #{db_file_name} -e #{@extensions_file_name}")
 
-          r[:status].exitstatus.should == 0
-          r[:stderr].should == ''
-          r[:stdout].should_not match /error/i
+          expect(r[:status].exitstatus).to eq(0)
+          expect(r[:stderr]).to eq('')
+          expect(r[:stdout]).not_to match /error/i
 
           sleep 2 # give the daemon a chance to finish
 
           log_contents = File.read("log/#{app_name}.log").chomp
           log_lines = log_contents.split("\n")
 
-          log_lines.each {|line| line.should_not match /^ERROR/ }
-          log_lines.each {|line| line.should_not match /^DEBUG/ }
+          log_lines.each {|line| expect(line).not_to match /^ERROR/ }
+          log_lines.each {|line| expect(line).not_to match /^DEBUG/ }
 
           # Grab all the pids from the log, which seems to be the only
           # reliable way to get them
@@ -252,15 +252,15 @@ describe RFlow do
           master_pid = File.read("run/#{app_name}.pid").chomp.to_i
           worker_pids = log_pids - [initial_pid, master_pid]
 
-          log_pids.should include initial_pid
-          log_pids.should include master_pid
+          expect(log_pids).to include initial_pid
+          expect(log_pids).to include master_pid
 
-          worker_pids.should have(10).pids # 1+3+2+2 workers, 2 brokers
-          worker_pids.should_not include 0
+          expect(worker_pids).to have(10).pids # 1+3+2+2 workers, 2 brokers
+          expect(worker_pids).not_to include 0
 
           expect { Process.kill(0, initial_pid) }.to raise_error(Errno::ESRCH)
           ([master_pid] + worker_pids).each do |pid|
-            Process.kill(0, pid).should == 1
+            expect(Process.kill(0, pid)).to eq(1)
           end
 
           output_files = {
@@ -271,12 +271,12 @@ describe RFlow do
           }
 
           output_files.each do |file_name, expected_contents|
-            File.exist?(File.join(@temp_directory_path, file_name)).should be true
-            File.readlines(file_name).map(&:to_i).sort.should == expected_contents.sort
+            expect(File.exist?(File.join(@temp_directory_path, file_name))).to be true
+            expect(File.readlines(file_name).map(&:to_i).sort).to eq(expected_contents.sort)
           end
 
           # Terminate the master
-          Process.kill("TERM", master_pid).should == 1
+          expect(Process.kill("TERM", master_pid)).to eq(1)
 
           # Make sure everything is dead after a second
           sleep 2

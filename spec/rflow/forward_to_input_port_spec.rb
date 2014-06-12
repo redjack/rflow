@@ -38,10 +38,10 @@ class RFlow
 
     it 'should forward generated integers to be filtered by the proc filter' do
       5.times { generator.generate }
-      filtered_messages.should have(3).messages
-      filtered_messages.map(&:data).map(&:data_object).should == [0, 2, 4]
-      dropped_messages.should have(2).messages
-      dropped_messages.map(&:data).map(&:data_object).should == [1, 3]
+      expect(filtered_messages).to have(3).messages
+      expect(filtered_messages.map(&:data).map(&:data_object)).to eq([0, 2, 4])
+      expect(dropped_messages).to have(2).messages
+      expect(dropped_messages.map(&:data).map(&:data_object)).to eq([1, 3])
     end
   end
 end

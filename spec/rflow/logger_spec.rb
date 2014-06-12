@@ -18,10 +18,10 @@ class RFlow
     before(:each) { initialize_logger }
 
     it "should initialize correctly" do
-      File.exist?(log_file_path).should be true
+      expect(File.exist?(log_file_path)).to be true
 
       logger.error "TESTTESTTEST"
-      File.read(log_file_path).should match(/TESTTESTTEST/)
+      expect(File.read(log_file_path)).to match(/TESTTESTTEST/)
 
       logger.close
     end
@@ -29,16 +29,16 @@ class RFlow
     it "should reopen correctly" do
       moved_path = log_file_path + '.old'
 
-      File.exist?(log_file_path).should be true
-      File.exist?(moved_path).should be false
+      expect(File.exist?(log_file_path)).to be true
+      expect(File.exist?(moved_path)).to be false
 
       File.rename log_file_path, moved_path
 
       logger.reopen
 
       logger.error "TESTTESTTEST"
-      File.read(log_file_path).should match(/TESTTESTTEST/)
-      File.read(moved_path).should_not match(/TESTTESTTEST/)
+      expect(File.read(log_file_path)).to match(/TESTTESTTEST/)
+      expect(File.read(moved_path)).not_to match(/TESTTESTTEST/)
 
       logger.close
     end

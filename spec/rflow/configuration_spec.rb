@@ -43,11 +43,11 @@ class RFlow
         Configuration.add_available_data_extension('A::B::C', C = Module.new)
         Configuration.add_available_data_extension('A::B::C::D', D = Module.new)
 
-        Configuration.available_data_extensions['A'].should == [A]
-        Configuration.available_data_extensions['A::B'].should == [A, B]
-        Configuration.available_data_extensions['A::B::C'].should == [A, B, C]
-        Configuration.available_data_extensions['A::B::C::D'].should == [A, B, C, D]
-        Configuration.available_data_extensions['A::B::C::D::E'].should == [A, B, C, D]
+        expect(Configuration.available_data_extensions['A']).to eq([A])
+        expect(Configuration.available_data_extensions['A::B']).to eq([A, B])
+        expect(Configuration.available_data_extensions['A::B::C']).to eq([A, B, C])
+        expect(Configuration.available_data_extensions['A::B::C::D']).to eq([A, B, C, D])
+        expect(Configuration.available_data_extensions['A::B::C::D::E']).to eq([A, B, C, D])
       end
     end
   end

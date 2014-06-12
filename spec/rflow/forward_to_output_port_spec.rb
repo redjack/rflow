@@ -34,7 +34,7 @@ class RFlow
 
     it 'should place the messages on the output port, regardless of the filter' do
       5.times { generator.generate }
-      messages.map(&:data).map(&:data_object).should == [0, 1, 2, 3, 4]
+      expect(messages.map(&:data).map(&:data_object)).to eq([0, 1, 2, 3, 4])
     end
   end
 end

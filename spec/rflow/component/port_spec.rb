@@ -4,17 +4,17 @@ class RFlow
   class Component
     describe Port do
       it "should not be connected" do
-        described_class.new.should_not be_connected
+        expect(described_class.new).not_to be_connected
       end
     end
 
     describe HashPort do
       it "should not be connected" do
         config = double('Port Config')
-        config.stub(:name).and_return('port')
-        config.stub(:uuid).and_return('1')
+        allow(config).to receive(:name).and_return('port')
+        allow(config).to receive(:uuid).and_return('1')
 
-        described_class.new(config).should_not be_connected
+        expect(described_class.new(config)).not_to be_connected
       end
     end
 
@@ -22,17 +22,17 @@ class RFlow
       context "#connect!" do
         it "should be connected" do
           connection = double('connection')
-          connection.should_receive(:connect_input!)
+          expect(connection).to receive(:connect_input!)
 
           config = double('Port Config')
-          config.stub(:name).and_return('port')
-          config.stub(:uuid).and_return('1')
+          allow(config).to receive(:name).and_return('port')
+          allow(config).to receive(:uuid).and_return('1')
 
           described_class.new(config).tap do |port|
             port.add_connection(nil, connection)
-            port.should_not be_connected
+            expect(port).not_to be_connected
             port.connect!
-            port.should be_connected
+            expect(port).to be_connected
           end
         end
       end
@@ -42,17 +42,17 @@ class RFlow
       context "#connect!" do
         it "should be connected" do
           connection = double('connection')
-          connection.should_receive(:connect_output!)
+          expect(connection).to receive(:connect_output!)
 
           port_config = double('Port Config')
-          port_config.stub(:name).and_return('port')
-          port_config.stub(:uuid).and_return('1')
+          allow(port_config).to receive(:name).and_return('port')
+          allow(port_config).to receive(:uuid).and_return('1')
 
           described_class.new(port_config).tap do |port|
             port.add_connection(nil, connection)
-            port.should_not be_connected
+            expect(port).not_to be_connected
             port.connect!
-            port.should be_connected
+            expect(port).to be_connected
           end
         end
       end

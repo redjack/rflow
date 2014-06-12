@@ -83,18 +83,18 @@ class RFlow
 
         it "should correctly set the provenance processing events" do
           Message.new('string_type', valid_provenance).provenance[1].tap do |p|
-            p.component_instance_uuid.should == 'uuid'
-            p.started_at.should == Time.xmlschema(valid_xmlschema_time)
-            p.completed_at.should be_nil
-            p.context.should be_nil
+            expect(p.component_instance_uuid).to eq('uuid')
+            expect(p.started_at).to eq(Time.xmlschema(valid_xmlschema_time))
+            expect(p.completed_at).to be_nil
+            expect(p.context).to be_nil
           end
         end
 
         it "should to_hash its provenance correctly" do
-          Message.new('string_type', valid_provenance).provenance.map(&:to_hash).should == [
+          expect(Message.new('string_type', valid_provenance).provenance.map(&:to_hash)).to eq([
             {"component_instance_uuid" => "uuid", "started_at" => nil, "completed_at" => nil, "context" => nil},
             {"component_instance_uuid" => "uuid", "started_at" => valid_xmlschema_time, "completed_at" => nil, "context" => nil},
-            {"component_instance_uuid" => "uuid", "started_at" => valid_xmlschema_time, "completed_at" => valid_xmlschema_time, "context" => "context"}]
+            {"component_instance_uuid" => "uuid", "started_at" => valid_xmlschema_time, "completed_at" => valid_xmlschema_time, "context" => "context"}])
         end
       end
 
@@ -106,8 +106,8 @@ class RFlow
           end
 
           Message.from_avro(message.to_avro).tap do |processed|
-            processed.data.to_avro.should == message.data.to_avro
-            processed.data.data_object.should == message.data.data_object
+            expect(processed.data.to_avro).to eq(message.data.to_avro)
+            expect(processed.data.data_object).to eq(message.data.data_object)
           end
         end
       end
@@ -117,11 +117,11 @@ class RFlow
           module ExtensionModule; def ext_method; end; end
 
           message = Message.new('string_type')
-          message.data.methods.should_not include(:ext_method)
+          expect(message.data.methods).not_to include(:ext_method)
 
           Configuration.add_available_data_extension('string_type', ExtensionModule)
           message = Message.new('string_type')
-          message.data.methods.should include(:ext_method)
+          expect(message.data.methods).to include(:ext_method)
         end
       end
     end
@@ -138,17 +138,17 @@ class RFlow
 
       @raw_schema = Configuration.available_data_types['RFlow::Message::Data::Raw']['avro']
 
-      encode_avro(@raw_schema, message.data.data_object).should == message.data.to_avro
-      decode_avro(@raw_schema, message.data.to_avro).should == message.data.data_object
+      expect(encode_avro(@raw_schema, message.data.data_object)).to eq(message.data.to_avro)
+      expect(decode_avro(@raw_schema, message.data.to_avro)).to eq(message.data.data_object)
 
       message_data_avro = message.data.to_avro.force_encoding('BINARY')
       processed_message_data_avro = processed_message.data.to_avro.force_encoding('BINARY')
 
-      Digest::MD5.hexdigest(message_avro).should == Digest::MD5.hexdigest(processed_message_avro)
+      expect(Digest::MD5.hexdigest(message_avro)).to eq(Digest::MD5.hexdigest(processed_message_avro))
 
-      message_data_avro.should == processed_message_data_avro
-      Digest::MD5.hexdigest(message_data_avro).should == Digest::MD5.hexdigest(processed_message_data_avro)
-      Digest::MD5.hexdigest(message.data.raw).should == Digest::MD5.hexdigest(processed_message.data.raw)
+      expect(message_data_avro).to eq(processed_message_data_avro)
+      expect(Digest::MD5.hexdigest(message_data_avro)).to eq(Digest::MD5.hexdigest(processed_message_data_avro))
+      expect(Digest::MD5.hexdigest(message.data.raw)).to eq(Digest::MD5.hexdigest(processed_message.data.raw))
     end
   end
 end
