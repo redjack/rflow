@@ -28,7 +28,7 @@ class RFlow
         end
       end
 
-      def zmq_context; self.class.zmq_context; end
+      def zmq_context; ZMQConnection.zmq_context; end
 
       private
       attr_accessor :input_socket, :output_socket
