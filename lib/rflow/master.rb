@@ -23,7 +23,10 @@ class RFlow
     end
 
     def spawn_subprocesses
+      RFlow.logger.debug "Running #{brokers.count} brokers" if brokers.count > 0
       brokers.each(&:spawn!)
+      RFlow.logger.debug "#{brokers.count} brokers started: #{brokers.map { |w| "#{w.name} (#{w.pid})" }.join(", ")}" if brokers.count > 0
+
       shards.each(&:run!)
     end
 
