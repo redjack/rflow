@@ -36,7 +36,7 @@ class RFlow
     def filtered_messages; filtered_message_connection.messages; end
     def dropped_messages; dropped_message_connection.messages; end
 
-    it 'foo' do
+    it 'should forward generated integers to be filtered by the proc filter' do
       5.times { generator.generate }
       filtered_messages.should have(3).messages
       filtered_messages.map(&:data).map(&:data_object).should == [0, 2, 4]
