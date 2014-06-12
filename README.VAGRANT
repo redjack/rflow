@@ -1,0 +1,63 @@
+How to build the vagrant boxes (VMWare Fusion 6):
+
+First:
+Add /Applications/VMware Fusion.app//Contents/Library/ to your PATH.
+
+CentOS 6.2 (http://cbednarski.com/articles/creating-vagrant-base-box-for-centos-62/)
+
+curl -O http://mirrors.usc.edu/pub/linux/distributions/centos/6.2/isos/x86_64/CentOS-6.2-x86_64-minimal.iso
+Create a new VMWare box with the iso. Start the image. Don't use Easy Install.
+  Hostname: centos62
+  Root password: vagrant
+  Disk partition: Replace Existing Linux Partition.
+  Reboot.
+Log in as root/vagrant.
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+  Change ONBOOT="no" to yes.
+  Remove HWADDR line.
+  Add BOOTPROTO="dhcp"
+vi /etc/udev/rules.d/70-persistent-net.rules
+  Replace the eth0 line with: SUBSYSTEM=="net", ACTION=="add", DRIVERS="?*", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"
+shutdown -r now
+
+Log back in as root.
+VMWare Fusion > Virtual Machine > Install VMWare Tools
+mkdir /media/cdrom
+mount /dev/cdrom /media/cdrom
+cd /tmp
+tar -xzf /media/cdrom/VM[tab].tar.gz
+yum install -y perl eject
+/tmp/vmware-tools-distrib/vmware-install.pl --default
+
+yum install -y sudo
+useradd -m vagrant
+usermod -aG wheel vagrant
+echo vagrant | passwd vagrant --stdin
+echo "vagrant ALL=(ALL) ALL" >> /etc/sudoers
+echo "%wheel ALL=NOPASSWD: ALL" >> /etc/sudoers
+echo 'Defaults env_keep="SSH_AUTH_SOCK"' >> /etc/sudoers
+
+vi /etc/sudoers
+  Change requiretty to !requiretty
+
+yum install -y openssh-server
+echo "UseDNS no" >> /etc/ssh/sshd_config
+
+mkdir -m 0700 /home/vagrant/.ssh
+curl -s https://raw.githubusercontent.com/mitchellh/vagrant/master/keys/vagrant.pub > /home/vagrant/.ssh/authorized_keys
+chown -R vagrant:vagrant /home/vagrant/.ssh
+chmod -R 0600 /home/vagrant/.ssh/*
+shutdown -r now
+
+Verify logging in as vagrant/vagrant and `sudo ls /root` with no password.
+
+sudo shutdown -h now
+
+cd to wherever you have stored the VMWare box (~/Documents/Virtual Machines.localized/ by default).
+vmware-vdiskmanager -d Virtual\ Disk.vmdk   (ignore the warning message)
+vmware-vdiskmanager -k Virtual\ Disk.vmdk   (ignore the warning message)
+cat > metadata.json
+{
+  "provider":"vmware_fusion"
+}
+

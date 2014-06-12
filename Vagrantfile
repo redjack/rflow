@@ -3,6 +3,9 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.define 'centos62' do |c|
+    c.vm.box = "jstoneham/rflow-centos62"
+  end
   config.vm.define 'centos64' do |c|
     c.vm.box = "box-cutter/centos64"
   end
