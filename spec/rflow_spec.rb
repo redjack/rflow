@@ -255,7 +255,7 @@ describe RFlow do
           log_pids.should include initial_pid
           log_pids.should include master_pid
 
-          worker_pids.should have(8).pids
+          worker_pids.should have(10).pids # 1+3+2+2 workers, 2 brokers
           worker_pids.should_not include 0
 
           expect { Process.kill(0, initial_pid) }.to raise_error(Errno::ESRCH)
@@ -279,7 +279,7 @@ describe RFlow do
           Process.kill("TERM", master_pid).should == 1
 
           # Make sure everything is dead after a second
-          sleep 1
+          sleep 2
           ([master_pid] + worker_pids).each do |pid|
             expect { Process.kill(0, pid) }.to raise_error(Errno::ESRCH)
           end

@@ -128,6 +128,178 @@ class RFlow
            'third#out=>fifth#in']
       end
 
+      it "should generate PUSH-PULL inproc ZeroMQ connections for in-shard connections" do
+        described_class.configure do |c|
+
+          c.shard "s1", :process => 1 do |s|
+            s.component 'first', 'First', :opt1 => 'opt1'
+            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          end
+
+          c.connect 'first#out' => 'second#in'
+        end
+
+        Shard.should have(1).shards
+        Component.should have(2).components
+        Port.should have(2).ports
+        Connection.should have(1).connections
+
+        Connection.first.tap do |conn|
+          conn.type.should == 'RFlow::Configuration::ZMQConnection'
+          conn.name.should == 'first#out=>second#in'
+          conn.output_port_key.should be_nil
+          conn.input_port_key.should be_nil
+          conn.options.tap do |opts|
+            opts['output_socket_type'].should == 'PUSH'
+            opts['output_address'].should == "inproc://rflow.#{conn.uuid}"
+            opts['output_responsibility'].should == 'connect'
+            opts['input_socket_type'].should == 'PULL'
+            opts['input_address'].should == "inproc://rflow.#{conn.uuid}"
+            opts['input_responsibility'].should == 'bind'
+          end
+        end
+      end
+
+      it "should generate PUSH-PULL ipc ZeroMQ connections for one-to-one inter-shard connections" do
+        described_class.configure do |c|
+
+          c.shard "s1", :process => 1 do |s|
+            s.component 'first', 'First', :opt1 => 'opt1'
+          end
+
+          c.shard "s2", :process => 1 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          end
+
+          c.connect 'first#out' => 'second#in'
+        end
+
+        Shard.should have(2).shards
+        Component.should have(2).components
+        Port.should have(2).ports
+        Connection.should have(1).connections
+
+        Connection.first.tap do |conn|
+          conn.type.should == 'RFlow::Configuration::ZMQConnection'
+          conn.name.should == 'first#out=>second#in'
+          conn.output_port_key.should be_nil
+          conn.input_port_key.should be_nil
+          conn.options.tap do |opts|
+            opts['output_socket_type'].should == 'PUSH'
+            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['output_responsibility'].should == 'connect'
+            opts['input_socket_type'].should == 'PULL'
+            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['input_responsibility'].should == 'bind'
+          end
+        end
+      end
+
+      it "should generate PUSH-PULL ipc ZeroMQ connections for one-to-many inter-shard connections" do
+        described_class.configure do |c|
+
+          c.shard "s1", :process => 1 do |s|
+            s.component 'first', 'First', :opt1 => 'opt1'
+          end
+
+          c.shard "s2", :process => 3 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          end
+
+          c.connect 'first#out' => 'second#in'
+        end
+
+        Shard.should have(2).shards
+        Component.should have(2).components
+        Port.should have(2).ports
+        Connection.should have(1).connections
+
+        Connection.first.tap do |conn|
+          conn.type.should == 'RFlow::Configuration::ZMQConnection'
+          conn.name.should == 'first#out=>second#in'
+          conn.output_port_key.should be_nil
+          conn.input_port_key.should be_nil
+          conn.options.tap do |opts|
+            opts['output_socket_type'].should == 'PUSH'
+            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['output_responsibility'].should == 'bind'
+            opts['input_socket_type'].should == 'PULL'
+            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['input_responsibility'].should == 'connect'
+          end
+        end
+      end
+
+      it "should generate PUSH-PULL ipc ZeroMQ connections for many-to-one inter-shard connections" do
+        described_class.configure do |c|
+
+          c.shard "s1", :process => 3 do |s|
+            s.component 'first', 'First', :opt1 => 'opt1'
+          end
+
+          c.shard "s2", :process => 1 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          end
+
+          c.connect 'first#out' => 'second#in'
+        end
+
+        Shard.should have(2).shards
+        Component.should have(2).components
+        Port.should have(2).ports
+        Connection.should have(1).connections
+
+        Connection.first.tap do |conn|
+          conn.type.should == 'RFlow::Configuration::ZMQConnection'
+          conn.name.should == 'first#out=>second#in'
+          conn.output_port_key.should be_nil
+          conn.input_port_key.should be_nil
+          conn.options.tap do |opts|
+            opts['output_socket_type'].should == 'PUSH'
+            opts['output_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['output_responsibility'].should == 'connect'
+            opts['input_socket_type'].should == 'PULL'
+            opts['input_address'].should == "ipc://rflow.#{conn.uuid}"
+            opts['input_responsibility'].should == 'bind'
+          end
+        end
+      end
+
+      it "should generate PUSH-PULL brokered ZeroMQ connections for many-to-many inter-shard connections" do
+        described_class.configure do |c|
+
+          c.shard "s1", :process => 3 do |s|
+            s.component 'first', 'First', :opt1 => 'opt1'
+          end
+
+          c.shard "s2", :process => 3 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          end
+
+          c.connect 'first#out' => 'second#in'
+        end
+
+        Shard.should have(2).shards
+        Component.should have(2).components
+        Port.should have(2).ports
+        Connection.should have(1).connections
+
+        Connection.first.tap do |conn|
+          conn.type.should == 'RFlow::Configuration::BrokeredZMQConnection'
+          conn.name.should == 'first#out=>second#in'
+          conn.output_port_key.should be_nil
+          conn.input_port_key.should be_nil
+          conn.options.tap do |opts|
+            opts['output_socket_type'].should == 'PUSH'
+            opts['output_address'].should == "ipc://rflow.#{conn.uuid}.in"
+            opts['output_responsibility'].should == 'connect'
+            opts['input_socket_type'].should == 'PULL'
+            opts['input_address'].should == "ipc://rflow.#{conn.uuid}.out"
+            opts['input_responsibility'].should == 'connect'
+          end
+        end
+      end
+
       it "should not allow two components with the same name" do
         expect {
           described_class.configure do |c|

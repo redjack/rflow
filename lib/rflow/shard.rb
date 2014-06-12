@@ -38,11 +38,17 @@ class RFlow
         end
       end
 
+      # Connect all inputs before all outputs, so connection types that require a 'server'
+      # to be established before a 'client' can connect can get themselves ready.
       def connect_components!
         RFlow.logger.debug "Connecting components"
         @components.each do |component|
-          RFlow.logger.debug "Connecting component '#{component.name}' (#{component.uuid})"
-          component.connect!
+          RFlow.logger.debug "Connecting component inputs '#{component.name}' (#{component.uuid})"
+          component.connect_inputs!
+        end
+        @components.each do |component|
+          RFlow.logger.debug "Connecting component outputs '#{component.name}' (#{component.uuid})"
+          component.connect_outputs!
         end
       end
 

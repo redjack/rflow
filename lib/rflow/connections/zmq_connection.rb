@@ -1,6 +1,7 @@
 require 'em-zeromq'
 require 'rflow/connection'
 require 'rflow/message'
+require 'rflow/broker'
 
 class RFlow
   module Connections
@@ -92,6 +93,40 @@ class RFlow
         end
 
         true
+      end
+    end
+
+    class BrokeredZMQConnection < ZMQConnection
+    end
+
+    # The broker process responsible for shuttling messages back and forth on a
+    # many-to-many pipeline link. (Solutions without a broker only allow a
+    # 1-to-many or many-to-1 connection.)
+    class ZMQStreamer < Broker
+      private
+      attr_reader :connection, :context, :back, :front
+
+      public
+      def initialize(config)
+        @connection = config.connection
+        super("broker-#{connection.name}", 'Broker')
+      end
+
+      def run_process
+        RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is %d.%d.%d" % ZMQ::Util.version }
+        @context = ZMQ::Context.new
+        RFlow.logger.debug { "Connecting message broker to route from #{connection.options['output_address']} to #{connection.options['input_address']}" }
+        @back = context.socket(ZMQ::PULL)
+        back.bind(connection.options['output_address'])
+        @front = context.socket(ZMQ::PUSH)
+        front.bind(connection.options['input_address'])
+        ZMQ::Device.new(ZMQ::STREAMER, back, front)
+        back.close
+        front.close
+      ensure
+        back.close if back
+        front.close if front
+        context.terminate if context
       end
     end
   end

@@ -211,6 +211,7 @@ class RFlow
     def [](name); Setting.find_by_name(name).value rescue nil; end
     def settings; Setting.all; end
     def shards; Shard.all; end
+    def connections; Connection.all; end
     def shard(uuid); Shard.find_by_uuid uuid; end
     def components; Component.all; end
     def component(uuid); Component.find_by_uuid uuid; end

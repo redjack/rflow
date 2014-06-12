@@ -93,9 +93,14 @@ class RFlow
     # Tell the component to establish its ports' connections, i.e. make
     # the connection.  Uses the underlying connection object.  Also
     # establishes the callbacks for each of the input ports
-    def connect!
+    def connect_inputs!
       input_ports.each {|port| port.recv_callback = method(:process_message) }
       input_ports.each(&:connect!)
+    end
+
+    # Tell the component to establish its ports' connections, i.e. make
+    # the connection. Uses the underlying connection object.
+    def connect_outputs!
       output_ports.each(&:connect!)
     end
 

@@ -46,6 +46,9 @@ class RFlow
       # allow defaults to use other parameters in the connection to
       # construct the appropriate default value.
       def self.default_options; {}; end
+
+      # By default, no broker processes are required to manage a connection.
+      def brokers; []; end
     end
 
     # STI Subclass for ZMQ connections and their required options
@@ -59,6 +62,43 @@ class RFlow
           'input_address'         => lambda{|conn| "ipc://rflow.#{conn.uuid}"},
           'input_responsibility'  => 'bind',
         }
+      end
+    end
+
+    # STI Subclass for brokered ZMQ connections and their required options
+    #
+    # We name the IPCs to resemble a quasi-component. Outputting to this
+    # connection goes to the 'in' of the IPC pair. Reading input from this
+    # connection comes from the 'out' of the IPC pair.
+    #
+    # The broker shuttles messages between the two to support the many-to-many
+    # delivery pattern.
+    class BrokeredZMQConnection < Connection
+      def self.default_options
+        {
+          'output_socket_type'    => 'PUSH',
+          'output_address'        => lambda{|conn| "ipc://rflow.#{conn.uuid}.in"},
+          'output_responsibility' => 'connect',
+          'input_socket_type'     => 'PULL',
+          'input_address'         => lambda{|conn| "ipc://rflow.#{conn.uuid}.out"},
+          'input_responsibility'  => 'connect',
+        }
+      end
+
+      # A brokered ZMQ connection requires one broker process.
+      def brokers
+        @brokers ||= [ZMQStreamer.new(self)]
+      end
+    end
+
+    # Represents the broker process configuration. No special parameters
+    # that can't be derived from the connection. Not persisted in the database -
+    # it's encapsulated in the nature of the connection.
+    class ZMQStreamer
+      attr_reader :connection
+
+      def initialize(connection)
+        @connection = connection
       end
     end
 

@@ -154,8 +154,8 @@ class RFlow
 
       # For each given connection, break up each input/output
       # component/port specification, ensure that the component
-      # already exists in the database (by name).  Also, only supports
-      # ZeroMQ ipc sockets
+      # already exists in the database (by name). Chooses the best
+      # connection type for any pair of components.
       def process_connection_specs
         connection_specs.each do |spec|
           begin
@@ -175,11 +175,39 @@ class RFlow
             input_port = input_component.input_ports.find_or_initialize_by_name :name => spec[:input_port_name]
             input_port.save!
 
-            RFlow::Configuration::ZMQConnection.create!(:name => spec[:name],
-                                                        :output_port_key => spec[:output_port_key],
-                                                        :input_port_key => spec[:input_port_key],
-                                                        :output_port => output_port,
-                                                        :input_port => input_port)
+            output_shards = output_component.shard.count
+            input_shards = input_component.shard.count
+
+            in_shard_connection = output_component.shard == input_component.shard
+            one_to_one = output_shards == 1 && input_shards == 1
+            one_to_many = output_shards == 1 && input_shards > 1
+            many_to_one = output_shards > 1 && input_shards == 1
+            many_to_many = output_shards > 1 && input_shards > 1
+
+            connection_type = many_to_many ? RFlow::Configuration::BrokeredZMQConnection : RFlow::Configuration::ZMQConnection
+
+            conn = connection_type.create!(:name => spec[:name],
+                                           :output_port_key => spec[:output_port_key],
+                                           :input_port_key => spec[:input_port_key],
+                                           :output_port => output_port,
+                                           :input_port => input_port)
+
+            # bind on the cardinality-1 side, connect on the cardinality-n side
+            if in_shard_connection
+              conn.options['output_responsibility'] = 'connect'
+              conn.options['input_responsibility'] = 'bind'
+              conn.options['output_address'] = "inproc://rflow.#{conn.uuid}"
+              conn.options['input_address'] = "inproc://rflow.#{conn.uuid}"
+            elsif many_to_one
+              conn.options['output_responsibility'] = 'connect'
+              conn.options['input_responsibility'] = 'bind'
+            elsif one_to_many
+              conn.options['output_responsibility'] = 'bind'
+              conn.options['input_responsibility'] = 'connect'
+            end
+
+            conn.save!
+            conn
           rescue Exception => e
             # TODO: Figure out why an ArgumentError doesn't put the
             # offending message into e.message, even though it is printed
