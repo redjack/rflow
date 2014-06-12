@@ -129,6 +129,8 @@ class RFlow
         ZMQ::Proxy.new(back, front)
         back.close
         front.close
+      rescue Exception => e
+        RFlow.logger.error "Error running message broker: #{e.class}: #{e.message}, because: #{e.backtrace.inspect}"
       ensure
         back.close if back
         front.close if front
