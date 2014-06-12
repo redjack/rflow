@@ -10,7 +10,8 @@ class RFlow
         attr_accessor :zmq_context
 
         def create_zmq_context
-          RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is %d.%d.%d" % ZMQ::Util.version }
+          version = LibZMQ::version
+          RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is #{version[:major]}.#{version[:minor]}.#{version[:patch]}" }
           if EM.reactor_running?
             raise RuntimeError, "EventMachine reactor is running when attempting to create a ZeroMQ context"
           end
@@ -120,7 +121,7 @@ class RFlow
         back.bind(connection.options['output_address'])
         @front = context.socket(ZMQ::PUSH)
         front.bind(connection.options['input_address'])
-        ZMQ::Device.new(ZMQ::STREAMER, back, front)
+        ZMQ::Proxy.new(back, front)
         back.close
         front.close
       ensure
