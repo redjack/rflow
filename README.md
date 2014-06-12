@@ -446,10 +446,14 @@ RFlow::Configuration::RubyDSL.configure do |config|
     }
   end
 
+  # another way of specifying type
+  config.process 'filters', :count => 2 do |shard|
+    shard.component 'output1', 'RFlow::Components::FileOutput', {
+      'output_file_path' => '/tmp/out1'
+    }
+  end
+
   # this component will be created in the DEFAULT shard
-  config.component 'output1', 'RFlow::Components::FileOutput', {
-    'output_file_path' => '/tmp/out1'
-  }
   config.component 'output2', 'RFlow::Components::FileOutput', {
     'output_file_path' => '/tmp/out2'
   }

@@ -93,39 +93,55 @@ class RFlow
             s.component 'fourth', 'Fourth'
           end
 
+          c.process "s3", :count => 10 do |s|
+            s.component 'fifth', 'Fifth'
+          end
+
           c.shard "s-ignored", :type => :process, :count => 10 do
             # ignored because there are no components
           end
 
-          c.component 'fifth', 'Fifth'
+          c.thread "s4", :count => 10 do |s|
+            s.component 'sixth', 'Sixth'
+          end
+
+          c.shard "s5", :type => :thread, :count => 10 do |s|
+            s.component 'seventh', 'Seventh'
+          end
+
+          c.component 'eighth', 'Eighth'
 
           c.connect 'first#out' => 'second#in'
           c.connect 'second#out[outkey]' => 'third#in[inkey]'
           c.connect 'second#out' => 'third#in2'
           c.connect 'third#out' => 'fourth#in'
           c.connect 'third#out' => 'fifth#in'
+          c.connect 'third#out' => 'sixth#in'
         end
 
-        Shard.should have(3).shards
-        Component.should have(5).components
-        Port.should have(8).ports
-        Connection.should have(5).connections
+        Shard.should have(6).shards
+        Component.should have(8).components
+        Port.should have(9).ports
+        Connection.should have(6).connections
 
         Shard.all.tap do |shards|
-          shards.map(&:name).should == ['DEFAULT', 's1', 's2']
-          shards.first.components.all.map(&:name).should == ['first', 'fifth']
+          shards.map(&:name).should == ['DEFAULT', 's1', 's2', 's3', 's4', 's5']
+          shards.map(&:type).should == (['RFlow::Configuration::ProcessShard'] * 4) + (['RFlow::Configuration::ThreadShard'] * 2)
+          shards.first.components.all.map(&:name).should == ['first', 'eighth']
           shards.second.components.all.map(&:name).should == ['second']
           shards.third.components.all.map(&:name).should == ['third', 'fourth']
+          shards.fourth.components.all.map(&:name).should == ['fifth']
         end
 
-        Port.all.map(&:name).should == ['out', 'in', 'out', 'in', 'in2', 'out', 'in', 'in']
+        Port.all.map(&:name).should == ['out', 'in', 'out', 'in', 'in2', 'out', 'in', 'in', 'in']
 
         Connection.all.map(&:name).should ==
           ['first#out=>second#in',
            'second#out[outkey]=>third#in[inkey]',
            'second#out=>third#in2',
            'third#out=>fourth#in',
-           'third#out=>fifth#in']
+           'third#out=>fifth#in',
+           'third#out=>sixth#in']
       end
 
       it "should generate PUSH-PULL inproc ZeroMQ connections for in-shard connections" do

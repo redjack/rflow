@@ -42,6 +42,16 @@ class RFlow
         @current_shard = default_shard
       end
 
+      # shortcut
+      def process(name, options = {}, &block)
+        shard(name, options.merge(:type => :process), &block)
+      end
+
+      # shortcut
+      def thread(name, options = {}, &block)
+        shard(name, options.merge(:type => :thread), &block)
+      end
+
       # DSL method to specify a component.  Expects a name,
       # specification, and set of component specific options, that
       # must be marshallable into the database (i.e. should all be strings)
@@ -85,12 +95,12 @@ class RFlow
       def self.configure
         config_file = self.new
         yield config_file
-        config_file.process
+        config_file.process_objects
       end
 
       # Method to process the 'DSL' objects into the config database
       # via ActiveRecord
-      def process
+      def process_objects
         process_setting_specs
         process_shard_specs
         process_connection_specs
