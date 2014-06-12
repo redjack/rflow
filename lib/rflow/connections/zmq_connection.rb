@@ -1,4 +1,8 @@
-require 'em-zeromq'
+begin
+  require 'em-zeromq'
+rescue Exception => e
+  raise LoadError, 'Error loading ZeroMQ; perhaps the wrong system library version is installed?'
+end
 require 'rflow/connection'
 require 'rflow/message'
 require 'rflow/broker'

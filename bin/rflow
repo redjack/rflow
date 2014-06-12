@@ -66,7 +66,12 @@ end
 
 # Now require rflow because the following parts of the startup require
 # pieces (usually RFlow::Configuration or RFlow.logger)
-require 'rflow'
+begin
+  require 'rflow'
+rescue Exception => e
+  STDERR.puts "Error loading RFlow: #{e.class} - #{e.message}"
+  exit 1
+end
 
 # Set up the startup logging, which is distinct from the runtime
 # logging that is defined in the config database.  The startup logging
