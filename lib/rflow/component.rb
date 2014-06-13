@@ -51,15 +51,24 @@ class RFlow
                         config.specification.constantize.new
                       end
 
-          component.tap do |c|
-            c.uuid = config.uuid
-            c.name = config.name
+          component.tap do |component|
+            component.uuid = config.uuid
+            component.name = config.name
 
-            config.input_ports.each {|p| c.configure_input_port! p.name, uuid: p.uuid }
-            config.output_ports.each {|p| c.configure_output_port! p.name, uuid: p.uuid }
+            config.input_ports.each {|p| component.configure_input_port! p.name, uuid: p.uuid }
+            config.output_ports.each {|p| component.configure_output_port! p.name, uuid: p.uuid }
 
-            config.input_ports.each {|p| p.input_connections.each {|conn| c.configure_input_connection! p, Connection.build(conn) } }
-            config.output_ports.each {|p| p.output_connections.each {|conn| c.configure_output_connection! p, Connection.build(conn) } }
+            config.input_ports.each do |p|
+              p.input_connections.each do |c|
+                component.send(p.name.to_sym).add_connection c.input_port_key, Connection.build(c)
+              end
+            end
+
+            config.output_ports.each do |p|
+              p.output_connections.each do |c|
+                component.send(p.name.to_sym).add_connection c.output_port_key, Connection.build(c)
+              end
+            end
           end
         rescue NameError => e
           raise RuntimeError, "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): the class '#{config.specification}' could not be loaded (#{e.message})"
@@ -101,16 +110,6 @@ class RFlow
         raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
       end
       ports.by_name[port_name].uuid = options[:uuid]
-    end
-
-    def configure_input_connection!(port, connection)
-      RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to input port '#{port.name}' (#{port.uuid}), key '#{connection.input_port_key}'"
-      ports.by_name[port.name].add_connection connection.input_port_key, connection
-    end
-
-    def configure_output_connection!(port, connection)
-      RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to output port '#{port.name}' (#{port.uuid}), key '#{connection.output_port_key}'"
-      ports.by_name[port.name].add_connection connection.output_port_key, connection
     end
 
     # Tell the component to establish its ports' connections, i.e. make

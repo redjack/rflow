@@ -73,6 +73,7 @@ class RFlow
 
       # Adds a connection for a given key
       def add_connection(key, connection)
+        RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to port '#{name}' (#{uuid}), key '#{connection.input_port_key}'"
         connections_for[key] << connection
       end
 

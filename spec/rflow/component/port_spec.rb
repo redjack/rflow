@@ -18,6 +18,9 @@ class RFlow
       context "#connect!" do
         it "should be connected" do
           connection = double('connection')
+          allow(connection).to receive(:name)
+          allow(connection).to receive(:uuid)
+          allow(connection).to receive(:input_port_key)
           expect(connection).to receive(:connect_input!)
 
           described_class.new.tap do |port|
@@ -34,6 +37,9 @@ class RFlow
       context "#connect!" do
         it "should be connected" do
           connection = double('connection')
+          allow(connection).to receive(:name)
+          allow(connection).to receive(:uuid)
+          allow(connection).to receive(:input_port_key)
           expect(connection).to receive(:connect_output!)
 
           described_class.new.tap do |port|
