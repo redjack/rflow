@@ -9,28 +9,25 @@ class RFlow
       end
     end
 
-    # Collection class to make it easier to index by both names,
-    # UUIDs, and types.
+    # Collection class to make it easier to index by both names
+    # and types.
     class PortCollection
-      attr_reader :ports, :by_uuid, :by_name, :by_type
+      attr_reader :ports, :by_name, :by_type
 
       def initialize
         @ports = []
-        @by_uuid = {}
         @by_name = {}
         @by_type = Hash.new {|hash, key| hash[key.to_s] = []}
       end
 
       def <<(port)
-        by_uuid[port.uuid.to_s] = port
         by_name[port.name.to_s] = port
         by_type[port.class.to_s] << port
         ports << port
         self
       end
 
-      # Enumerate through each connected (or disconnected but
-      # referenced) port
+      # Enumerate through each port
       # TODO: simplify with enumerators and procs
       def each
         ports.each {|port| yield port }
@@ -141,7 +138,5 @@ class RFlow
         all_connections.send_message(message)
       end
     end
-
-    class DisconnectedPort < HashPort; end
   end
 end

@@ -24,16 +24,7 @@ class RFlow
 
         # Create the port accessor method based on the port name
         define_method name.to_s.to_sym do
-          port = ports.by_name[name.to_s]
-          return port if port
-
-          # If the port was not connected, return a port-like object
-          # that can respond/log but doesn't send any data.  Note,
-          # it won't be available in the 'by_uuid' collection, as it
-          # doesn't have a configured uuid
-          RFlow.logger.debug "'#{self.name}##{name}' not connected, creating a disconnected port"
-
-          DisconnectedPort.new(name: name).tap {|p| ports << p }
+          ports.by_name[name.to_s]
         end
       end
 
@@ -83,6 +74,9 @@ class RFlow
 
     def initialize
       @ports = PortCollection.new
+
+      self.class.defined_input_ports.each {|name, _| ports << InputPort.new(name: name) }
+      self.class.defined_output_ports.each {|name, _| ports << OutputPort.new(name: name) }
     end
 
     # Returns a list of connected input ports.  Each port will have
@@ -93,15 +87,12 @@ class RFlow
     # one or more keys associated with the particular connection.
     def output_ports; ports.by_type["RFlow::Component::OutputPort"]; end
 
-    # Returns a list of disconnected output ports.
-    def disconnected_ports; ports.by_type["RFlow::Component::DisconnectedPort"]; end
-
     def configure_input_port!(port_name, options = {})
       RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) input port '#{port_name}' (#{options[:uuid]})"
       unless self.class.defined_input_ports.include? port_name
         raise ArgumentError, "Input port '#{port_name}' not defined on component '#{self.class}'"
       end
-      ports << InputPort.new(name: port_name, uuid: options[:uuid])
+      ports.by_name[port_name].uuid = options[:uuid]
     end
 
     def configure_output_port!(port_name, options = {})
@@ -109,17 +100,17 @@ class RFlow
       unless self.class.defined_output_ports.include? port_name
         raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
       end
-      ports << OutputPort.new(name: port_name, uuid: options[:uuid])
+      ports.by_name[port_name].uuid = options[:uuid]
     end
 
     def configure_input_connection!(port, connection)
       RFlow.logger.debug "Attaching #{connection.type} connection '#{connection.name}' (#{connection.uuid}) to input port '#{port.name}' (#{port.uuid}), key '#{connection.input_port_key}'"
-      ports.by_uuid[port.uuid].add_connection connection.input_port_key, Connection.build(connection)
+      ports.by_name[port.name].add_connection connection.input_port_key, Connection.build(connection)
     end
 
     def configure_output_connection!(port, connection)
       RFlow.logger.debug "Attaching #{connection.type} connection '#{connection.name}' (#{connection.uuid}) to output port '#{port.name}' (#{port.uuid}), key '#{connection.output_port_key}'"
-      ports.by_uuid[port.uuid].add_connection connection.output_port_key, Connection.build(connection)
+      ports.by_name[port.name].add_connection connection.output_port_key, Connection.build(connection)
     end
 
     # Tell the component to establish its ports' connections, i.e. make

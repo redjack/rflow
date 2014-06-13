@@ -11,7 +11,6 @@ class RFlow
 
       def clock(args = {})
         Clock.new.tap do |c|
-          c.configure_output_port! 'tick_port'
           c.configure! args
           c.tick_port.connect!
           c.tick_port.add_connection nil, message_connection
