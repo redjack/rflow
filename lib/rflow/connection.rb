@@ -20,6 +20,7 @@ class RFlow
     protected
     attr_reader :recv_callback
 
+    public
     def initialize(config)
       @config = config
       @uuid = config.uuid
@@ -58,6 +59,9 @@ class RFlow
     def recv_callback
       @recv_callback ||= Proc.new {|message|}
     end
+
+    def input_port_key; config.input_port_key; end
+    def output_port_key; config.output_port_key; end
   end
 
   # Primarily for testing purposes. Captures whatever messages are sent on it.

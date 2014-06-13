@@ -58,8 +58,8 @@ class RFlow
             config.input_ports.each {|p| c.configure_input_port! p.name, uuid: p.uuid }
             config.output_ports.each {|p| c.configure_output_port! p.name, uuid: p.uuid }
 
-            config.input_ports.each {|p| p.input_connections.each {|conn| c.configure_input_connection! p, conn } }
-            config.output_ports.each {|p| p.output_connections.each {|conn| c.configure_output_connection! p, conn } }
+            config.input_ports.each {|p| p.input_connections.each {|conn| c.configure_input_connection! p, Connection.build(conn) } }
+            config.output_ports.each {|p| p.output_connections.each {|conn| c.configure_output_connection! p, Connection.build(conn) } }
           end
         rescue NameError => e
           raise RuntimeError, "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): the class '#{config.specification}' could not be loaded (#{e.message})"
@@ -104,13 +104,13 @@ class RFlow
     end
 
     def configure_input_connection!(port, connection)
-      RFlow.logger.debug "Attaching #{connection.type} connection '#{connection.name}' (#{connection.uuid}) to input port '#{port.name}' (#{port.uuid}), key '#{connection.input_port_key}'"
-      ports.by_name[port.name].add_connection connection.input_port_key, Connection.build(connection)
+      RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to input port '#{port.name}' (#{port.uuid}), key '#{connection.input_port_key}'"
+      ports.by_name[port.name].add_connection connection.input_port_key, connection
     end
 
     def configure_output_connection!(port, connection)
-      RFlow.logger.debug "Attaching #{connection.type} connection '#{connection.name}' (#{connection.uuid}) to output port '#{port.name}' (#{port.uuid}), key '#{connection.output_port_key}'"
-      ports.by_name[port.name].add_connection connection.output_port_key, Connection.build(connection)
+      RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to output port '#{port.name}' (#{port.uuid}), key '#{connection.output_port_key}'"
+      ports.by_name[port.name].add_connection connection.output_port_key, connection
     end
 
     # Tell the component to establish its ports' connections, i.e. make
