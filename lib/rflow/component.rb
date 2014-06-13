@@ -33,7 +33,7 @@ class RFlow
           # doesn't have a configured uuid
           RFlow.logger.debug "'#{self.name}##{name}' not connected, creating a disconnected port"
 
-          DisconnectedPort.new(OpenStruct.new(:name => name, :uuid => 0)).tap {|d| ports << d }
+          DisconnectedPort.new(name: name).tap {|p| ports << p }
         end
       end
 
@@ -64,8 +64,8 @@ class RFlow
             c.uuid = config.uuid
             c.name = config.name
 
-            config.input_ports.each {|p| c.configure_input_port! p }
-            config.output_ports.each {|p| c.configure_output_port! p }
+            config.input_ports.each {|p| c.configure_input_port! p.name, uuid: p.uuid }
+            config.output_ports.each {|p| c.configure_output_port! p.name, uuid: p.uuid }
 
             config.input_ports.each {|p| p.input_connections.each {|conn| c.configure_input_connection! p, conn } }
             config.output_ports.each {|p| p.output_connections.each {|conn| c.configure_output_connection! p, conn } }
@@ -96,20 +96,20 @@ class RFlow
     # Returns a list of disconnected output ports.
     def disconnected_ports; ports.by_type["RFlow::Component::DisconnectedPort"]; end
 
-    def configure_input_port!(port)
-      RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) input port '#{port.name}' (#{port.uuid})"
-      unless self.class.defined_input_ports.include? port.name
-        raise ArgumentError, "Input port '#{port.name}' not defined on component '#{self.class}'"
+    def configure_input_port!(port_name, options = {})
+      RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) input port '#{port_name}' (#{options[:uuid]})"
+      unless self.class.defined_input_ports.include? port_name
+        raise ArgumentError, "Input port '#{port_name}' not defined on component '#{self.class}'"
       end
-      ports << InputPort.new(port)
+      ports << InputPort.new(name: port_name, uuid: options[:uuid])
     end
 
-    def configure_output_port!(port)
-      RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) output port '#{port.name}' (#{port.uuid})"
-      unless self.class.defined_output_ports.include? port.name
-        raise ArgumentError, "Output port '#{port.name}' not defined on component '#{self.class}'"
+    def configure_output_port!(port_name, options = {})
+      RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) output port '#{port_name}' (#{options[:uuid]})"
+      unless self.class.defined_output_ports.include? port_name
+        raise ArgumentError, "Output port '#{port_name}' not defined on component '#{self.class}'"
       end
-      ports << OutputPort.new(port)
+      ports << OutputPort.new(name: port_name, uuid: options[:uuid])
     end
 
     def configure_input_connection!(port, connection)

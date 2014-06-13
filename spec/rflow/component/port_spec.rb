@@ -10,11 +10,7 @@ class RFlow
 
     describe HashPort do
       it "should not be connected" do
-        config = double('Port Config')
-        allow(config).to receive(:name).and_return('port')
-        allow(config).to receive(:uuid).and_return('1')
-
-        expect(described_class.new(config)).not_to be_connected
+        expect(described_class.new).not_to be_connected
       end
     end
 
@@ -24,11 +20,7 @@ class RFlow
           connection = double('connection')
           expect(connection).to receive(:connect_input!)
 
-          config = double('Port Config')
-          allow(config).to receive(:name).and_return('port')
-          allow(config).to receive(:uuid).and_return('1')
-
-          described_class.new(config).tap do |port|
+          described_class.new.tap do |port|
             port.add_connection(nil, connection)
             expect(port).not_to be_connected
             port.connect!
@@ -44,11 +36,7 @@ class RFlow
           connection = double('connection')
           expect(connection).to receive(:connect_output!)
 
-          port_config = double('Port Config')
-          allow(port_config).to receive(:name).and_return('port')
-          allow(port_config).to receive(:uuid).and_return('1')
-
-          described_class.new(port_config).tap do |port|
+          described_class.new.tap do |port|
             port.add_connection(nil, connection)
             expect(port).not_to be_connected
             port.connect!

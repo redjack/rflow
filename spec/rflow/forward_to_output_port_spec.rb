@@ -12,7 +12,7 @@ class RFlow
     let(:generator) do
       RFlow::Components::GenerateIntegerSequence.new.tap do |c|
         c.configure!({})
-        c.configure_output_port! RFlow::Configuration::OutputPort.new(name: 'out')
+        c.configure_output_port! 'out'
         c.out.add_connection nil, ForwardToOutputPort.new(ruby_proc_filter, 'filtered')
       end
     end
@@ -20,7 +20,7 @@ class RFlow
     let(:ruby_proc_filter) do
       RFlow::Components::RubyProcFilter.new.tap do |c|
         c.configure! 'filter_proc_string' => 'message % 2 == 0'
-        c.configure_output_port! RFlow::Configuration::OutputPort.new(name: 'filtered')
+        c.configure_output_port! 'filtered'
         c.filtered.add_connection nil, message_connection
       end
     end

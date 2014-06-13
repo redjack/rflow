@@ -49,16 +49,15 @@ class RFlow
     # result in the same message being sent to all indexed
     # connections.
     class HashPort < Port
-      attr_reader :config, :name, :uuid
+      attr_accessor :name, :uuid
 
       protected
       attr_reader :connections_for
 
       public
-      def initialize(config)
-        @config = config
-        @name = config.name
-        @uuid = config.uuid
+      def initialize(args = {})
+        self.uuid = args[:uuid]
+        self.name = args[:name]
         @connections_for = Hash.new {|hash, key| hash[key] = [].extend(ConnectionCollection)}
       end
 
