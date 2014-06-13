@@ -9,28 +9,25 @@ class RFlow
       end
     end
 
-    # Collection class to make it easier to index by both names,
-    # UUIDs, and types.
+    # Collection class to make it easier to index by both names
+    # and types.
     class PortCollection
-      attr_reader :ports, :by_uuid, :by_name, :by_type
+      attr_reader :ports, :by_name, :by_type
 
       def initialize
         @ports = []
-        @by_uuid = {}
         @by_name = {}
         @by_type = Hash.new {|hash, key| hash[key.to_s] = []}
       end
 
       def <<(port)
-        by_uuid[port.uuid.to_s] = port
         by_name[port.name.to_s] = port
         by_type[port.class.to_s] << port
         ports << port
         self
       end
 
-      # Enumerate through each connected (or disconnected but
-      # referenced) port
+      # Enumerate through each port
       # TODO: simplify with enumerators and procs
       def each
         ports.each {|port| yield port }
@@ -38,7 +35,12 @@ class RFlow
     end
 
     class Port
-      attr_reader :connected
+      attr_reader :connected, :component
+
+      def initialize(component)
+        @component = component
+      end
+
       def connected?; connected; end
     end
 
@@ -49,16 +51,16 @@ class RFlow
     # result in the same message being sent to all indexed
     # connections.
     class HashPort < Port
-      attr_reader :config, :name, :uuid
+      attr_accessor :name, :uuid
 
       protected
       attr_reader :connections_for
 
       public
-      def initialize(config)
-        @config = config
-        @name = config.name
-        @uuid = config.uuid
+      def initialize(component, args = {})
+        super(component)
+        self.uuid = args[:uuid]
+        self.name = args[:name]
         @connections_for = Hash.new {|hash, key| hash[key] = [].extend(ConnectionCollection)}
       end
 
@@ -77,7 +79,16 @@ class RFlow
 
       # Adds a connection for a given key
       def add_connection(key, connection)
+        RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to port '#{name}' (#{uuid}), key '#{connection.input_port_key}'"
         connections_for[key] << connection
+      end
+
+      def direct_connect(other_port)
+        case other_port
+        when InputPort; add_connection nil, ForwardToInputPort.new(other_port)
+        when OutputPort; add_connection nil, ForwardToOutputPort.new(other_port)
+        else raise ArgumentError, "Unknown port type #{other_port.class.name}"
+        end
       end
 
       # Return a list of connected keys
@@ -142,7 +153,5 @@ class RFlow
         all_connections.send_message(message)
       end
     end
-
-    class DisconnectedPort < HashPort; end
   end
 end

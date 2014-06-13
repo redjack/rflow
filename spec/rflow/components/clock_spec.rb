@@ -7,15 +7,10 @@ class RFlow
         ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
         Configuration.migrate_database
       end
-      let(:config) do
-        RFlow::Configuration::Component.new.tap do |c|
-          c.output_ports << RFlow::Configuration::OutputPort.new(name: 'tick_port')
-        end
-      end
       let(:message_connection) { RFlow::MessageCollectingConnection.new }
 
       def clock(args = {})
-        Clock.new(config).tap do |c|
+        Clock.new.tap do |c|
           c.configure! args
           c.tick_port.connect!
           c.tick_port.add_connection nil, message_connection

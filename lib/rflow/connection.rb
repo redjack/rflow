@@ -20,6 +20,7 @@ class RFlow
     protected
     attr_reader :recv_callback
 
+    public
     def initialize(config)
       @config = config
       @uuid = config.uuid
@@ -58,6 +59,9 @@ class RFlow
     def recv_callback
       @recv_callback ||= Proc.new {|message|}
     end
+
+    def input_port_key; config.input_port_key; end
+    def output_port_key; config.output_port_key; end
   end
 
   # Primarily for testing purposes. Captures whatever messages are sent on it.
@@ -79,14 +83,13 @@ class RFlow
   # contain other components within it, shuttling messages in and out without
   # making the internal component visible to the larger RFlow network.
   class ForwardToOutputPort < Connection
-    def initialize(receiver, port_name)
+    def initialize(target_port)
       super(RFlow::Configuration::NullConfiguration.new)
-      @receiver = receiver
-      @port_name = port_name.to_sym
+      @target_port = target_port
     end
 
     def send_message(message)
-      @receiver.send(@port_name).send_message(message)
+      @target_port.send_message(message)
     end
   end
 
@@ -95,15 +98,14 @@ class RFlow
   # contain other components within it, shuttling messages in and out without
   # making the internal component visible to the larger RFlow network.
   class ForwardToInputPort < Connection
-    def initialize(receiver, port_name, port_key)
+    def initialize(target_port)
       super(RFlow::Configuration::NullConfiguration.new)
-      @receiver = receiver
-      @port_name = port_name.to_sym
-      @port_key = port_key
+      @receiver = target_port.component
+      @target_port = target_port
     end
 
     def send_message(message)
-      @receiver.process_message(@receiver.send(@port_name), @port_key, self, message)
+      @receiver.process_message(@target_port, nil, self, message)
     end
   end
 end

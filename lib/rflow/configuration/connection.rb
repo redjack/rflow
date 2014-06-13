@@ -104,7 +104,7 @@ class RFlow
 
     # for testing purposes
     class NullConfiguration
-      attr_accessor :name, :uuid, :options
+      attr_accessor :name, :uuid, :options, :input_port_key, :output_port_key
     end
   end
 end
