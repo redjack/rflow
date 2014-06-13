@@ -35,7 +35,12 @@ class RFlow
     end
 
     class Port
-      attr_reader :connected
+      attr_reader :connected, :component
+
+      def initialize(component)
+        @component = component
+      end
+
       def connected?; connected; end
     end
 
@@ -52,7 +57,8 @@ class RFlow
       attr_reader :connections_for
 
       public
-      def initialize(args = {})
+      def initialize(component, args = {})
+        super(component)
         self.uuid = args[:uuid]
         self.name = args[:name]
         @connections_for = Hash.new {|hash, key| hash[key] = [].extend(ConnectionCollection)}
@@ -75,6 +81,14 @@ class RFlow
       def add_connection(key, connection)
         RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to port '#{name}' (#{uuid}), key '#{connection.input_port_key}'"
         connections_for[key] << connection
+      end
+
+      def direct_connect(other_port)
+        case other_port
+        when InputPort; add_connection nil, ForwardToInputPort.new(other_port)
+        when OutputPort; add_connection nil, ForwardToOutputPort.new(other_port)
+        else raise ArgumentError, "Unknown port type #{other_port.class.name}"
+        end
       end
 
       # Return a list of connected keys

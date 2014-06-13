@@ -13,7 +13,7 @@ class RFlow
     let(:generator) do
       RFlow::Components::GenerateIntegerSequence.new.tap do |c|
         c.configure!({})
-        c.out.add_connection nil, ForwardToInputPort.new(ruby_proc_filter, 'in', nil)
+        c.out.direct_connect ruby_proc_filter.in
       end
     end
 

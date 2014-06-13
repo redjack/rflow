@@ -83,14 +83,13 @@ class RFlow
   # contain other components within it, shuttling messages in and out without
   # making the internal component visible to the larger RFlow network.
   class ForwardToOutputPort < Connection
-    def initialize(receiver, port_name)
+    def initialize(target_port)
       super(RFlow::Configuration::NullConfiguration.new)
-      @receiver = receiver
-      @port_name = port_name.to_sym
+      @target_port = target_port
     end
 
     def send_message(message)
-      @receiver.send(@port_name).send_message(message)
+      @target_port.send_message(message)
     end
   end
 
@@ -99,15 +98,14 @@ class RFlow
   # contain other components within it, shuttling messages in and out without
   # making the internal component visible to the larger RFlow network.
   class ForwardToInputPort < Connection
-    def initialize(receiver, port_name, port_key)
+    def initialize(target_port)
       super(RFlow::Configuration::NullConfiguration.new)
-      @receiver = receiver
-      @port_name = port_name.to_sym
-      @port_key = port_key
+      @receiver = target_port.component
+      @target_port = target_port
     end
 
     def send_message(message)
-      @receiver.process_message(@receiver.send(@port_name), @port_key, self, message)
+      @receiver.process_message(@target_port, nil, self, message)
     end
   end
 end

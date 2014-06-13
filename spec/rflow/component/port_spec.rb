@@ -4,13 +4,13 @@ class RFlow
   class Component
     describe Port do
       it "should not be connected" do
-        expect(described_class.new).not_to be_connected
+        expect(described_class.new(nil)).not_to be_connected
       end
     end
 
     describe HashPort do
       it "should not be connected" do
-        expect(described_class.new).not_to be_connected
+        expect(described_class.new(nil)).not_to be_connected
       end
     end
 
@@ -23,7 +23,7 @@ class RFlow
           allow(connection).to receive(:input_port_key)
           expect(connection).to receive(:connect_input!)
 
-          described_class.new.tap do |port|
+          described_class.new(nil).tap do |port|
             port.add_connection(nil, connection)
             expect(port).not_to be_connected
             port.connect!
@@ -42,7 +42,7 @@ class RFlow
           allow(connection).to receive(:input_port_key)
           expect(connection).to receive(:connect_output!)
 
-          described_class.new.tap do |port|
+          described_class.new(nil).tap do |port|
             port.add_connection(nil, connection)
             expect(port).not_to be_connected
             port.connect!

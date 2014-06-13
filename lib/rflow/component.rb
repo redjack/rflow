@@ -84,8 +84,8 @@ class RFlow
     def initialize
       @ports = PortCollection.new
 
-      self.class.defined_input_ports.each {|name, _| ports << InputPort.new(name: name) }
-      self.class.defined_output_ports.each {|name, _| ports << OutputPort.new(name: name) }
+      self.class.defined_input_ports.each {|name, _| ports << InputPort.new(self, name: name) }
+      self.class.defined_output_ports.each {|name, _| ports << OutputPort.new(self, name: name) }
     end
 
     # Returns a list of connected input ports.  Each port will have
