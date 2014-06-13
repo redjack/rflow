@@ -50,14 +50,25 @@ class RFlow
 
         RFlow.logger.debug "Instantiating component '#{config.name}' as '#{config.specification}' (#{config.uuid})"
         begin
-          component = RFlow.configuration.available_components[config.specification]
+          component_class = RFlow.configuration.available_components[config.specification]
 
-          if component
-            RFlow.logger.debug "Component found in configuration.available_components['#{config.specification}']"
-            component.new(config)
-          else
-            RFlow.logger.debug "Component not found in configuration.available_components, constantizing component '#{config.specification}'"
-            config.specification.constantize.new(config)
+          component = if component_class
+                        RFlow.logger.debug "Component found in configuration.available_components['#{config.specification}']"
+                        component_class.new
+                      else
+                        RFlow.logger.debug "Component not found in configuration.available_components, constantizing component '#{config.specification}'"
+                        config.specification.constantize.new
+                      end
+
+          component.tap do |c|
+            c.uuid = config.uuid
+            c.name = config.name
+
+            config.input_ports.each {|p| c.configure_input_port! p }
+            config.output_ports.each {|p| c.configure_output_port! p }
+
+            config.input_ports.each {|p| p.input_connections.each {|conn| c.configure_input_connection! p, conn } }
+            config.output_ports.each {|p| p.output_connections.each {|conn| c.configure_output_connection! p, conn } }
           end
         rescue NameError => e
           raise RuntimeError, "Could not instantiate component '#{config.name}' as '#{config.specification}' (#{config.uuid}): the class '#{config.specification}' could not be loaded (#{e.message})"
@@ -67,16 +78,11 @@ class RFlow
       end
     end
 
-    attr_reader :uuid, :name, :ports
+    attr_accessor :uuid, :name
+    attr_reader :ports
 
-    def initialize(config)
-      @config = config
-      @uuid = config.uuid
-      @name = config.name
+    def initialize
       @ports = PortCollection.new
-
-      configure_ports!
-      configure_connections!
     end
 
     # Returns a list of connected input ports.  Each port will have
@@ -89,6 +95,32 @@ class RFlow
 
     # Returns a list of disconnected output ports.
     def disconnected_ports; ports.by_type["RFlow::Component::DisconnectedPort"]; end
+
+    def configure_input_port!(port)
+      RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) input port '#{port.name}' (#{port.uuid})"
+      unless self.class.defined_input_ports.include? port.name
+        raise ArgumentError, "Input port '#{port.name}' not defined on component '#{self.class}'"
+      end
+      ports << InputPort.new(port)
+    end
+
+    def configure_output_port!(port)
+      RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) output port '#{port.name}' (#{port.uuid})"
+      unless self.class.defined_output_ports.include? port.name
+        raise ArgumentError, "Output port '#{port.name}' not defined on component '#{self.class}'"
+      end
+      ports << OutputPort.new(port)
+    end
+
+    def configure_input_connection!(port, connection)
+      RFlow.logger.debug "Attaching #{connection.type} connection '#{connection.name}' (#{connection.uuid}) to input port '#{port.name}' (#{port.uuid}), key '#{connection.input_port_key}'"
+      ports.by_uuid[port.uuid].add_connection connection.input_port_key, Connection.build(connection)
+    end
+
+    def configure_output_connection!(port, connection)
+      RFlow.logger.debug "Attaching #{connection.type} connection '#{connection.name}' (#{connection.uuid}) to output port '#{port.name}' (#{port.uuid}), key '#{connection.output_port_key}'"
+      ports.by_uuid[port.uuid].add_connection connection.output_port_key, Connection.build(connection)
+    end
 
     # Tell the component to establish its ports' connections, i.e. make
     # the connection.  Uses the underlying connection object.  Also
@@ -142,40 +174,5 @@ class RFlow
     # before the global RFlow exit.  Sublcasses should implement to
     # cleanup any leftover state, e.g. flush file handles, etc
     def cleanup!; end
-
-    private
-    def configure_ports!
-      @config.input_ports.each do |p|
-        RFlow.logger.debug "Realizing component '#{name}' (#{uuid}) input port '#{p.name}' (#{p.uuid})"
-        unless self.class.defined_input_ports.include? p.name
-          raise ArgumentError, "Input port '#{p.name}' not defined on component '#{self.class}'"
-        end
-        ports << InputPort.new(p)
-      end
-
-      @config.output_ports.each do |p|
-        RFlow.logger.debug "Realizing component '#{name}' (#{uuid}) output port '#{p.name}' (#{p.uuid})"
-        unless self.class.defined_output_ports.include? p.name
-          raise ArgumentError, "Output port '#{p.name}' not defined on component '#{self.class}'"
-        end
-        ports << OutputPort.new(p)
-      end
-    end
-
-    def configure_connections!
-      @config.input_ports.each do |p|
-        p.input_connections.each do |c|
-          RFlow.logger.debug "Attaching #{c.type} connection '#{c.name}' (#{c.uuid}) to input port '#{p.name}' (#{p.uuid}), key '#{c.input_port_key}'"
-          ports.by_uuid[p.uuid].add_connection c.input_port_key, Connection.build(c)
-        end
-      end
-
-      @config.output_ports.each do |p|
-        p.output_connections.each do |c|
-          RFlow.logger.debug "Attaching #{c.type} connection '#{c.name}' (#{c.uuid}) to output port '#{p.name}' (#{p.uuid}), key '#{c.output_port_key}'"
-          ports.by_uuid[p.uuid].add_connection c.output_port_key, Connection.build(c)
-        end
-      end
-    end
   end
 end

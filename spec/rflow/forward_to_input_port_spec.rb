@@ -11,23 +11,18 @@ class RFlow
     let(:dropped_message_connection) { RFlow::MessageCollectingConnection.new }
 
     let(:generator) do
-      config = RFlow::Configuration::Component.new.tap do |c|
-        c.output_ports << RFlow::Configuration::OutputPort.new(name: 'out')
-      end
-      RFlow::Components::GenerateIntegerSequence.new(config).tap do |c|
-        c.configure! config.options
+      RFlow::Components::GenerateIntegerSequence.new.tap do |c|
+        c.configure!({})
+        c.configure_output_port! RFlow::Configuration::OutputPort.new(name: 'out')
         c.out.add_connection nil, ForwardToInputPort.new(ruby_proc_filter, 'in', nil)
       end
     end
 
     let(:ruby_proc_filter) do
-      config = RFlow::Configuration::Component.new.tap do |c|
-        c.input_ports << RFlow::Configuration::InputPort.new(name: 'in')
-        ['filtered', 'dropped'].each {|p| c.output_ports << RFlow::Configuration::OutputPort.new(name: p) }
-        c.options = {'filter_proc_string' => 'message.data.data_object % 2 == 0'}
-      end
-      RFlow::Components::RubyProcFilter.new(config).tap do |c|
-        c.configure! config.options
+      RFlow::Components::RubyProcFilter.new.tap do |c|
+        c.configure! 'filter_proc_string' => 'message.data.data_object % 2 == 0'
+        c.configure_input_port! RFlow::Configuration::InputPort.new(name: 'in')
+        ['filtered', 'dropped'].each {|p| c.configure_output_port! RFlow::Configuration::OutputPort.new(name: p) }
         c.filtered.add_connection nil, filtered_message_connection
         c.dropped.add_connection nil, dropped_message_connection
       end
