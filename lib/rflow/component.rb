@@ -43,18 +43,14 @@ class RFlow
         begin
           component_class = RFlow.configuration.available_components[config.specification]
 
-          component = if component_class
-                        RFlow.logger.debug "Component found in configuration.available_components['#{config.specification}']"
-                        component_class.new
-                      else
-                        RFlow.logger.debug "Component not found in configuration.available_components, constantizing component '#{config.specification}'"
-                        config.specification.constantize.new
-                      end
+          if component_class
+            RFlow.logger.debug "Component found in configuration.available_components['#{config.specification}']"
+          else
+            RFlow.logger.debug "Component not found in configuration.available_components, constantizing component '#{config.specification}'"
+            component_class = config.specification.constantize
+          end
 
-          component.tap do |component|
-            component.uuid = config.uuid
-            component.name = config.name
-
+          component_class.new(uuid: config.uuid, name: config.name).tap do |component|
             config.input_ports.each {|p| component.configure_input_port! p.name, uuid: p.uuid }
             config.output_ports.each {|p| component.configure_output_port! p.name, uuid: p.uuid }
 
@@ -81,7 +77,9 @@ class RFlow
     attr_accessor :uuid, :name
     attr_reader :ports
 
-    def initialize
+    def initialize(args = {})
+      @name = args[:name]
+      @uuid = args[:uuid]
       @ports = PortCollection.new
 
       self.class.defined_input_ports.each {|name, _| ports << InputPort.new(self, name: name) }
