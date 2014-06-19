@@ -78,6 +78,8 @@ class RFlow
     end
 
     def handle_signals
+      Signal.trap 'SIGCHLD', 'DEFAULT' # make sure child process can run subshells
+
       ['SIGTERM', 'SIGINT', 'SIGQUIT'].each do |signal|
         trap_signal(signal) do
           shutdown! signal

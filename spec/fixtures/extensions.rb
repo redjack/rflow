@@ -29,3 +29,20 @@ class RFlow::Components::FileOutput < RFlow::Component
     end
   end
 end
+
+class RFlow::Components::DateShellComponent < RFlow::Component
+  input_port :in
+  output_port :out
+
+  def configure!(config); end
+  def run!; end
+  def process_message(input_port, input_port_key, connection, message)
+    out.send_message(
+      RFlow::Message.new('RFlow::Message::Data::Raw').tap do |m|
+        m.provenance = message.provenance
+        m.data.raw = `date`
+      end)
+  end
+  def shutdown!; end
+  def cleanup!; end
+end

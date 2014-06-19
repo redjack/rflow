@@ -238,6 +238,36 @@ describe RFlow do
       end
     end
 
+    context "with a component that runs subshells" do
+      let(:app_name) { 'sharded_subshell_test' }
+
+      before(:each) do
+        write_config_file <<-EOF
+          RFlow::Configuration::RubyDSL.configure do |c|
+            c.setting('rflow.log_level', 'INFO')
+            c.setting('rflow.application_directory_path', '#{@temp_directory_path}')
+            c.setting('rflow.application_name', '#{app_name}')
+
+            c.component 'generate_ints', 'RFlow::Components::GenerateIntegerSequence', 'start' => 0, 'finish' => 10, 'step' => 3
+            c.component 'subshell_date', 'RFlow::Components::DateShellComponent'
+            c.component 'output', 'RFlow::Components::FileOutput', 'output_file_path' => 'out1'
+
+            c.connect 'generate_ints#out' => 'subshell_date#in'
+            c.connect 'subshell_date#out' => 'output#in'
+          end
+        EOF
+
+        load_database
+      end
+
+      it "should run successfully daemonize and run in the background" do
+        run_and_shutdown app_name, 1 do # 1 default worker
+          expect(File.exist?(File.join(@temp_directory_path, 'out1'))).to be true
+          File.readlines('out1').each {|line| expect(line).to match /\w+ \w+ \d+ \d+:\d+:\d+ \w+ \d+/ }
+        end
+      end
+    end
+
     context "with a complex, sharded ruby DSL config file" do
       let(:app_name) { 'sharded_bin_test' }
 
