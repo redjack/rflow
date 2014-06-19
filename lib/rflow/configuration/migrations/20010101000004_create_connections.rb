@@ -7,6 +7,9 @@ class CreateConnections < ActiveRecord::Migration
       # To allow for multiple types of connections
       t.string :type
 
+      # round-robin
+      t.string :delivery
+
       # Data flows from an output port to an input port
       t.string  :output_port_uuid
       t.string  :output_port_key, :default => '0'

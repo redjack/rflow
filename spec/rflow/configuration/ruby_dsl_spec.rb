@@ -50,14 +50,17 @@ class RFlow
         expect(Port).to have(2).ports
         expect(Connection).to have(4).connections
 
-        first_component = Component.where(name: 'first').first.tap do |component|
-          expect(component.specification).to eq('First')
-          expect(component).to have(0).input_ports
-          expect(component).to have(1).output_port
-          expect(component.output_ports.first.name).to eq('out')
+        first_component = Component.find_by_name('first').tap do |c|
+          expect(c.specification).to eq('First')
+          expect(c).to have(0).input_ports
+          expect(c).to have(1).output_port
 
-          expect(component.output_ports.first).to have(4).connections
-          component.output_ports.first.connections.tap do |connections|
+          out_port = c.output_ports.first
+          expect(out_port.name).to eq('out')
+
+          expect(out_port).to have(4).connections
+          out_port.connections.tap do |connections|
+            connections.each {|c| expect(c.delivery).to eq 'round-robin' }
             expect(connections[0].input_port_key).to be_nil
             expect(connections[0].output_port_key).to be_nil
             expect(connections[1].input_port_key).to eq('inkey')
@@ -69,14 +72,16 @@ class RFlow
           end
         end
 
-        Component.where(name: 'second').first.tap do |component|
-          expect(component.specification).to eq('Second')
-          expect(component).to have(1).input_port
-          expect(component.input_ports.first.name).to eq('in')
-          expect(component).to have(0).output_ports
+        Component.find_by_name('second').tap do |c|
+          expect(c.specification).to eq('Second')
+          expect(c).to have(1).input_port
+          expect(c).to have(0).output_ports
 
-          expect(component.input_ports.first).to have(4).connections
-          expect(component.input_ports.first.connections).to eq(first_component.output_ports.first.connections)
+          in_port = c.input_ports.first
+          expect(in_port.name).to eq('in')
+
+          expect(in_port).to have(4).connections
+          expect(in_port.connections).to eq(first_component.output_ports.first.connections)
         end
       end
 

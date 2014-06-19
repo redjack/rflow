@@ -122,9 +122,16 @@ class RFlow
         RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is #{version[:major]}.#{version[:minor]}.#{version[:patch]}" }
         @context = ZMQ::Context.new
         RFlow.logger.debug { "Connecting message broker to route from #{connection.options['output_address']} to #{connection.options['input_address']}" }
-        @front = context.socket(ZMQ::PULL)
+
+        @front = case connection.options['output_socket_type']
+                 when 'PUSH'; context.socket(ZMQ::PULL)
+                 else raise ArgumentError, "Unknown output socket type #{connection.options['output_socket_type']}"
+                 end
+        @back = case connection.options['input_socket_type']
+                when 'PULL'; context.socket(ZMQ::PUSH)
+                else raise ArgumentError, "Unknown input socket type #{connection.options['input_socket_type']}"
+                end
         front.bind(connection.options['output_address'])
-        @back = context.socket(ZMQ::PUSH)
         back.bind(connection.options['input_address'])
         ZMQ::Proxy.new(front, back)
         back.close
