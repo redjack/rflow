@@ -42,7 +42,7 @@ class RFlow
 
       def connect_input!
         RFlow.logger.debug "Connecting input #{uuid} with #{options.find_all {|k, v| k.to_s =~ /input/}}"
-        self.input_socket = zmq_context.socket(ZMQ.const_get(options['input_socket_type'].to_sym))
+        self.input_socket = zmq_context.socket(ZMQ.const_get(options['input_socket_type']))
         input_socket.send(options['input_responsibility'].to_sym, options['input_address'])
 
         input_socket.on(:message) do |*message_parts|
@@ -61,7 +61,7 @@ class RFlow
 
       def connect_output!
         RFlow.logger.debug "Connecting output #{uuid} with #{options.find_all {|k, v| k.to_s =~ /output/}}"
-        self.output_socket = zmq_context.socket(ZMQ.const_get(options['output_socket_type'].to_sym))
+        self.output_socket = zmq_context.socket(ZMQ.const_get(options['output_socket_type']))
         output_socket.send(options['output_responsibility'].to_sym, options['output_address'].to_s)
         output_socket
       end
@@ -122,11 +122,11 @@ class RFlow
         RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is #{version[:major]}.#{version[:minor]}.#{version[:patch]}" }
         @context = ZMQ::Context.new
         RFlow.logger.debug { "Connecting message broker to route from #{connection.options['output_address']} to #{connection.options['input_address']}" }
-        @back = context.socket(ZMQ::PULL)
-        back.bind(connection.options['output_address'])
-        @front = context.socket(ZMQ::PUSH)
-        front.bind(connection.options['input_address'])
-        ZMQ::Proxy.new(back, front)
+        @front = context.socket(ZMQ::PULL)
+        front.bind(connection.options['output_address'])
+        @back = context.socket(ZMQ::PUSH)
+        back.bind(connection.options['input_address'])
+        ZMQ::Proxy.new(front, back)
         back.close
         front.close
       rescue Exception => e
