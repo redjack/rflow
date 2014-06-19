@@ -53,6 +53,7 @@ class RFlow
   end
 
   def self.start_master_node
+    RFlow.logger.info "#{configuration['rflow.application_name']} starting"
     @master = Master.new(configuration)
     master.daemonize! if @daemonize
     master.run! # blocks until EventMachine stops
