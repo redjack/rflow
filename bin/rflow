@@ -135,7 +135,7 @@ when 'load'
     exit 1
   end
 
-  startup_logger.warn "Config database '#{options[:config_database_path]}' not found, creating"
+  startup_logger.info "Creating config database '#{options[:config_database_path]}'"
   begin
     config = RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])
   rescue Exception => e
