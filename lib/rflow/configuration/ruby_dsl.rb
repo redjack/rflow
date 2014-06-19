@@ -74,12 +74,14 @@ class RFlow
       #  connect 'componentA#arrayport[2]' => 'componentB#in[1]'
       # Uses the model to assign random UUIDs
       def connect(hash)
-        hash.each do |output_string, input_string|
+        delivery = hash[:delivery] || 'round-robin'
+        hash.except(:delivery).each do |output_string, input_string|
           output_component_name, output_port_name, output_port_key = parse_connection_string(output_string)
           input_component_name, input_port_name, input_port_key = parse_connection_string(input_string)
 
           connection_specs << {
             :name => output_string + '=>' + input_string,
+            :delivery => delivery,
             :output_component_name => output_component_name,
             :output_port_name => output_port_name, :output_port_key => output_port_key,
             :output_string => output_string,
@@ -197,6 +199,7 @@ class RFlow
             connection_type = many_to_many ? RFlow::Configuration::BrokeredZMQConnection : RFlow::Configuration::ZMQConnection
 
             conn = connection_type.create!(:name => spec[:name],
+                                           :delivery => spec[:delivery],
                                            :output_port_key => spec[:output_port_key],
                                            :input_port_key => spec[:input_port_key],
                                            :output_port => output_port,
@@ -214,6 +217,18 @@ class RFlow
             elsif one_to_many
               conn.options['output_responsibility'] = 'bind'
               conn.options['input_responsibility'] = 'connect'
+            end
+
+            case spec[:delivery]
+            when 'broadcast'
+              conn.options['output_socket_type'] = 'PUB'
+              conn.options['input_socket_type'] = 'SUB'
+            when 'round-robin'
+              conn.options['output_socket_type'] = 'PUSH'
+              conn.options['input_socket_type'] = 'PULL'
+            else
+              raise RFlow::Configuration::Connection::ConnectionInvalid,
+                "Delivery type '#{spec[:delivery]}' unknown at #{spec[:config_line]}"
             end
 
             conn.save!
