@@ -220,6 +220,9 @@ class RFlow
             end
 
             case spec[:delivery]
+            when 'broadcast'
+              conn.options['output_socket_type'] = 'PUB'
+              conn.options['input_socket_type'] = 'SUB'
             when 'round-robin'
               conn.options['output_socket_type'] = 'PUSH'
               conn.options['input_socket_type'] = 'PULL'

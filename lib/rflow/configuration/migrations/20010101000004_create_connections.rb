@@ -7,7 +7,7 @@ class CreateConnections < ActiveRecord::Migration
       # To allow for multiple types of connections
       t.string :type
 
-      # round-robin
+      # round-robin or broadcast
       t.string :delivery
 
       # Data flows from an output port to an input port

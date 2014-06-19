@@ -206,6 +206,46 @@ describe RFlow do
           expect(File.readlines(file_name).map(&:to_i).sort).to eq(expected_contents.sort)
         end
       end
+
+      it "should deliver broadcast messages to every copy of a shard" do
+        run_rflow_with_dsl do |c|
+          c.setting 'rflow.log_level', 'FATAL'
+          c.setting 'rflow.application_directory_path', @temp_directory_path
+          c.setting 'rflow.application_name', 'sharded_broadcast_test'
+
+          c.shard 's1', :process => 1 do |s|
+            s.component 'generate_ints1', 'RFlow::Components::GenerateIntegerSequence', 'start' => 0, 'finish' => 10, 'step' => 3
+          end
+
+          c.shard 's2', :process => 2 do |s|
+            s.component 'generate_ints2', 'RFlow::Components::GenerateIntegerSequence', 'start' => 1, 'finish' => 11, 'step' => 3
+          end
+
+          c.shard 's3', :type => :process, :count => 3 do |s|
+            s.component 'broadcast_output', 'RFlow::Components::FileOutput', 'output_file_path' => 'broadcast'
+            s.component 'roundrobin_output', 'RFlow::Components::FileOutput', 'output_file_path' => 'round-robin'
+          end
+
+          c.connect 'generate_ints1#out' => 'broadcast_output#in', :delivery => 'broadcast'
+          c.connect 'generate_ints2#out' => 'broadcast_output#in', :delivery => 'broadcast'
+          c.connect 'generate_ints1#out' => 'roundrobin_output#in'
+          c.connect 'generate_ints2#out' => 'roundrobin_output#in'
+        end
+
+        output_files = {
+          'broadcast'   => ([0, 3, 6, 9] * 3) + ([1, 4, 7, 10] * 6),
+          'round-robin' => [0, 3, 6, 9] + ([1, 4, 7, 10] * 2)
+        }
+
+        expect(RFlow.master).to have(3).shards
+        expect(RFlow.master.shards.map(&:count)).to eq([1, 2, 3])
+        expect(RFlow.master.shards.map(&:workers).map(&:count)).to eq([1, 2, 3])
+
+        output_files.each do |file_name, expected_contents|
+          expect(File.exist?(File.join(@temp_directory_path, file_name))).to be true
+          expect(File.readlines(file_name).map(&:to_i).sort).to eq(expected_contents.sort)
+        end
+      end
     end
   end
 

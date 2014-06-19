@@ -44,6 +44,9 @@ class RFlow
         RFlow.logger.debug "Connecting input #{uuid} with #{options.find_all {|k, v| k.to_s =~ /input/}}"
         self.input_socket = zmq_context.socket(ZMQ.const_get(options['input_socket_type']))
         input_socket.send(options['input_responsibility'].to_sym, options['input_address'])
+        if config.delivery == 'broadcast'
+          input_socket.setsockopt(ZMQ::SUBSCRIBE, '') # request all messages
+        end
 
         input_socket.on(:message) do |*message_parts|
           begin
@@ -125,10 +128,12 @@ class RFlow
 
         @front = case connection.options['output_socket_type']
                  when 'PUSH'; context.socket(ZMQ::PULL)
+                 when 'PUB'; context.socket(ZMQ::XSUB)
                  else raise ArgumentError, "Unknown output socket type #{connection.options['output_socket_type']}"
                  end
         @back = case connection.options['input_socket_type']
                 when 'PULL'; context.socket(ZMQ::PUSH)
+                when 'SUB'; context.socket(ZMQ::XPUB)
                 else raise ArgumentError, "Unknown input socket type #{connection.options['input_socket_type']}"
                 end
         front.bind(connection.options['output_address'])
