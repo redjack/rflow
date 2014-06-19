@@ -4,7 +4,7 @@ require 'rflow'
 
 describe RFlow do
   before(:all) do
-    @extensions_file_name = File.join(File.dirname(__FILE__), 'fixtures', 'extensions_ints.rb')
+    @extensions_file_name = File.join(File.dirname(__FILE__), 'fixtures', 'extensions.rb')
   end
 
   before(:each) do
