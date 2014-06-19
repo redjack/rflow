@@ -29,14 +29,3 @@ class RFlow::Components::FileOutput < RFlow::Component
     end
   end
 end
-
-class SimpleComponent < RFlow::Component
-  input_port :in
-  output_port :out
-
-  def configure!(config); end
-  def run!; end
-  def process_message(input_port, input_port_key, connection, message); end
-  def shutdown!; end
-  def cleanup!; end
-end
