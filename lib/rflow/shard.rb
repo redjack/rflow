@@ -9,12 +9,15 @@ class RFlow
   # start an EventMachine reactor.
   class Shard
     class Worker < ChildProcess
+      attr_reader :shard, :index
+
       def initialize(shard, index = 1)
         super("#{shard.name}-#{index}", 'Worker')
         @shard = shard
+        @index = index
 
         # build at initialize time to fail fast
-        @components = shard.config.components.map {|config| Component.build(config) }
+        @components = shard.config.components.map {|config| Component.build(self, config) }
       end
 
       def run_process
@@ -36,7 +39,7 @@ class RFlow
 
       def configure_components!
         RFlow.logger.debug "Configuring components"
-        @components.zip(@shard.config.components.map(&:options)).each do |(component, config)|
+        @components.zip(shard.config.components.map(&:options)).each do |(component, config)|
           RFlow.logger.debug "Configuring component '#{component.name}' (#{component.uuid})"
           component.configure! config
         end

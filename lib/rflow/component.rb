@@ -36,7 +36,7 @@ class RFlow
       # attempt to constantize the specification into a different
       # class. Future releases will support external (i.e. non-managed
       # components), but the current stuff only supports Ruby classes
-      def build(config)
+      def build(worker, config)
         raise NotImplementedError, "Non-managed components not yet implemented for component '#{config.name}' as '#{config.specification}' (#{config.uuid})" unless config.managed?
 
         RFlow.logger.debug "Instantiating component '#{config.name}' as '#{config.specification}' (#{config.uuid})"
@@ -50,7 +50,7 @@ class RFlow
             component_class = config.specification.constantize
           end
 
-          component_class.new(uuid: config.uuid, name: config.name).tap do |component|
+          component_class.new(worker: worker, uuid: config.uuid, name: config.name).tap do |component|
             config.input_ports.each {|p| component.configure_input_port! p.name, uuid: p.uuid }
             config.output_ports.each {|p| component.configure_output_port! p.name, uuid: p.uuid }
 
@@ -75,16 +75,19 @@ class RFlow
     end
 
     attr_accessor :uuid, :name
-    attr_reader :ports
+    attr_reader :ports, :worker
 
     def initialize(args = {})
       @name = args[:name]
       @uuid = args[:uuid]
+      @worker = args[:worker]
       @ports = PortCollection.new
 
       self.class.defined_input_ports.each {|name, _| ports << InputPort.new(self, name: name) }
       self.class.defined_output_ports.each {|name, _| ports << OutputPort.new(self, name: name) }
     end
+
+    def shard; worker.shard if worker; end
 
     # Returns a list of connected input ports.  Each port will have
     # one or more keys associated with a particular connection.
