@@ -31,6 +31,7 @@ class RFlow
             run_components!
           rescue Exception => e
             RFlow.logger.error "Error in worker, shutting down: #{e.class.name}: #{e.message}, because: #{e.backtrace.inspect}"
+            exit! 1
           end
         end
 
