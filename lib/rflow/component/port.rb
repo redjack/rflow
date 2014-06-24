@@ -89,6 +89,20 @@ class RFlow
         connections_for[key].delete(connection)
       end
 
+      def collect_messages(key, receiver)
+        begin
+          connection = RFlow::MessageCollectingConnection.new.tap do |c|
+            c.messages = receiver
+          end
+          add_connection key, connection
+
+          yield if block_given?
+          connection
+        ensure
+          remove_connection key, connection if connection && block_given?
+        end
+      end
+
       def direct_connect(other_port)
         case other_port
         when InputPort; add_connection nil, ForwardToInputPort.new(other_port)

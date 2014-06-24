@@ -7,17 +7,14 @@ class RFlow
         ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
         Configuration.migrate_database
       end
-      let(:message_connection) { RFlow::MessageCollectingConnection.new }
+
+      let(:messages) { [] }
 
       def clock(args = {})
         Clock.new.tap do |c|
           c.configure! args
-          c.tick_port.connect!
-          c.tick_port.add_connection nil, message_connection
         end
       end
-
-      def messages; message_connection.messages; end
 
       it 'defaults configuration nicely' do
         clock.tap do |c|
@@ -51,14 +48,16 @@ class RFlow
 
       it 'should generate a tick message when asked' do
         clock.tap do |c|
-          now = Integer(Time.now.to_f * 1000)
-          expect(messages).to be_empty
-          c.tick
-          expect(messages).to have(1).message
-          messages.first.tap do |m|
-            expect(m.data_type_name).to eq('RFlow::Message::Clock::Tick')
-            expect(m.data.name).to eq('Clock')
-            expect(m.data.timestamp).to be >= now
+          c.tick_port.collect_messages(nil, messages) do
+            now = Integer(Time.now.to_f * 1000)
+            expect(messages).to be_empty
+            c.tick
+            expect(messages).to have(1).message
+            messages.first.tap do |m|
+              expect(m.data_type_name).to eq('RFlow::Message::Clock::Tick')
+              expect(m.data.name).to eq('Clock')
+              expect(m.data.timestamp).to be >= now
+            end
           end
         end
       end

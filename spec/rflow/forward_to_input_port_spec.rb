@@ -7,8 +7,8 @@ class RFlow
       Configuration.migrate_database
     end
 
-    let(:filtered_message_connection) { RFlow::MessageCollectingConnection.new }
-    let(:dropped_message_connection) { RFlow::MessageCollectingConnection.new }
+    let(:filtered_messages) { [] }
+    let(:dropped_messages) { [] }
 
     let(:generator) do
       RFlow::Components::GenerateIntegerSequence.new.tap do |c|
@@ -20,16 +20,16 @@ class RFlow
     let(:ruby_proc_filter) do
       RFlow::Components::RubyProcFilter.new.tap do |c|
         c.configure! 'filter_proc_string' => 'message.data.data_object % 2 == 0'
-        c.filtered.add_connection nil, filtered_message_connection
-        c.dropped.add_connection nil, dropped_message_connection
       end
     end
 
-    def filtered_messages; filtered_message_connection.messages; end
-    def dropped_messages; dropped_message_connection.messages; end
-
     it 'should forward generated integers to be filtered by the proc filter' do
-      5.times { generator.generate }
+      ruby_proc_filter.filtered.collect_messages(nil, filtered_messages) do
+        ruby_proc_filter.dropped.collect_messages(nil, dropped_messages) do
+          5.times { generator.generate }
+        end
+      end
+
       expect(filtered_messages).to have(3).messages
       expect(filtered_messages.map(&:data).map(&:data_object)).to eq([0, 2, 4])
       expect(dropped_messages).to have(2).messages
