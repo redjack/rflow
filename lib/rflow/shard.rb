@@ -69,6 +69,11 @@ class RFlow
       end
 
       def shutdown!(signal)
+        RFlow.logger.debug "Shutting down components"
+        @components.each do |component|
+          RFlow.logger.debug "Shutting down component '#{component.name}' (#{component.uuid})"
+          component.shutdown!
+        end
         EM.stop_event_loop
         super
       end
