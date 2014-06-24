@@ -353,7 +353,7 @@ identify specific components.
 * connections - a connection between two ports via foreign keys
   `input_port_uuid` and `output_port_uuid`. Like ports, connections
   are typed via AR STI (`RFlow::Configuration::ZMQConnection` and
-  'RFlow::Configuration::BrokeredZMGConnection` are the only
+  `RFlow::Configuration::BrokeredZMQConnection` are the only
   supported values for now) and have a YAML serialized `options`
   hash and a `delivery` type (`round-robin` or `broadcast`).
   A connection also (potentially) defines the port keys.
