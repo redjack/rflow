@@ -463,7 +463,9 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'generate_ints1#out' => 'filter#in'
   config.connect 'generate_ints2#out' => 'filter#in'
   config.connect 'filter#filtered' => 'replicate#in'
-  config.connect 'filter#out' => 'output1#in', :delivery => 'broadcast' # delivers a copy to each worker for the shard
+  # choosing broadcast delivery delivers a copy to each worker for
+  # the shard
+  config.connect 'filter#out' => 'output1#in', :delivery => 'broadcast'
   config.connect 'filter#filtered' => 'output2#in'
 end
 ```
