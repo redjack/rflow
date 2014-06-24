@@ -31,6 +31,22 @@ class RFlow
           end
         end
       end
+
+      context "#(add|remove)_connection" do
+        it "should remove the connection" do
+          connection = double('connection')
+          allow(connection).to receive(:name)
+          allow(connection).to receive(:uuid)
+          allow(connection).to receive(:input_port_key)
+
+          described_class.new(nil).tap do |port|
+            port.add_connection(nil, connection)
+            expect(port[nil]).to include connection
+            port.remove_connection(nil, connection)
+            expect(port[nil]).not_to include connection
+          end
+        end
+      end
     end
 
     describe OutputPort do

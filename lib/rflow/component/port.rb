@@ -83,6 +83,12 @@ class RFlow
         connections_for[key] << connection
       end
 
+      # Removes a connection from a given key
+      def remove_connection(key, connection)
+        RFlow.logger.debug "Removing #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) from port '#{name}' (#{uuid}), key '#{connection.input_port_key}'"
+        connections_for[key].delete(connection)
+      end
+
       def direct_connect(other_port)
         case other_port
         when InputPort; add_connection nil, ForwardToInputPort.new(other_port)
