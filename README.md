@@ -64,10 +64,11 @@ work. (You will probably get errors saying arcane things like
 
 * __Connection__ - a directed link between an output port and an input
   port.  RFlow supports generalized connection types; however, only
-  ZeroMQ links are currently used.
+  ZeroMQ links are currently used.  Round-robin and broadcast message
+  delivery are supported on a per-link basis.
 
 * __Message__ - a bit of serialized data that is sent out an output
-  port and recieved on an input port. Due to the serialization,
+  port and received on an input port. Due to the serialization,
   message types and schemas are explicitly defined. In a departure
   from "pure" FBP, RFlow supports sending multiple message types via a
   single connection.
@@ -228,7 +229,7 @@ The `provenance` is a way for a component to annotate a message with a
 bit of data that should (by convention) be carried through the
 workflow with the message, as well as being copied to derived
 messages. For example, a TCP server component would spin up a TCP
-server and, upon recieving a connection and packets on a session, it
+server and, upon receiving a connection and packets on a session, it
 would marshal the packets into `RFlow::Messsage`s and send them out
 its output ports. Messages received on its input port, however, need
 to have a way to be matched to the corresponding underlying TCP
@@ -236,7 +237,6 @@ connection. `provenance` provides a method for the TCP server
 component to add a bit of metadata (namely an identifier for the TCP
 connection) such that later messages that contain the same provenance
 can be matched to the correct underlying TCP connection.
-
 
 The other parts of the message envelope are related to the embedded
 data object. In addition to the data object itself (which is encoded
@@ -319,7 +319,6 @@ message.data.int = 1024
 messaga.data.default?   # => false
 ```
 
-
 ## RFlow Workflow Configuration
 
 RFlow currently stores its configuration in a SQLite database which
@@ -351,12 +350,13 @@ identify specific components.
   either a `RFlow::Configuration::InputPort` or
   `RFlow::Configuration::OutputPort`.
 
-* connections - a connection between two ports via foriegn keys
+* connections - a connection between two ports via foreign keys
   `input_port_uuid` and `output_port_uuid`. Like ports, connections
   are typed via AR STI (`RFlow::Configuration::ZMQConnection` and
   'RFlow::Configuration::BrokeredZMGConnection` are the only
   supported values for now) and have a YAML serialized `options`
-  hash. A connection also (potentially) defines the port keys.
+  hash and a `delivery` type (`round-robin` or `broadcast`).
+  A connection also (potentially) defines the port keys.
 
 RFlow also provides a RubyDSL for configuration-like file to be used
 to load the database:
@@ -411,9 +411,10 @@ ZeroMQ communication between components in the same shard uses ZeroMQ's
 components in different shards is accomplished with a ZeroMQ `ipc` socket.
 In the case of a many-to-many connection (many workers in a producing
 shard and many workers in a consuming shard), a ZeroMQ message broker
-process is created to route the messages appropriately. Senders round-robin
-to receivers and receivers fair-queue the messages from the senders.
-Load balancing based on receiver responsiveness is not currently implemented.
+process is created to route the messages appropriately. By default,
+senders round-robin to receivers, though broadcast delivery can be chosen
+instead. Receivers fair-queue the messages from senders.  Load balancing
+based on receiver responsiveness is not currently implemented.
 
 To define a custom shard in the Ruby DSL, use the `shard` method. For
 example:
@@ -462,7 +463,7 @@ RFlow::Configuration::RubyDSL.configure do |config|
   config.connect 'generate_ints1#out' => 'filter#in'
   config.connect 'generate_ints2#out' => 'filter#in'
   config.connect 'filter#filtered' => 'replicate#in'
-  config.connect 'filter#out' => 'output1#in'
+  config.connect 'filter#out' => 'output1#in', :delivery => 'broadcast' # delivers a copy to each worker for the shard
   config.connect 'filter#filtered' => 'output2#in'
 end
 ```
