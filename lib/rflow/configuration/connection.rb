@@ -103,7 +103,7 @@ class RFlow
     end
 
     # for testing purposes
-    class NullConfiguration
+    class NullConnectionConfiguration
       attr_accessor :name, :uuid, :options, :input_port_key, :output_port_key, :delivery
     end
   end

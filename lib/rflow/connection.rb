@@ -69,7 +69,7 @@ class RFlow
     attr_accessor :messages
 
     def initialize
-      super(RFlow::Configuration::NullConfiguration.new)
+      super(RFlow::Configuration::NullConnectionConfiguration.new)
       @messages = []
     end
 
@@ -84,7 +84,7 @@ class RFlow
   # making the internal component visible to the larger RFlow network.
   class ForwardToOutputPort < Connection
     def initialize(target_port)
-      super(RFlow::Configuration::NullConfiguration.new)
+      super(RFlow::Configuration::NullConnectionConfiguration.new)
       @target_port = target_port
     end
 
@@ -99,7 +99,7 @@ class RFlow
   # making the internal component visible to the larger RFlow network.
   class ForwardToInputPort < Connection
     def initialize(target_port)
-      super(RFlow::Configuration::NullConfiguration.new)
+      super(RFlow::Configuration::NullConnectionConfiguration.new)
       @receiver = target_port.component
       @target_port = target_port
     end
