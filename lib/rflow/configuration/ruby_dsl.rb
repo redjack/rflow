@@ -196,7 +196,8 @@ class RFlow
             many_to_one = output_shards > 1 && input_shards == 1
             many_to_many = output_shards > 1 && input_shards > 1
 
-            connection_type = many_to_many ? RFlow::Configuration::BrokeredZMQConnection : RFlow::Configuration::ZMQConnection
+            use_broker = many_to_many && !in_shard_connection
+            connection_type = use_broker ? RFlow::Configuration::BrokeredZMQConnection : RFlow::Configuration::ZMQConnection
 
             conn = connection_type.create!(:name => spec[:name],
                                            :delivery => spec[:delivery],
@@ -206,7 +207,7 @@ class RFlow
                                            :input_port => input_port)
 
             # bind on the cardinality-1 side, connect on the cardinality-n side
-            if in_shard_connection
+            if in_shard_connection && !use_broker
               conn.options['output_responsibility'] = 'connect'
               conn.options['input_responsibility'] = 'bind'
               conn.options['output_address'] = "inproc://rflow.#{conn.uuid}"

@@ -176,7 +176,7 @@ class RFlow
       it "should generate PUSH-PULL inproc ZeroMQ connections for in-shard connections" do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 1 do |s|
+          c.shard "s1", :process => 2 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
             s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
           end
