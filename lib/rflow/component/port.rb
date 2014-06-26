@@ -138,12 +138,8 @@ class RFlow
 
     class InputPort < HashPort
       def connect!
-        connections_for.each do |key, connections|
-          connections.each do |connection|
-            connection.connect_input!
-            @connected = true
-          end
-        end
+        connections_for.each {|key, conns| conns.each {|c| c.connect_input! } }
+        @connected = true
       end
 
       def recv_callback=(callback)
@@ -159,12 +155,8 @@ class RFlow
 
     class OutputPort < HashPort
       def connect!
-        connections_for.each do |key, connections|
-          connections.each do |connection|
-            connection.connect_output!
-            @connected = true
-          end
-        end
+        connections_for.each {|key, conns| conns.each {|c| c.connect_output! } }
+        @connected = true
       end
 
       # Send a message to all connections on all keys for this port,
