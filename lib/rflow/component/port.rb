@@ -142,6 +142,11 @@ class RFlow
         @connected = true
       end
 
+      def add_connection(key, connection)
+        super
+        connection.connect_input! if connected?
+      end
+
       def recv_callback=(callback)
         connections_for.each do |key, connections|
           connections.each do |connection|
@@ -157,6 +162,11 @@ class RFlow
       def connect!
         connections_for.each {|key, conns| conns.each {|c| c.connect_output! } }
         @connected = true
+      end
+
+      def add_connection(key, connection)
+        super
+        connection.connect_output! if connected?
       end
 
       # Send a message to all connections on all keys for this port,
