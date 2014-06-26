@@ -415,6 +415,38 @@ class RFlow
         end
       end
 
+      it "should generate PUB-SUB brokered ZeroMQ connections for many-to-many in-shard broadcast connections" do
+        described_class.configure do |c|
+
+          c.shard "s1", :process => 3 do |s|
+            s.component 'first', 'First', :opt1 => 'opt1'
+            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          end
+
+          c.connect 'first#out' => 'second#in', :delivery => 'broadcast'
+        end
+
+        expect(Shard).to have(1).shards
+        expect(Component).to have(2).components
+        expect(Port).to have(2).ports
+        expect(Connection).to have(1).connections
+
+        Connection.first.tap do |conn|
+          expect(conn.type).to eq('RFlow::Configuration::BrokeredZMQConnection')
+          expect(conn.name).to eq('first#out=>second#in')
+          expect(conn.output_port_key).to be_nil
+          expect(conn.input_port_key).to be_nil
+          conn.options.tap do |opts|
+            expect(opts['output_socket_type']).to eq('PUB')
+            expect(opts['output_address']).to eq("ipc://rflow.#{conn.uuid}.in")
+            expect(opts['output_responsibility']).to eq('connect')
+            expect(opts['input_socket_type']).to eq('SUB')
+            expect(opts['input_address']).to eq("ipc://rflow.#{conn.uuid}.out")
+            expect(opts['input_responsibility']).to eq('connect')
+          end
+        end
+      end
+
       it "should not allow two components with the same name" do
         expect {
           described_class.configure do |c|

@@ -190,13 +190,14 @@ class RFlow
             output_shards = output_component.shard.count
             input_shards = input_component.shard.count
 
+            broadcast_connection = spec[:delivery] == 'broadcast'
             in_shard_connection = output_component.shard == input_component.shard
             one_to_one = output_shards == 1 && input_shards == 1
             one_to_many = output_shards == 1 && input_shards > 1
             many_to_one = output_shards > 1 && input_shards == 1
             many_to_many = output_shards > 1 && input_shards > 1
 
-            use_broker = many_to_many && !in_shard_connection
+            use_broker = many_to_many && (broadcast_connection || !in_shard_connection)
             connection_type = use_broker ? RFlow::Configuration::BrokeredZMQConnection : RFlow::Configuration::ZMQConnection
 
             conn = connection_type.create!(:name => spec[:name],
