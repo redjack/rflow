@@ -81,12 +81,14 @@ class RFlow
       def add_connection(key, connection)
         RFlow.logger.debug "Attaching #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) to port '#{name}' (#{uuid}), key '#{connection.input_port_key}'"
         connections_for[key] << connection
+        @all_connections = nil
       end
 
       # Removes a connection from a given key
       def remove_connection(key, connection)
         RFlow.logger.debug "Removing #{connection.class.name} connection '#{connection.name}' (#{connection.uuid}) from port '#{name}' (#{uuid}), key '#{connection.input_port_key}'"
         connections_for[key].delete(connection)
+        @all_connections = nil
       end
 
       def collect_messages(key, receiver)
@@ -130,7 +132,6 @@ class RFlow
       # establish the connection
       def connect!; raise NotImplementedError, "Raw ports do not know which direction to connect"; end
 
-      private
       def all_connections
         @all_connections ||= connections_for.values.flatten.uniq.extend(ConnectionCollection)
       end
