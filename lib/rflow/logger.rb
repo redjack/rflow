@@ -5,7 +5,7 @@ class RFlow
     extend Forwardable
     include Log4r
 
-    LOG_PATTERN_FORMAT = '%l [%d] %x (%p) - %M'
+    LOG_PATTERN_FORMAT = '%-5l [%d] %x (%-5p) - %M'
     DATE_METHOD = 'xmlschema(6)'
     LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => LOG_PATTERN_FORMAT, :date_method => DATE_METHOD
 
