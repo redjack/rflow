@@ -112,12 +112,12 @@ class RFlow
 
       trap_signal 'SIGUSR1' do
         RFlow.logger.reopen
-        signal_subprocesses signal
+        signal_subprocesses 'SIGUSR1'
       end
 
       trap_signal 'SIGUSR2' do
         RFlow.logger.toggle_log_level
-        signal_subprocesses signal
+        signal_subprocesses 'SIGUSR2'
       end
     end
 
