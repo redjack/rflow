@@ -61,7 +61,7 @@ class RFlow
 
     def register_logging_context
       # arrange for child's name to appear in log messages
-      Log4r::NDC.push @name
+      Log4r::NDC.push sprintf("%-#{RFlow.logger.context_width}s", @name)
     end
 
     def clone_logging_context

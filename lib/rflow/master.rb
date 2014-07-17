@@ -12,6 +12,7 @@ class RFlow
       super(config['rflow.application_name'], 'Master')
       @pid_file = PIDFile.new(config['rflow.pid_file_path'])
       @shards = config.shards.map {|config| Shard.new(config) }
+      RFlow.logger.context_width = @shards.flat_map(&:workers).map(&:name).map(&:length).max
       @brokers = config.connections.flat_map(&:brokers).map {|config| Broker.build(config) }
     end
 

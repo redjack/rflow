@@ -14,6 +14,7 @@ class RFlow
     attr_accessor :log_file_path, :log_level, :log_name
 
     public
+    attr_accessor :context_width
 
     # make sure Log4r is initialized; ignored if custom levels are already set
     Log4r.define_levels(*Log4rConfig::LogLevels)
