@@ -59,7 +59,7 @@ class RFlow
     end
 
     def toggle_log_level
-      original_log_level = LNAMES[logger.level]
+      original_log_level = LNAMES[internal_logger.level]
       new_log_level = (original_log_level == 'DEBUG' ? log_level : 'DEBUG')
 
       internal_logger.warn "Changing log level from #{original_log_level} to #{new_log_level}"
