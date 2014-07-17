@@ -80,7 +80,6 @@ class RFlow
 
         begin
           output_socket.send_msg(message.data_type_name.to_s, message.to_avro)
-          RFlow.logger.debug "#{name}: Successfully sent message of type '#{message.data_type_name.to_s}'"
         rescue Exception => e
           RFlow.logger.debug "Exception #{e.class}: #{e.message}, retrying send"
           retry
