@@ -24,9 +24,15 @@ class RFlow
       *Log4r::LNAMES.map(&:downcase).map {|n| "#{n}?".to_sym }
 
     def initialize(config, include_stdout = false)
+      reconfigure(config, include_stdout)
+    end
+
+    def reconfigure(config, include_stdout = false)
       @log_file_path = config['rflow.log_file_path']
-      @log_level = config['rflow.log_level']
-      @log_name = (config['rflow.application_name'] || File.basename(log_file_path))
+      @log_level = config['rflow.log_level'] || "WARN"
+      @log_name = if config['rflow.application_name']; config['rflow.application_name']
+                  elsif log_file_path; File.basename(log_file_path)
+                  else ''; end
 
       establish_internal_logger
       hook_up_logfile
@@ -47,6 +53,10 @@ class RFlow
       Outputter['rflow.log_file'].close
     end
 
+    def level=(level)
+      internal_logger.level = LNAMES.index(level.to_s) || level
+    end
+
     def toggle_log_level
       original_log_level = LNAMES[logger.level]
       new_log_level = (original_log_level == 'DEBUG' ? log_level : 'DEBUG')
@@ -64,10 +74,12 @@ class RFlow
     end
 
     def hook_up_logfile
-      begin
-        internal_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
-      rescue Exception => e
-        raise ArgumentError, "Log file '#{File.expand_path log_file_path}' problem: #{e.message}\b#{e.backtrace.join("\n")}"
+      if log_file_path
+        begin
+          internal_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
+        rescue Exception => e
+          raise ArgumentError, "Log file '#{File.expand_path log_file_path}' problem: #{e.message}\n#{e.backtrace.join("\n")}"
+        end
       end
     end
 

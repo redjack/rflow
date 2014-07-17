@@ -73,46 +73,33 @@ rescue Exception => e
   exit 1
 end
 
-# Set up the startup logging, which is distinct from the runtime
-# logging that is defined in the config database.  The startup logging
-# will always go to STDOUT, as well as to the file specified with the
-# '-l' parameter
-startup_logger = Log4r::Logger.new 'startup'
-startup_logger.add Log4r::StdoutOutputter.new('startup_stdout', :formatter => RFlow::Logger::LOG_PATTERN_FORMATTER)
-startup_logger.level = Log4r::LNAMES.index options[:startup_log_level].to_s
-Log4r::NDC.push('startup')
-
-if options[:startup_log_file_path]
-  begin
-    startup_logger.add Log4r::FileOutputter.new('startup_file', :filename => options[:startup_log_file_path], :formatter => RFlow::Logger::LOG_PATTERN_FORMATTER)
-  rescue Exception => e
-    startup_logger.fatal "Log file '#{options[:startup_log_file_path]}' problem: #{e.message}"
-    exit 1
-  end
-end
+# Set up the startup logging, which is distinct from the runtime logging that
+# is defined in the config database.  The startup logging will always go to
+# STDOUT, as well as to the file specified with the '-l' parameter
+#
+# This logging setup will be used while we call into RFlow to check on or setup
+# things, like the config database.  We want those log messages to go to the
+# startup log when setting up.  The running log will transition to what is
+# specified in the config database.
+RFlow.logger.reconfigure({'rflow.application_name' => 'startup',
+                          'rflow.log_level' => options[:startup_log_level].to_s,
+                          'rflow.log_file_path' => options[:startup_log_file_path]}, true)
 
 command = ARGV[0]
 unless ['start', 'stop', 'status', 'load'].include? command
-  startup_logger.fatal "Command needs to be one of [start|stop|status|load]\n#{option_parser.help}"
+  RFlow.logger.fatal "Command needs to be one of [start|stop|status|load]\n#{option_parser.help}"
   exit 1
 end
 
 if options[:config_file_path] && command != 'load'
-  startup_logger.fatal "Config file only valid for 'load' command"
+  RFlow.logger.fatal "Config file only valid for 'load' command"
   exit 1
 end
 
 unless options[:config_database_path]
-  startup_logger.warn "Config database not specified, using default 'config.sqlite'"
+  RFlow.logger.warn "Config database not specified, using default 'config.sqlite'"
   options[:config_database_path] = File.expand_path(File.join(Dir.getwd, 'config.sqlite'))
 end
-
-# Set the standard logger to the startup one in the case that we need
-# to call into RFlow to check on or setup things, like the config
-# database.  We want those log messages to go to the startup log when
-# setting up.  The running log will transition to what is specified in
-# the config database
-RFlow.logger = startup_logger
 
 case command
 when 'load'
@@ -120,31 +107,31 @@ when 'load'
   # otherwise default values (not very useful)
   if options[:config_file_path]
     unless File.exist? options[:config_file_path]
-      startup_logger.fatal "Config file '#{options[:config_file_path]}' not found\n#{option_parser.help}"
+      RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not found\n#{option_parser.help}"
       exit 1
     end
 
     unless File.readable? options[:config_file_path]
-      startup_logger.fatal "Config file '#{options[:config_file_path]}' not readable\n#{option_parser.help}"
+      RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not readable\n#{option_parser.help}"
       exit 1
     end
   end
 
   if File.exist? options[:config_database_path]
-    startup_logger.fatal "Config database '#{options[:config_database_path]}' exists, exiting to prevent accidental overwrite from config file '#{options[:config_file_path]}'"
+    RFlow.logger.fatal "Config database '#{options[:config_database_path]}' exists, exiting to prevent accidental overwrite from config file '#{options[:config_file_path]}'"
     exit 1
   end
 
-  startup_logger.info "Creating config database '#{options[:config_database_path]}'"
+  RFlow.logger.info "Creating config database '#{options[:config_database_path]}'"
   begin
     config = RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])
   rescue Exception => e
-    startup_logger.fatal "Error initializing configuration database: #{e.message}: #{e.backtrace.join "\n"}"
+    RFlow.logger.fatal "Error initializing configuration database: #{e.message}: #{e.backtrace.join "\n"}"
     exit 1
   end
 
-  startup_logger.warn "Successfully initialized database '#{options[:config_database_path]}' with '#{options[:config_file_path]}'"
-  startup_logger.debug config.to_s
+  RFlow.logger.warn "Successfully initialized database '#{options[:config_database_path]}' with '#{options[:config_file_path]}'"
+  RFlow.logger.debug config.to_s
   exit 0
 end
 
@@ -152,7 +139,7 @@ end
 begin
   config = RFlow::Configuration.new(options[:config_database_path])
 rescue Exception => e
-  startup_logger.fatal "Error loading config database: #{e.class} - #{e.message}"
+  RFlow.logger.fatal "Error loading config database: #{e.class} - #{e.message}"
   exit 1
 end
 
@@ -163,26 +150,26 @@ pid_file = RFlow::PIDFile.new(config['rflow.pid_file_path'])
 case command
 when 'stop'
   if pid_file.running?
-    startup_logger.info "#{config['rflow.application_name']} running, process #{pid_file.read} found in #{pid_file.to_s}, terminating"
+    RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid_file.read} found in #{pid_file.to_s}, terminating"
     # TODO: check if it actually shut down
     pid_file.signal(:INT)
   else
-    startup_logger.warn "#{config['rflow.application_name']} process not found in #{pid_file.to_s}"
+    RFlow.logger.warn "#{config['rflow.application_name']} process not found in #{pid_file.to_s}"
     exit 1
   end
   exit 0
 
 when 'status'
   unless pid_file.running?
-    startup_logger.error "#{config['rflow.application_name']} process not found in #{pid_file.to_s}"
+    RFlow.logger.error "#{config['rflow.application_name']} process not found in #{pid_file.to_s}"
     exit 1
   end
-  startup_logger.info "#{config['rflow.application_name']} running, process #{pid_file.read} found in #{pid_file.to_s}"
+  RFlow.logger.info "#{config['rflow.application_name']} running, process #{pid_file.read} found in #{pid_file.to_s}"
   exit 0
 
 when 'start'
   if pid_file.running?
-    startup_logger.error "#{config['rflow.application_name']} already running, process #{pid_file.read} found in #{pid_file.to_s}"
+    RFlow.logger.error "#{config['rflow.application_name']} already running, process #{pid_file.read} found in #{pid_file.to_s}"
     exit 1
   end
 end
@@ -191,15 +178,15 @@ end
 
 # require all the gem extensions
 options[:gems].each do |extension_gem|
-  startup_logger.info "Requiring #{extension_gem}"
+  RFlow.logger.info "Requiring #{extension_gem}"
   require extension_gem
 end
 
 # load all the file extensions
 options[:extensions_file_paths].each do |extensions_file_path|
-  startup_logger.info "Loading #{extensions_file_path}"
+  RFlow.logger.info "Loading #{extensions_file_path}"
   unless File.readable? extensions_file_path
-    startup_logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not reabable\n#{option_parser.help}"
+    RFlow.logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not reabable\n#{option_parser.help}"
     exit 1
   end
   load extensions_file_path
@@ -209,7 +196,7 @@ end
 begin
   RFlow.run! options[:config_database_path], options[:daemonize]
 rescue Exception => e
-  startup_logger.fatal "Error running rflow: #{e.class}: #{e.message}"
+  RFlow.logger.fatal "Error running rflow: #{e.class}: #{e.message}"
   exit(1)
 end
 

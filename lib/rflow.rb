@@ -17,6 +17,8 @@ class RFlow
   class << self
     attr_accessor :logger
     attr_reader :configuration, :master
+
+    RFlow.logger = RFlow::Logger.new({})
   end
 
   def self.run!(config_database_path = nil, daemonize = false)
@@ -49,7 +51,7 @@ class RFlow
 
   def self.setup_logger
     include_stdout = !@daemonize
-    self.logger = RFlow::Logger.new(configuration, include_stdout)
+    logger.reconfigure(configuration, include_stdout)
   end
 
   def self.start_master_node
