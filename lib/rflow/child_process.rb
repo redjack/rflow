@@ -26,6 +26,7 @@ class RFlow
       @child_pipe_w.close
       register_logging_context
       update_process_name
+      detach_process_group
       handle_signals
 
       RFlow.logger.info "#{@role} started"
@@ -75,6 +76,12 @@ class RFlow
     def update_process_name
       # set the visible process name to match the child's name
       $0 += " #{@name}"
+    end
+
+    # detach from parent process group so shutdown remains orderly (prevent
+    # signals from being delivered to entire group)
+    def detach_process_group
+      Process.setpgid(0, 0)
     end
 
     def handle_signals
