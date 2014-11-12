@@ -220,7 +220,7 @@ end
 
 RFlow messages are instances of
 [`RFlow::Message`](lib/rflow/message.rb), which are ultimately
-serialized via an Avro [schema](schema/message.zvsc).
+serialized via an Avro [schema](schema/message.avsc).
 
 There are two parts of the message "envelope": a provenance and the
 embedded data object "payload".
