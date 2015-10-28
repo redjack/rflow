@@ -81,8 +81,7 @@ class RFlow
         begin
           output_socket.send_msg(message.data_type_name.to_s, message.to_avro)
         rescue Exception => e
-          RFlow.logger.debug "Exception #{e.class}: #{e.message}, retrying send"
-          retry
+          RFlow.logger.error "Exception #{e.class}: #{e.message}, because: #{e.backtrace}"
         end
       end
 
