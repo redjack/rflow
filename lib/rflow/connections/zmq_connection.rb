@@ -74,7 +74,6 @@ class RFlow
         output_socket
       end
 
-      # TODO: fix this tight loop of retries
       def send_message(message)
         RFlow.logger.debug "#{name}: Sending message of type '#{message.data_type_name.to_s}'"
 
