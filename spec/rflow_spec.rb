@@ -303,7 +303,7 @@ describe RFlow do
       it "should run successfully daemonize and run in the background" do
         run_and_shutdown app_name, 1 do # 1 default worker
           expect(File.exist?(File.join(@temp_directory_path, 'out1'))).to be true
-          File.readlines('out1').each {|line| expect(line).to match /\w+ \w+ \d+ \d+:\d+:\d+ \w+ \d+/ }
+          File.readlines('out1').each {|line| expect(line).to match /\w+ \w+\s+\d+ \d+:\d+:\d+ \w+ \d+/ }
         end
       end
     end
