@@ -16,12 +16,18 @@ class RFlow
     def write(pid = $$)
       return unless validate?
 
-      RFlow.logger.debug "Writing PID #{pid} file '#{to_s}'"
+      RFlow.logger.debug "Writing PID #{pid} to file '#{to_s}'"
+      tmp_path = File.join(File.dirname(path), ".#{File.basename(path)}")
+      if File.exist? tmp_path
+        RFlow.logger.warn "Deleting stale temp PID file #{tmp_path}"
+        File.delete(tmp_path)
+      end
       pid_fp = begin
-                 tmp_path = File.join(File.dirname(path), ".#{File.basename(path)}")
                  File.open(tmp_path, File::RDWR|File::CREAT|File::EXCL, 0644)
-               rescue Errno::EEXIST
-                 retry
+               rescue Errno::EACCES => e
+                 RFlow.logger.fatal "Access error while writing temp PID file '#{tmp_path}'"
+                 RFlow.logger.fatal "Exception #{e.class}: #{e.message}"
+                 abort
                end
       pid_fp.syswrite("#{pid}\n")
       File.rename(pid_fp.path, path)
