@@ -462,7 +462,7 @@ class RFlow
             c.shard('s1', :process => 2) {|c| c.component 'x', 'y' }
             c.shard('s1', :process => 2) {|c| c.component 'z', 'q' }
           end
-        }.to raise_error
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
   end
