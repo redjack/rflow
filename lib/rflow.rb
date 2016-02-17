@@ -60,4 +60,25 @@ class RFlow
     master.daemonize! if @daemonize
     master.run! # blocks until EventMachine stops
   end
+
+  # This ought to be in EM, but we'll put it here instead of monkey-patching
+  def self.next_tick_and_wait
+    mutex = Mutex.new
+    condition = ConditionVariable.new
+
+    mutex.synchronize do # while locked...
+      EM.next_tick do # schedule a job that will...
+        mutex.synchronize do # grab the lock
+          begin
+            yield # do its thing...
+            condition.signal # then wake us up when it's done...
+          rescue
+            condition.signal # even if the thing fails
+            raise
+          end
+        end
+      end
+      condition.wait(mutex) # drop the mutex to allow the job to run
+    end
+  end
 end
