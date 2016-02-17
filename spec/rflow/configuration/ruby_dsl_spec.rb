@@ -5,11 +5,11 @@ class RFlow
   class Configuration
     describe RubyDSL do
       before(:each) do
-        ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
+        ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
         Configuration.migrate_database
       end
 
-      it "should correctly process an empty DSL" do
+      it 'should correctly process an empty DSL' do
         described_class.configure {}
 
         expect(Shard).to have(0).shards
@@ -18,7 +18,7 @@ class RFlow
         expect(Connection).to have(0).connections
       end
 
-      it "should correctly process a component declaration" do
+      it 'should correctly process a component declaration' do
         described_class.configure do |c|
           c.component 'boom', 'town', 'opt1' => 'OPT1', 'opt2' => 'OPT2'
         end
@@ -35,7 +35,7 @@ class RFlow
         end
       end
 
-      it "should correctly process a connect declaration" do
+      it 'should correctly process a connect declaration' do
         described_class.configure do |c|
           c.component 'first', 'First'
           c.component 'second', 'Second'
@@ -109,32 +109,32 @@ class RFlow
         end
       end
 
-      it "should correctly process shard declarations" do
+      it 'should correctly process shard declarations' do
         described_class.configure do |c|
           c.component 'first', 'First', :opt1 => 'opt1'
 
-          c.shard "s1", :process => 2 do |s|
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          c.shard 's1', :process => 2 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
-          c.shard "s2", :type => :process, :count => 10 do |s|
+          c.shard 's2', :type => :process, :count => 10 do |s|
             s.component 'third', 'Third'
             s.component 'fourth', 'Fourth'
           end
 
-          c.process "s3", :count => 10 do |s|
+          c.process 's3', :count => 10 do |s|
             s.component 'fifth', 'Fifth'
           end
 
-          c.shard "s-ignored", :type => :process, :count => 10 do
+          c.shard 's-ignored', :type => :process, :count => 10 do
             # ignored because there are no components
           end
 
-          c.thread "s4", :count => 10 do |s|
+          c.thread 's4', :count => 10 do |s|
             s.component 'sixth', 'Sixth'
           end
 
-          c.shard "s5", :type => :thread, :count => 10 do |s|
+          c.shard 's5', :type => :thread, :count => 10 do |s|
             s.component 'seventh', 'Seventh'
           end
 
@@ -173,12 +173,12 @@ class RFlow
            'third#out=>sixth#in'])
       end
 
-      it "should generate PUSH-PULL inproc ZeroMQ connections for in-shard connections" do
+      it 'should generate PUSH-PULL inproc ZeroMQ connections for in-shard connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 2 do |s|
+          c.shard 's1', :process => 2 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in'
@@ -205,15 +205,15 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL ipc ZeroMQ connections for one-to-one inter-shard connections" do
+      it 'should generate PUSH-PULL ipc ZeroMQ connections for one-to-one inter-shard connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 1 do |s|
+          c.shard 's1', :process => 1 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
           end
 
-          c.shard "s2", :process => 1 do |s|
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          c.shard 's2', :process => 1 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in'
@@ -240,15 +240,15 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL ipc ZeroMQ connections for one-to-many inter-shard connections" do
+      it 'should generate PUSH-PULL ipc ZeroMQ connections for one-to-many inter-shard connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 1 do |s|
+          c.shard 's1', :process => 1 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
           end
 
-          c.shard "s2", :process => 3 do |s|
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          c.shard 's2', :process => 3 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in'
@@ -275,15 +275,15 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL ipc ZeroMQ connections for many-to-one inter-shard connections" do
+      it 'should generate PUSH-PULL ipc ZeroMQ connections for many-to-one inter-shard connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 3 do |s|
+          c.shard 's1', :process => 3 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
           end
 
-          c.shard "s2", :process => 1 do |s|
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          c.shard 's2', :process => 1 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in'
@@ -310,15 +310,15 @@ class RFlow
         end
       end
 
-      it "should generate PUSH-PULL brokered ZeroMQ connections for many-to-many inter-shard connections" do
+      it 'should generate PUSH-PULL brokered ZeroMQ connections for many-to-many inter-shard connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 3 do |s|
+          c.shard 's1', :process => 3 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
           end
 
-          c.shard "s2", :process => 3 do |s|
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          c.shard 's2', :process => 3 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in'
@@ -345,15 +345,15 @@ class RFlow
         end
       end
 
-      it "should generate PUB-SUB ipc ZeroMQ connections for one-to-many broadcast connections" do
+      it 'should generate PUB-SUB ipc ZeroMQ connections for one-to-many broadcast connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 1 do |s|
+          c.shard 's1', :process => 1 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
           end
 
-          c.shard "s2", :process => 3 do |s|
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          c.shard 's2', :process => 3 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in', :delivery => 'broadcast'
@@ -380,15 +380,15 @@ class RFlow
         end
       end
 
-      it "should generate PUB-SUB brokered ZeroMQ connections for many-to-many broadcast connections" do
+      it 'should generate PUB-SUB brokered ZeroMQ connections for many-to-many broadcast connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 3 do |s|
+          c.shard 's1', :process => 3 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
           end
 
-          c.shard "s2", :process => 3 do |s|
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+          c.shard 's2', :process => 3 do |s|
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in', :delivery => 'broadcast'
@@ -415,12 +415,12 @@ class RFlow
         end
       end
 
-      it "should generate PUB-SUB brokered ZeroMQ connections for many-to-many in-shard broadcast connections" do
+      it 'should generate PUB-SUB brokered ZeroMQ connections for many-to-many in-shard broadcast connections' do
         described_class.configure do |c|
 
-          c.shard "s1", :process => 3 do |s|
+          c.shard 's1', :process => 3 do |s|
             s.component 'first', 'First', :opt1 => 'opt1'
-            s.component 'second', 'Second', :opt1 => 'opt1', "opt2" => "opt2"
+            s.component 'second', 'Second', :opt1 => 'opt1', 'opt2' => 'opt2'
           end
 
           c.connect 'first#out' => 'second#in', :delivery => 'broadcast'
@@ -447,7 +447,7 @@ class RFlow
         end
       end
 
-      it "should not allow two components with the same name" do
+      it 'should not allow two components with the same name' do
         expect {
           described_class.configure do |c|
             c.component 'first', 'First'
@@ -456,11 +456,11 @@ class RFlow
         }.to raise_error(ActiveRecord::RecordInvalid)
       end
 
-      it "should not allow two shards with the same name" do
+      it 'should not allow two shards with the same name' do
         expect {
           described_class.configure do |c|
-            c.shard("s1", :process => 2) {|c| c.component 'x', 'y' }
-            c.shard("s1", :process => 2) {|c| c.component 'z', 'q' }
+            c.shard('s1', :process => 2) {|c| c.component 'x', 'y' }
+            c.shard('s1', :process => 2) {|c| c.component 'z', 'q' }
           end
         }.to raise_error
       end

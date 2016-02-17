@@ -18,7 +18,7 @@ class RFlow
           version = LibZMQ::version
           RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is #{version[:major]}.#{version[:minor]}.#{version[:patch]}" }
           if EM.reactor_running?
-            raise RuntimeError, "EventMachine reactor is running when attempting to create a ZeroMQ context"
+            raise RuntimeError, 'EventMachine reactor is running when attempting to create a ZeroMQ context'
           end
           EM::ZeroMQ::Context.new(1)
         end

@@ -79,7 +79,7 @@ class RFlow
       $stdout.sync = $stderr.sync = true
       [$stdin, $stdout, $stderr].each do |stream|
         stream.binmode
-        begin; stream.reopen "/dev/null"; rescue ::Exception; end
+        begin; stream.reopen '/dev/null'; rescue ::Exception; end
       end
     end
 

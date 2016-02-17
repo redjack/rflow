@@ -35,11 +35,11 @@ class RFlow
           end
         end
 
-        RFlow.logger.info "Shutting down worker after EM stopped"
+        RFlow.logger.info 'Shutting down worker after EM stopped'
       end
 
       def configure_components!
-        RFlow.logger.debug "Configuring components"
+        RFlow.logger.debug 'Configuring components'
         @components.zip(shard.config.components.map(&:options)).each do |(component, config)|
           RFlow.logger.debug "Configuring component '#{component.name}' (#{component.uuid})"
           component.configure! config
@@ -49,7 +49,7 @@ class RFlow
       # Connect all inputs before all outputs, so connection types that require a 'server'
       # to be established before a 'client' can connect can get themselves ready.
       def connect_components!
-        RFlow.logger.debug "Connecting components"
+        RFlow.logger.debug 'Connecting components'
         @components.each do |component|
           RFlow.logger.debug "Connecting inputs for component '#{component.name}' (#{component.uuid})"
           component.connect_inputs!
@@ -61,7 +61,7 @@ class RFlow
       end
 
       def run_components!
-        RFlow.logger.debug "Running components"
+        RFlow.logger.debug 'Running components'
         @components.each do |component|
           RFlow.logger.debug "Running component '#{component.name}' (#{component.uuid})"
           component.run!
@@ -69,7 +69,7 @@ class RFlow
       end
 
       def shutdown!(signal)
-        RFlow.logger.debug "Shutting down components"
+        RFlow.logger.debug 'Shutting down components'
         @components.each do |component|
           RFlow.logger.debug "Shutting down component '#{component.name}' (#{component.uuid})"
           component.shutdown!
@@ -93,7 +93,7 @@ class RFlow
       RFlow.logger.debug "Running shard #{name} with #{count} workers"
       workers.each(&:spawn!)
 
-      RFlow.logger.debug "#{count} workers started for #{name}: #{workers.map { |w| "#{w.name} (#{w.pid})" }.join(", ")}"
+      RFlow.logger.debug "#{count} workers started for #{name}: #{workers.map { |w| "#{w.name} (#{w.pid})" }.join(', ')}"
       workers
     end
   end

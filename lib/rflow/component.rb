@@ -91,11 +91,11 @@ class RFlow
 
     # Returns a list of connected input ports.  Each port will have
     # one or more keys associated with a particular connection.
-    def input_ports; ports.by_type["RFlow::Component::InputPort"]; end
+    def input_ports; ports.by_type['RFlow::Component::InputPort']; end
 
     # Returns a list of connected output ports.  Each port will have
     # one or more keys associated with the particular connection.
-    def output_ports; ports.by_type["RFlow::Component::OutputPort"]; end
+    def output_ports; ports.by_type['RFlow::Component::OutputPort']; end
 
     def configure_input_port!(port_name, options = {})
       RFlow.logger.debug "Configuring component '#{name}' (#{uuid}) input port '#{port_name}' (#{options[:uuid]})"

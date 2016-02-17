@@ -4,7 +4,7 @@ class RFlow
   module Components
     describe Clock do
       before(:each) do
-        ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
+        ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
         Configuration.migrate_database
       end
 

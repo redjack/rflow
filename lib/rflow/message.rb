@@ -124,7 +124,7 @@ class RFlow
       attr_accessor :data_object
 
       def initialize(schema_string, serialization_type = 'avro', serialized_data = nil)
-        raise ArgumentError, "Only Avro serialization_type supported at the moment" unless serialization_type.to_s == 'avro'
+        raise ArgumentError, 'Only Avro serialization_type supported at the moment' unless serialization_type.to_s == 'avro'
 
         @schema_string = schema_string
         @serialization_type = serialization_type.to_s

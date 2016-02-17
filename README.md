@@ -13,7 +13,7 @@ RFlow is a Ruby framework inspired by
 
 In short, components communicate with each other by sending/receiving
 messages via their output/input ports over connections. Ports are
-"wired" together output->input with connections, and messages are
+'wired' together output->input with connections, and messages are
 explicitly serialized before being sent over the connection. RFlow
 supports generalized connection types and message serialization,
 however only two are in current use, namely ZeroMQ connections and
@@ -58,7 +58,7 @@ work. (You will probably get errors saying arcane things like
 
 * __Port__ - a named entity on each component that is responsible for
   receiving data (and input port) or sending data (and output port).
-  Ports can be "keyed" or "indexed" to allow better multiplexing of
+  Ports can be 'keyed' or 'indexed' to allow better multiplexing of
   messages out/in a single port, as well as allow a single port to be
   accessed by an array.
 
@@ -70,7 +70,7 @@ work. (You will probably get errors saying arcane things like
 * __Message__ - a bit of serialized data that is sent out an output
   port and received on an input port. Due to the serialization,
   message types and schemas are explicitly defined. In a departure
-  from "pure" FBP, RFlow supports sending multiple message types via a
+  from 'pure' FBP, RFlow supports sending multiple message types via a
   single connection.
 
 * __Workflow__ - the common name for the digraph created when the
@@ -126,7 +126,7 @@ end
   component to clean up any external resources that it might have
   outstanding, such as file handles or network sockets.
 
-"Source" components will often do all of their work within the `run!`
+'Source' components will often do all of their work within the `run!`
 method, and often gather message data from an external source, such as
 file, database, or network socket. The following component generates a
 set of integers between a configured start/finish, incrementing by a
@@ -158,7 +158,7 @@ class RFlow::Components::GenerateIntegerSequence < RFlow::Component
 end
 ```
 
-"Middle" components receive messages on input port(s), perform a bit
+'Middle' components receive messages on input port(s), perform a bit
 of computation, and then send a message out the output port(s). The
 following component accepts a Ruby expression string via its config,
 and then uses that as an expression to determine what port to send an
@@ -189,7 +189,7 @@ class RFlow::Components::RubyProcFilter < RFlow::Component
 end
 ```
 
-"Sink" components accept messages on an input port and do not have an
+'Sink' components accept messages on an input port and do not have an
 output port. They often operate on external sinks, such as writing
 messages to a file, database, or network socket. The following
 component writes the inspected message to a file (defined via the
@@ -222,8 +222,8 @@ RFlow messages are instances of
 [`RFlow::Message`](lib/rflow/message.rb), which are ultimately
 serialized via an Avro [schema](schema/message.avsc).
 
-There are two parts of the message "envelope": a provenance and the
-embedded data object "payload".
+There are two parts of the message 'envelope': a provenance and the
+embedded data object 'payload'.
 
 The `provenance` is a way for a component to annotate a message with a
 bit of data that should (by convention) be carried through the

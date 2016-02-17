@@ -7,11 +7,11 @@ class RFlow
       describe 'Raw Avro Schema' do
         let(:schema) { Configuration.available_data_types['RFlow::Message::Data::Raw']['avro'] }
 
-        it "should load the schema" do
+        it 'should load the schema' do
           expect(schema).not_to be_nil
         end
 
-        it "should encode and decode an object" do
+        it 'should encode and decode an object' do
           raw = {'raw' => Array.new(256) { rand(256) }.pack('c*')}
 
           expect { encode_avro(schema, raw) }.to_not raise_error

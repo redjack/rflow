@@ -16,41 +16,41 @@ option_parser = OptionParser.new do |opts|
 Usage: #{File.basename $0} [options] (start|stop|status|load)
 EOB
 
-  opts.on("-d", "--database DB", "Config database (sqlite) path (GENERALLY REQUIRED)") do |db|
+  opts.on('-d', '--database DB', 'Config database (sqlite) path (GENERALLY REQUIRED)') do |db|
     options[:config_database_path] = File.expand_path(db)
   end
 
-  opts.on("-c", "--config CONFIG", "Config file path (only valid for load)") do |config|
+  opts.on('-c', '--config CONFIG', 'Config file path (only valid for load)') do |config|
     options[:config_file_path] = File.expand_path(config)
   end
 
-  opts.on("-e", "--extensions FILE1[,FILE_N]", Array, "Extension file paths (will load)") do |extensions|
+  opts.on('-e', '--extensions FILE1[,FILE_N]', Array, 'Extension file paths (will load)') do |extensions|
     options[:extensions_file_paths] += extensions.map {|extension| File.expand_path(extension)}
   end
 
-  opts.on("-g", "--gems GEM1[,GEM_N]", Array, "Extension gems (will require)") do |gems|
+  opts.on('-g', '--gems GEM1[,GEM_N]', Array, 'Extension gems (will require)') do |gems|
     options[:gems] += gems
   end
 
-  opts.on("-l", "--log LOGFILE", "Initial startup log file (in addition to stdout)") do |log|
+  opts.on('-l', '--log LOGFILE', 'Initial startup log file (in addition to stdout)') do |log|
     options[:startup_log_file_path] = File.expand_path(log)
   end
 
-  opts.on("-v", "--verbose [LEVEL]", [:DEBUG, :INFO, :WARN], "Control the startup log (and stdout) verbosity (DEBUG, INFO, WARN) defaults to INFO") do |level|
+  opts.on('-v', '--verbose [LEVEL]', [:DEBUG, :INFO, :WARN], 'Control the startup log (and stdout) verbosity (DEBUG, INFO, WARN) defaults to INFO') do |level|
     options[:startup_log_level] = level || :DEBUG
   end
 
-  opts.on("-f", "Run in the foreground") do |f|
+  opts.on('-f', 'Run in the foreground') do |f|
     options[:daemonize] = false
   end
 
-  opts.on_tail("--version", "Show RFlow version and exit") do
+  opts.on_tail('--version', 'Show RFlow version and exit') do
     require 'rflow/version'
     puts RFlow::VERSION
     exit 0
   end
 
-  opts.on_tail("-h", "--help", "Show this message and exit") do
+  opts.on_tail('-h', '--help', 'Show this message and exit') do
     puts opts
     exit 0
   end

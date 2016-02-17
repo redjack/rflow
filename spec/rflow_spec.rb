@@ -64,7 +64,7 @@ describe RFlow do
     yield # verify output
 
     # Terminate the master
-    expect(Process.kill("TERM", master_pid)).to eq(1)
+    expect(Process.kill('TERM', master_pid)).to eq(1)
 
     # Make sure everything is dead after a second
     sleep 2
@@ -72,7 +72,7 @@ describe RFlow do
       expect { Process.kill(0, pid) }.to raise_error(Errno::ESRCH)
     end
   rescue Exception => e
-    Process.kill("TERM", master_pid) if master_pid
+    Process.kill('TERM', master_pid) if master_pid
     raise
   end
 
@@ -94,13 +94,13 @@ describe RFlow do
 
   after(:each) { Dir.chdir @original_directory_path }
 
-  context "when executing from the test script" do
+  context 'when executing from the test script' do
     before(:all) { load @extensions_file_name }
 
     describe '.run!' do
       def run_rflow_with_dsl(&block)
         rflow_thread = Thread.new do
-          ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
+          ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
           RFlow::Configuration.migrate_database
           RFlow::Configuration::RubyDSL.configure {|c| block.call(c) }
           RFlow::Configuration.merge_defaults!
@@ -117,7 +117,7 @@ describe RFlow do
         rflow_thread.join
       end
 
-      it "should run a non-sharded workflow" do
+      it 'should run a non-sharded workflow' do
         run_rflow_with_dsl do |c|
           c.setting 'rflow.log_level', 'ERROR'
           c.setting 'rflow.application_directory_path', @temp_directory_path
@@ -158,7 +158,7 @@ describe RFlow do
         end
       end
 
-      it "should run a sharded workflow" do
+      it 'should run a sharded workflow' do
         run_rflow_with_dsl do |c|
           c.setting 'rflow.log_level', 'ERROR'
           c.setting 'rflow.application_directory_path', @temp_directory_path
@@ -207,7 +207,7 @@ describe RFlow do
         end
       end
 
-      it "should deliver broadcast messages to every copy of a shard" do
+      it 'should deliver broadcast messages to every copy of a shard' do
         run_rflow_with_dsl do |c|
           c.setting 'rflow.log_level', 'FATAL'
           c.setting 'rflow.application_directory_path', @temp_directory_path
@@ -249,8 +249,8 @@ describe RFlow do
     end
   end
 
-  context "when executing via the rflow binary" do
-    context "with a simple ruby DSL config file" do
+  context 'when executing via the rflow binary' do
+    context 'with a simple ruby DSL config file' do
       before(:each) do
         write_config_file <<-EOF
           RFlow::Configuration::RubyDSL.configure do |c|
@@ -259,14 +259,14 @@ describe RFlow do
         EOF
       end
 
-      it "should load a ruby dsl file into a sqlite DB" do
+      it 'should load a ruby dsl file into a sqlite DB' do
         load_database
 
-        ActiveRecord::Base.establish_connection adapter: "sqlite3", database: db_file_name
+        ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: db_file_name
         expect(RFlow::Configuration::Setting.where(:name => 'mysetting').first.value).to eq('myvalue')
       end
 
-      it "should not load a database if the database file already exists" do
+      it 'should not load a database if the database file already exists' do
         File.open(db_file_name, 'w') {|file| file.write 'boom' }
 
         r = execute_rflow("load -d #{db_file_name} -c #{config_file_name}")
@@ -278,7 +278,7 @@ describe RFlow do
       end
     end
 
-    context "with a component that runs subshells" do
+    context 'with a component that runs subshells' do
       let(:app_name) { 'sharded_subshell_test' }
 
       before(:each) do
@@ -300,7 +300,7 @@ describe RFlow do
         load_database
       end
 
-      it "should run successfully daemonize and run in the background" do
+      it 'should run successfully daemonize and run in the background' do
         run_and_shutdown app_name, 1 do # 1 default worker
           expect(File.exist?(File.join(@temp_directory_path, 'out1'))).to be true
           File.readlines('out1').each {|line| expect(line).to match /\w+ \w+\s+\d+ \d+:\d+:\d+ \w+ \d+/ }
@@ -308,7 +308,7 @@ describe RFlow do
       end
     end
 
-    context "with a complex, sharded ruby DSL config file" do
+    context 'with a complex, sharded ruby DSL config file' do
       let(:app_name) { 'sharded_bin_test' }
 
       before(:each) do
@@ -352,7 +352,7 @@ describe RFlow do
         expect(r[:stdout]).to match /error/i
       end
 
-      it "should daemonize and run in the background" do
+      it 'should daemonize and run in the background' do
         output_files = {
           'out1'    => [0, 3, 6, 9] * 3,
           'out2'    => (20..30).to_a * 2,

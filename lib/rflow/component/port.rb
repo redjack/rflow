@@ -1,7 +1,7 @@
 class RFlow
   class Component
     # TODO: make this into a class to limit the amount of extensions
-    # that we have to do when operating on these "Arrays", i.e. when
+    # that we have to do when operating on these 'Arrays', i.e. when
     # adding two together
     module ConnectionCollection
       def send_message(message)
@@ -125,12 +125,12 @@ class RFlow
       end
 
       def send_message(message)
-        def connect!; raise NotImplementedError, "Raw ports do not know how to send messages"; end
+        def connect!; raise NotImplementedError, 'Raw ports do not know how to send messages'; end
       end
 
       # Should be overridden.  Called when it is time to actually
       # establish the connection
-      def connect!; raise NotImplementedError, "Raw ports do not know which direction to connect"; end
+      def connect!; raise NotImplementedError, 'Raw ports do not know which direction to connect'; end
 
       def all_connections
         @all_connections ||= connections_for.values.flatten.uniq.extend(ConnectionCollection)

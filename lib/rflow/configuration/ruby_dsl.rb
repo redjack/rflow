@@ -10,7 +10,7 @@ class RFlow
 
       public
       def initialize
-        @default_shard = {:name => "DEFAULT", :type => :process, :count => 1, :components => []}
+        @default_shard = {:name => 'DEFAULT', :type => :process, :count => 1, :components => []}
         @current_shard = default_shard
 
         @setting_specs = []
@@ -27,8 +27,8 @@ class RFlow
 
       # DSL method to specify a shard block for either a process or thread
       def shard(name, options = {})
-        raise ArgumentError, "Cannot use DEFAULT as a shard name" if name == 'DEFAULT'
-        raise ArgumentError, "Cannot nest shards" if @current_shard != default_shard
+        raise ArgumentError, 'Cannot use DEFAULT as a shard name' if name == 'DEFAULT'
+        raise ArgumentError, 'Cannot nest shards' if @current_shard != default_shard
 
         type = if options[:thread] || options[:type] == :thread; :thread
                else :process
@@ -66,7 +66,7 @@ class RFlow
       # DSL method to specify a connection between a
       # component/output_port and another component/input_port.  The
       # component/port specification is a string where the names of
-      # the two elements are separated by '#', and the "connection" is
+      # the two elements are separated by '#', and the 'connection' is
       # specified by a Ruby Hash, i.e.:
       #  connect 'componentA#output' => 'componentB#input'
       # Array ports are specified with an key suffix in standard

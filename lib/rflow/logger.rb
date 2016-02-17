@@ -30,7 +30,7 @@ class RFlow
 
     def reconfigure(config, include_stdout = false)
       @log_file_path = config['rflow.log_file_path']
-      @log_level = config['rflow.log_level'] || "WARN"
+      @log_level = config['rflow.log_level'] || 'WARN'
       @log_name = if config['rflow.application_name']; config['rflow.application_name']
                   elsif log_file_path; File.basename(log_file_path)
                   else ''; end

@@ -110,13 +110,13 @@ class RFlow
       def establish_config_database_connection(database_path)
         RFlow.logger.debug "Establishing connection to config database (#{Dir.getwd}) '#{database_path}'"
         ActiveRecord::Base.logger = RFlow.logger
-        ConfigurationItem.establish_connection(:adapter => "sqlite3", :database => database_path)
+        ConfigurationItem.establish_connection(:adapter => 'sqlite3', :database => database_path)
       end
 
       # Using default ActiveRecord migrations, attempt to migrate the
       # database to the latest version.
       def migrate_database
-        RFlow.logger.debug "Applying default migrations to config database"
+        RFlow.logger.debug 'Applying default migrations to config database'
         migrations_path = File.join(File.dirname(__FILE__), 'configuration', 'migrations')
         ActiveRecord::Migration.verbose = false
         ActiveRecord::Migrator.migrate migrations_path
@@ -135,7 +135,7 @@ class RFlow
         RFlow.logger.debug "Initializing config database (#{Dir.getwd}) '#{database_path}'"
 
         # TODO should not need this line
-        ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => database_path)
+        ActiveRecord::Base.establish_connection(:adapter => 'sqlite3', :database => database_path)
 
         establish_config_database_connection database_path
         migrate_database
@@ -147,7 +147,7 @@ class RFlow
           process_config_file File.expand_path(config_file_path)
         end
 
-        RFlow.logger.debug "Defaulting non-existing config values"
+        RFlow.logger.debug 'Defaulting non-existing config values'
         merge_defaults!
 
         Dir.chdir working_dir

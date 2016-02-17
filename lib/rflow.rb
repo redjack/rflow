@@ -1,5 +1,5 @@
-require "rubygems"
-require "bundler/setup"
+require 'rubygems'
+require 'bundler/setup'
 require 'time'
 require 'active_record'
 require 'eventmachine'
@@ -38,7 +38,7 @@ class RFlow
   def self.establish_configuration
     @configuration = Configuration.new(@config_database_path)
     unless configuration['rflow.application_directory_path']
-      raise ArgumentError, "Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration"
+      raise ArgumentError, 'Empty configuration database!  Use a view/controller (such as the RubyDSL) to create a configuration'
     end
   end
 

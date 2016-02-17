@@ -98,10 +98,10 @@ class HTTPServer < RFlow::Component
   # This is done by inspecting the provenance, specifically the
   # context attribute that we stored originally
   def process_message(input_port, input_port_key, connection, message)
-    RFlow.logger.debug "Received a message"
+    RFlow.logger.debug 'Received a message'
     return unless message.data_type_name == 'HTTPResponse'
 
-    RFlow.logger.debug "Received a HTTPResponse message, determining if its mine"
+    RFlow.logger.debug 'Received a HTTPResponse message, determining if its mine'
     my_events = message.provenance.find_all {|processing_event| processing_event.component_instance_uuid == instance_uuid}
     RFlow.logger.debug "Found #{my_events.size} processing events from me"
 
@@ -122,7 +122,7 @@ class HTTPServer < RFlow::Component
     attr_accessor :server, :client_ip, :client_port
 
     def post_init
-      @client_port, @client_ip = Socket.unpack_sockaddr_in(get_peername) rescue ["?", "?.?.?.?"]
+      @client_port, @client_ip = Socket.unpack_sockaddr_in(get_peername) rescue ['?', '?.?.?.?']
       RFlow.logger.debug "Connection from #{@client_ip}:#{@client_port}"
       super
       no_environment_strings
@@ -154,9 +154,9 @@ class HTTPServer < RFlow::Component
 
       # Default values
       resp.status                  = 200
-      resp.content                 = ""
-      resp.headers["Content-Type"] = "text/html; charset=UTF-8"
-      resp.headers["Server"]       = "Apache/2.2.3 (CentOS)"
+      resp.content                 = ''
+      resp.headers['Content-Type'] = 'text/html; charset=UTF-8'
+      resp.headers['Server']       = 'Apache/2.2.3 (CentOS)'
 
       if response_message
         resp.status  = response_message.data.status
@@ -170,7 +170,7 @@ class HTTPServer < RFlow::Component
     # Called when a connection is torn down for whatever reason.
     # Remove this connection from the server's list
     def unbind
-      RFlow.logger.debug "Connection lost"
+      RFlow.logger.debug 'Connection lost'
       server.connections.delete(self.signature)
     end
   end
