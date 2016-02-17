@@ -157,9 +157,9 @@ class RFlow
                 end
         front.bind(connection.options['output_address'])
         back.bind(connection.options['input_address'])
-        ZMQ::Proxy.new(front, back)
-        back.close
-        front.close
+        while true
+          ZMQ::Proxy.new(front, back)
+        end
       rescue Exception => e
         RFlow.logger.error "Error running message broker: #{e.class}: #{e.message}, because: #{e.backtrace.inspect}"
       ensure
