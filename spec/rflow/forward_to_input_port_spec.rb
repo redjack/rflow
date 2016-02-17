@@ -51,5 +51,19 @@ class RFlow
       expect(dropped_messages).to have(2).messages
       expect(dropped_messages.map(&:data).map(&:data_object)).to eq([1, 3])
     end
+
+    it 'should forward integers from a subport' do
+      generator.even_odd_out['even'].direct_connect accept_evens.in
+
+      accept_evens.filtered.collect_messages(nil, accepted_messages) do
+        accept_evens.dropped.collect_messages(nil, dropped_messages) do
+          5.times { generator.generate }
+        end
+      end
+
+      expect(accepted_messages).to have(3).messages
+      expect(accepted_messages.map(&:data).map(&:data_object)).to eq([0, 2, 4])
+      expect(dropped_messages).to have(0).messages
+    end
   end
 end
