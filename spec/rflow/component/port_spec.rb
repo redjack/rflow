@@ -24,7 +24,7 @@ class RFlow
             it 'should add the connection' do
               described_class.new(nil).tap do |port|
                 port.add_connection(nil, connection)
-                expect(port[nil]).to include connection
+                expect(port[nil].connections).to include connection
               end
             end
           end
@@ -34,7 +34,7 @@ class RFlow
               described_class.new(nil).tap do |port|
                 port.add_connection(nil, connection)
                 port.remove_connection(nil, connection)
-                expect(port[nil]).not_to include connection
+                expect(port[nil].connections).not_to include connection
               end
             end
           end
