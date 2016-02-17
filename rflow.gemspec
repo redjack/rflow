@@ -7,8 +7,8 @@ Gem::Specification.new do |s|
   s.version     = RFlow::VERSION
   s.platform    = Gem::Platform::RUBY
   s.required_ruby_version = '>= 1.9'
-  s.authors     = ['Michael L. Artz']
-  s.email       = ['michael.artz@redjack.com']
+  s.authors     = ['John Stoneham', 'Michael L. Artz']
+  s.email       = ['john.stoneham@redjack.com', 'michael.artz@redjack.com']
   s.homepage    = 'https://github.com/redjack/rflow'
   s.license     = 'Apache-2.0'
   s.summary     = %q{A Ruby flow-based programming framework}
