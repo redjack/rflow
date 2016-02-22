@@ -10,7 +10,13 @@ class RFlow
 
     def read
       return nil unless File.exist? path
-      File.read(path).to_i
+      contents = File.read(path)
+      if contents.empty?
+        RFlow.logger.warn "Ignoring empty PID file #{path}"
+        nil
+      else
+        contents.to_i
+      end
     end
 
     def write(pid = $$)
