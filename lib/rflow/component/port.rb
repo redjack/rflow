@@ -150,7 +150,7 @@ class RFlow
       end
 
       def send_message(message)
-        def connect!; raise NotImplementedError, 'Raw ports do not know how to send messages'; end
+        raise NotImplementedError, 'Raw ports do not know how to send messages'
       end
 
       # Should be overridden.  Called when it is time to actually
