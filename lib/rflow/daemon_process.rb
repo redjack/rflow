@@ -1,8 +1,11 @@
+require 'rflow/pid_file'
+
 class RFlow
   class DaemonProcess
-    def initialize(name, role = name)
+    def initialize(name, role = name, options = {})
       @name = name
       @role = role
+      @pid_file = PIDFile.new(options[:pid_file_path]) if options[:pid_file_path]
     end
 
     def daemonize!
@@ -19,6 +22,7 @@ class RFlow
     end
 
     def run!
+      write_pid_file
       register_logging_context
       update_process_name
       handle_signals
@@ -29,6 +33,7 @@ class RFlow
       run_process
     ensure
       unhandle_signals
+      remove_pid_file
     end
 
     def spawn_subprocesses; end
@@ -36,6 +41,7 @@ class RFlow
 
     def shutdown!(reason)
       RFlow.logger.info "#{@name} shutting down due to #{reason}"
+      remove_pid_file
       unhandle_signals
       signal_subprocesses('QUIT')
       RFlow.logger.info "#{@name} exiting"
@@ -151,5 +157,8 @@ class RFlow
         Process.kill(signal, p.pid)
       end
     end
+
+    def write_pid_file; @pid_file.write if @pid_file; end
+    def remove_pid_file; @pid_file.safe_unlink if @pid_file; end
   end
 end
