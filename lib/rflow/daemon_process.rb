@@ -71,6 +71,7 @@ class RFlow
         exit 0
       else
         RFlow.logger.error "#{@role} failed to start"
+        STDERR.puts "\n\n*** #{@role} failed to start; see log file for details"
         exit! 1
       end
     end
