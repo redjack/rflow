@@ -27,31 +27,21 @@ class RFlow
       # Message object.  Assumes the org.rflow.Message Avro schema.
       def from_avro(bytes)
         message = RFlow::Avro.decode(message_reader, bytes)
-        Message.new(message['data_type_name'], message['provenance'],
+        Message.new(message['data_type_name'], message['provenance'], message['properties'],
                     message['data_serialization_type'], message['data_schema'],
                     message['data'])
       end
     end
 
+    attr_accessor :provenance, :properties
     attr_reader :data_type_name, :data
-    attr_accessor :provenance
 
-    def initialize(data_type_name, provenance = [], serialization_type = 'avro', schema = nil, serialized_data = nil)
+    # When creating a new message as a transformation of an existing
+    # message, its encouraged to copy the provenance and properties of
+    # the original message into the new message. This allows
+    # downstream components to potentially use these fields
+    def initialize(data_type_name, provenance = [], properties = {}, serialization_type = 'avro', schema = nil, serialized_data = nil)
       @data_type_name = data_type_name.to_s
-
-      # TODO: Make this better.  This check is technically
-      # unnecessary, as we are able to completely deserialize the
-      # message without needing to resort to the registered schema.
-      registered_schema = RFlow::Configuration.available_data_types[@data_type_name][serialization_type.to_s]
-      unless registered_schema
-        raise ArgumentError, "Data type '#{@data_type_name}' with serialization_type '#{serialization_type}' not found"
-      end
-
-      # TODO: think about registering the schemas automatically if not
-      # found in Configuration
-      if schema && (registered_schema != schema)
-        raise ArgumentError, "Passed schema ('#{schema}') does not equal registered schema ('#{registered_schema}') for data type '#{@data_type_name}' with serialization_type '#{serialization_type}'"
-      end
 
       # Turn the provenance array of Hashes into an array of
       # ProcessingEvents for easier access and time validation.
@@ -65,6 +55,22 @@ class RFlow
                               event['started_at'], event['completed_at'],
                               event['context'])
         end
+      end
+
+      @properties = properties || {}
+
+      # TODO: Make this better.  This check is technically
+      # unnecessary, as we are able to completely deserialize the
+      # message without needing to resort to the registered schema.
+      registered_schema = RFlow::Configuration.available_data_types[@data_type_name][serialization_type.to_s]
+      unless registered_schema
+        raise ArgumentError, "Data type '#{@data_type_name}' with serialization_type '#{serialization_type}' not found"
+      end
+
+      # TODO: think about registering the schemas automatically if not
+      # found in Configuration
+      if schema && (registered_schema != schema)
+        raise ArgumentError, "Passed schema ('#{schema}') does not equal registered schema ('#{registered_schema}') for data type '#{@data_type_name}' with serialization_type '#{serialization_type}'"
       end
 
       @data = Data.new(registered_schema, serialization_type.to_s, serialized_data)
@@ -82,8 +88,12 @@ class RFlow
     # UTF-8 by default, which would not work correctly, as a serialize
     # avro string is BINARY, not UTF-8
     def to_avro
+      # stringify all the properties
+      string_properties = Hash[properties.map { |k,v| [k.to_s, v.to_s] }]
+
       Message.encode('data_type_name' => data_type_name.to_s,
                      'provenance' => provenance.map(&:to_hash),
+                     'properties' => string_properties.to_hash,
                      'data_serialization_type' => data.serialization_type.to_s,
                      'data_schema' => data.schema_string,
                      'data' => data.to_avro)

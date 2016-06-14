@@ -22,6 +22,12 @@
              }
          }
         },
+        {"name": "properties",
+         "type": {
+             "type": "map",
+             "values": "string"
+         }
+        },
         {"name": "data_serialization_type",
          "type": {
              "type": "enum",
@@ -33,4 +39,3 @@
         {"name": "data", "type": "bytes"}
     ]
 }
-
