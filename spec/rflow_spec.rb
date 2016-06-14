@@ -37,7 +37,7 @@ describe RFlow do
 
     # Grab all the pids from the log, which seems to be the only
     # reliable way to get them
-    log_lines.map {|line| /\((\d+)\)/.match(line)[1].to_i }.uniq
+    log_lines.map {|line| /\(\s*(\d+)\s*\)/.match(line)[1].to_i }.uniq
   end
 
   def run_and_shutdown(app_name, expected_worker_count)
