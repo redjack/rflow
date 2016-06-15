@@ -1,3 +1,5 @@
+require 'fcntl'
+
 class RFlow
   class ChildProcess
     attr_reader :pid, :name

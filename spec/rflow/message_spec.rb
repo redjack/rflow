@@ -25,7 +25,7 @@ class RFlow
         context 'if created with an unknown data serialization' do
           ['unknown', :unknown].each do |it|
             it "should throw an exception for #{it.inspect}" do
-              expect { Message.new('string_type', [], it) }.to raise_error(
+              expect { Message.new('string_type', [], {}, it) }.to raise_error(
                 ArgumentError, "Data type 'string_type' with serialization_type 'unknown' not found")
             end
           end
@@ -34,7 +34,7 @@ class RFlow
         context 'if created with a known data serialization' do
           ['avro', :avro].each do |it|
             it "should instantiate correctly for #{it.inspect}" do
-              expect { Message.new('string_type', [], it) }.to_not raise_error
+              expect { Message.new('string_type', [], {}, it) }.to_not raise_error
             end
           end
 
@@ -50,7 +50,7 @@ class RFlow
               let(:serialized_string) { encode_avro(@schema, 'this is a string to be serialized') }
 
               it 'should instantiate correctly' do
-                expect { Message.new('string_type', [], 'avro', nil, serialized_string) }.to_not raise_error
+                expect { Message.new('string_type', [], {}, 'avro', nil, serialized_string) }.to_not raise_error
               end
             end
           end
@@ -96,6 +96,40 @@ class RFlow
             {'component_instance_uuid' => 'uuid', 'started_at' => valid_xmlschema_time, 'completed_at' => nil, 'context' => nil},
             {'component_instance_uuid' => 'uuid', 'started_at' => valid_xmlschema_time, 'completed_at' => valid_xmlschema_time, 'context' => 'context'}])
         end
+
+        it "should not serialize data that doesn't match the schema" do
+          message = Message.new('string_type')
+          expect { message.to_avro }.to raise_error(::Avro::IO::AvroTypeError)
+          message.data.data_object = 'data'
+          expect { message.to_avro }.to_not raise_error
+        end
+      end
+
+      context 'if given properties' do
+        it 'should initialize and serialize with valid properties' do
+          properties = { 'boom' => 'boom', 'down' => 'town' }
+          message = Message.new('string_type', nil, properties)
+          expect(message.properties).to eq(properties)
+
+          message.data.data_object = 'data'
+
+          Message.from_avro(message.to_avro).tap do |processed|
+            expect(processed.properties).to eq(properties)
+            expect(processed.properties['boom']).to eq(message.properties['boom'])
+          end
+        end
+
+        it 'should stringify non-string properties' do
+          properties = { :boom => :town }
+          message = Message.new('string_type', nil, properties)
+
+          message.data.data_object = 'data'
+
+          Message.from_avro(message.to_avro).tap do |processed|
+            expect(processed.properties['boom']).to eq(message.properties[:boom].to_s)
+          end
+        end
+
       end
 
       context 'if correctly created' do
