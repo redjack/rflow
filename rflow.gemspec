@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.executables   = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ['lib']
+  s.bindir        = 'bin'
 
   s.add_dependency 'uuidtools', '~> 2.1'
   s.add_dependency 'log4r', '~> 1.1'
