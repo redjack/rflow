@@ -4,6 +4,11 @@
 # startup cases (version and help) that don't need it
 require 'optparse'
 
+if Process::Sys.geteuid == 0
+  STDERR.puts "Error: RFlow will not run as root."
+  exit 1
+end
+
 options = {
   :daemonize => true,
   :startup_log_level => :INFO,
