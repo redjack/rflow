@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "Log",
+  "namespace": "org.rflow.message.log",
+  "aliases": [],
+  "fields": [
+    {"name": "timestamp", "type": "long"},
+    {"name": "level", "type": "string"},
+    {"name": "text", "type": "string"}
+  ]
+}
