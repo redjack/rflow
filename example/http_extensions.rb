@@ -102,7 +102,7 @@ class HTTPServer < RFlow::Component
     return unless message.data_type_name == 'HTTPResponse'
 
     RFlow.logger.debug 'Received a HTTPResponse message, determining if its mine'
-    my_events = message.provenance.find_all {|processing_event| processing_event.component_instance_uuid == instance_uuid}
+    my_events = message.provenance.find_all {|processing_event| processing_event.component_instance_uuid == uuid}
     RFlow.logger.debug "Found #{my_events.size} processing events from me"
 
     # Attempt to send the data to each context match
@@ -136,7 +136,7 @@ class HTTPServer < RFlow::Component
     def process_http_request
       RFlow.logger.debug "Received a full HTTP request from #{client_ip}:#{client_port}"
 
-      processing_event = RFlow::Message::ProcessingEvent.new(server.instance_uuid, Time.now.utc)
+      processing_event = RFlow::Message::ProcessingEvent.new(server.uuid, Time.now.utc)
 
       request_message = RFlow::Message.new('HTTPRequest')
       request_message.data.path = @http_request_uri
