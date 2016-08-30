@@ -201,7 +201,7 @@ end
 begin
   RFlow.run! options[:config_database_path], options[:daemonize]
 rescue Exception => e
-  RFlow.logger.fatal "Error running rflow: #{e.class}: #{e.message}"
+  RFlow.logger.fatal "Error running rflow: #{e.class}: #{e.message}, because: #{e.backtrace}"
   exit(1)
 end
 
