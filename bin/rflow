@@ -191,7 +191,7 @@ end
 options[:extensions_file_paths].each do |extensions_file_path|
   RFlow.logger.info "Loading #{extensions_file_path}"
   unless File.readable? extensions_file_path
-    RFlow.logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not reabable\n#{option_parser.help}"
+    RFlow.logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not readable\n#{option_parser.help}"
     exit 1
   end
   load extensions_file_path
