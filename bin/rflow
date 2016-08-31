@@ -194,7 +194,12 @@ options[:extensions_file_paths].each do |extensions_file_path|
     RFlow.logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not readable\n#{option_parser.help}"
     exit 1
   end
-  load extensions_file_path
+  begin
+    load extensions_file_path
+  rescue Exception => e
+    RFlow.logger.fatal "Error running rflow: #{e.class}: #{e.message}, because: #{e.backtrace}"
+    exit 1
+  end
 end
 
 # Start the flow
