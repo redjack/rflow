@@ -111,9 +111,15 @@ class RFlow
 
     def handle_signals
       ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGCHLD'].each do |signal|
-        trap_signal(signal) do
+        trap_signal(signal) do |return_code|
+          exit_status = if signal == 'SIGCHLD'
+                          pid, status = Process.wait2
+                          status.exitstatus
+                        else
+                          0
+                        end
           shutdown! signal
-          exit! 0
+          exit! exit_status
         end
       end
 
@@ -136,11 +142,12 @@ class RFlow
 
     def trap_signal(signal)
       # Log4r and traps don't mix, so we need to put it in another thread
+      return_code = $?
       context = clone_logging_context
       Signal.trap signal do
         Thread.new do
           apply_logging_context context
-          yield
+          yield return_code
         end.join
       end
     end
@@ -155,7 +162,11 @@ class RFlow
     def signal_subprocesses(signal)
       subprocesses.reject {|p| p.pid.nil? }.each do |p|
         RFlow.logger.info "Signaling #{p.name} with #{signal}"
-        Process.kill(signal, p.pid)
+        begin
+          Process.kill(signal, p.pid)
+        rescue Errno::ESRCH
+          # process already died and was waited for, ignore
+        end
       end
     end
 
