@@ -159,7 +159,7 @@ class RFlow
       def merge_defaults!
         Setting::DEFAULTS.each do |name, default_value_or_proc|
           value = default_value_or_proc.is_a?(Proc) ? default_value_or_proc.call() : default_value_or_proc
-          setting = Setting.find_or_create_by_name(:name => name, :value => value)
+          setting = Setting.find_or_create_by(:name => name, :value => value)
           unless setting.valid?
             raise RuntimeError, setting.errors.map {|_, msg| msg }.join(', ')
           end

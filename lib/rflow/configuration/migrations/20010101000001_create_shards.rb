@@ -8,7 +8,7 @@ class CreateShards < ActiveRecord::Migration
       # STI
       t.string :type
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :shards, :uuid, :unique => true

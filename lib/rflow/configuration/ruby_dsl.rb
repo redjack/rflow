@@ -178,13 +178,13 @@ class RFlow
             output_component = RFlow::Configuration::Component.find_by_name spec[:output_component_name]
             raise RFlow::Configuration::Connection::ConnectionInvalid,
               "Component '#{spec[:output_component_name]}' not found at #{spec[:config_line]}" unless output_component
-            output_port = output_component.output_ports.find_or_initialize_by_name :name => spec[:output_port_name]
+            output_port = output_component.output_ports.find_or_initialize_by :name => spec[:output_port_name]
             output_port.save!
 
             input_component = RFlow::Configuration::Component.find_by_name spec[:input_component_name]
             raise RFlow::Configuration::Connection::ConnectionInvalid,
               "Component '#{spec[:input_component_name]}' not found at #{spec[:config_line]}" unless input_component
-            input_port = input_component.input_ports.find_or_initialize_by_name :name => spec[:input_port_name]
+            input_port = input_component.input_ports.find_or_initialize_by :name => spec[:input_port_name]
             input_port.save!
 
             output_shards = output_component.shard.count

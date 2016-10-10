@@ -18,7 +18,7 @@ class CreateConnections < ActiveRecord::Migration
 
       t.text :options
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :connections, :uuid, :unique => true

@@ -8,8 +8,6 @@ class RFlow
 
       self.primary_key = 'name'
 
-      attr_accessible :name, :value
-
       DEFAULTS = {
         'rflow.application_name'           => 'rflow',
         'rflow.application_directory_path' => '.',

@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'sys-filesystem', '~> 1.1'
 
   s.add_dependency 'sqlite3', '~> 1.3'
-  s.add_dependency 'activerecord', '~> 3.2'
+  s.add_dependency 'activerecord', '~> 4.0'
 
   s.add_dependency 'avro', '~> 1.8'
   s.add_dependency 'em-zeromq', '~> 0.5'

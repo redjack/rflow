@@ -156,10 +156,10 @@ class RFlow
         Shard.all.tap do |shards|
           expect(shards.map(&:name)).to eq(['DEFAULT', 's1', 's2', 's3', 's4', 's5'])
           expect(shards.map(&:type)).to eq((['RFlow::Configuration::ProcessShard'] * 4) + (['RFlow::Configuration::ThreadShard'] * 2))
-          expect(shards.first.components.all.map(&:name)).to eq(['first', 'eighth'])
-          expect(shards.second.components.all.map(&:name)).to eq(['second'])
-          expect(shards.third.components.all.map(&:name)).to eq(['third', 'fourth'])
-          expect(shards.fourth.components.all.map(&:name)).to eq(['fifth'])
+          expect(shards.first.components.to_a.map(&:name)).to eq(['first', 'eighth'])
+          expect(shards.second.components.to_a.map(&:name)).to eq(['second'])
+          expect(shards.third.components.to_a.map(&:name)).to eq(['third', 'fourth'])
+          expect(shards.fourth.components.to_a.map(&:name)).to eq(['fifth'])
         end
 
         expect(Port.all.map(&:name)).to eq(['out', 'in', 'out', 'in', 'in2', 'out', 'in', 'in', 'in'])

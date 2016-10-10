@@ -4,7 +4,7 @@ class CreateSettings < ActiveRecord::Migration
       t.string :name, :primary => true
       t.text   :value
 
-      t.timestamps
+      t.timestamps null: false
     end
   end
 

@@ -10,7 +10,7 @@ class CreatePorts < ActiveRecord::Migration
       # UUID version of belongs_to :component
       t.string :component_uuid
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :ports, :uuid, :unique => true

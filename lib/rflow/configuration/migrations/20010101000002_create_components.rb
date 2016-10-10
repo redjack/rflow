@@ -10,7 +10,7 @@ class CreateComponents < ActiveRecord::Migration
       # UUID version of belongs_to :shard
       t.string :shard_uuid
 
-      t.timestamps
+      t.timestamps null: false
     end
 
     add_index :components, :uuid, :unique => true
