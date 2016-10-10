@@ -7,6 +7,9 @@ require 'tmpdir'
 
 I18n.enforce_available_locales = true
 
+ActiveRecord::Base.logger = Logger.new(STDOUT)
+ActiveRecord::Base.logger.level = 4
+
 RSpec.configure do |config|
   config.before(:each) do
     @temp_directory_path = Dir.mktmpdir('rflow')
