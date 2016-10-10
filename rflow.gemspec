@@ -27,12 +27,12 @@ Gem::Specification.new do |s|
   s.add_dependency 'sqlite3', '~> 1.3'
   s.add_dependency 'activerecord', '~> 3.2'
 
-  s.add_dependency 'avro', '~> 1.7'
-  s.add_dependency 'em-zeromq', '~> 0.5.0'
+  s.add_dependency 'avro', '~> 1.8'
+  s.add_dependency 'em-zeromq', '~> 0.5'
 
-  s.add_development_dependency 'bundler', '~> 1'
+  s.add_development_dependency 'bundler', '~> 1.0'
   s.add_development_dependency 'rspec', '~> 3.0'
   s.add_development_dependency 'rspec-collection_matchers', '~> 1.0'
   s.add_development_dependency 'rake', '>= 10.3'
-  s.add_development_dependency 'yard', '~> 0.8'
+  s.add_development_dependency 'yard', '~> 0.9'
 end
