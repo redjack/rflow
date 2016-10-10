@@ -114,7 +114,7 @@ class RFlow
         trap_signal(signal) do |return_code|
           exit_status = if signal == 'SIGCHLD'
                           pid, status = Process.wait2
-                          status.exitstatus
+                          status.exitstatus || 0
                         else
                           0
                         end
