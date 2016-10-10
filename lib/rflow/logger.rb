@@ -66,6 +66,15 @@ class RFlow
       internal_logger.level = LNAMES.index new_log_level
     end
 
+    def dump_threads
+      Thread.list.each do |t|
+        info "Thread #{t.inspect}:"
+        t.backtrace.each {|b| info "  #{b}" }
+        info '---'
+      end
+      info 'Thread dump complete.'
+    end
+
     private
     def establish_internal_logger
       @internal_logger = Log4r::Logger.new(log_name).tap do |logger|

@@ -4,6 +4,8 @@ class RFlow
   class ChildProcess
     attr_reader :pid, :name
 
+    SIGINFO = 29
+
     def initialize(name, role = name)
       @name = name
       @role = role
@@ -103,10 +105,14 @@ class RFlow
       trap_signal 'SIGUSR2' do
         RFlow.logger.toggle_log_level
       end
+
+      trap_signal SIGINFO do
+        RFlow.logger.dump_threads
+      end
     end
 
     def unhandle_signals
-      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGCHLD', 'SIGUSR1', 'SIGUSR2'].each do |signal|
+      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGCHLD', 'SIGUSR1', 'SIGUSR2', SIGINFO].each do |signal|
         Signal.trap signal, 'DEFAULT'
       end
     end
