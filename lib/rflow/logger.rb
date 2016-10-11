@@ -75,6 +75,22 @@ class RFlow
       info 'Thread dump complete.'
     end
 
+    def clone_logging_context
+      Log4r::NDC.clone_stack
+    end
+
+    def apply_logging_context(context)
+      Log4r::NDC.inherit(context)
+    end
+
+    def clear_logging_context
+      Log4r::NDC.clear
+    end
+
+    def add_logging_context(context)
+      Log4r::NDC.push context
+    end
+
     private
     def establish_internal_logger
       @internal_logger = Log4r::Logger.new(log_name).tap do |logger|

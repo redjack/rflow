@@ -94,16 +94,8 @@ class RFlow
 
     def register_logging_context
       # arrange for process's name to appear in log messages
-      Log4r::NDC.clear
-      Log4r::NDC.push @name
-    end
-
-    def clone_logging_context
-      Log4r::NDC.clone_stack
-    end
-
-    def apply_logging_context(context)
-      Log4r::NDC.inherit(context)
+      RFlow.logger.clear_logging_context
+      RFlow.logger.add_logging_context @name
     end
 
     def update_process_name
@@ -150,10 +142,10 @@ class RFlow
     def trap_signal(signal)
       # Log4r and traps don't mix, so we need to put it in another thread
       return_code = $?
-      context = clone_logging_context
+      context = RFlow.logger.clone_logging_context
       Signal.trap signal do
         Thread.new do
-          apply_logging_context context
+          RFlow.logger.apply_logging_context context
           yield return_code
         end.join
       end
