@@ -70,11 +70,14 @@ class RFlow
     RFlow.logger.error "Unhandled error on worker thread: #{error.class}: #{error.message}, because: #{error.backtrace}"
   end
 
-  # Wrapped version of EM.defer that also releases AR connections and catches
-  # exceptions that would otherwise propagate to the main thread magically
+  # Wrapped version of EM.defer that also fixes logging, releases AR
+  # connections, and catches exceptions that would otherwise propagate to the
+  # main thread magically
   def self.defer(op = nil, callback = nil, errback = nil, &blk)
+    context = RFlow.logger.clone_logging_context
     EM.defer(nil, callback, errback || method(:default_error_callback)) do
       begin
+        RFlow.logger.apply_logging_context context
         (op || blk).call
       ensure
         ActiveRecord::Base.connection_pool.release_connection
