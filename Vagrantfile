@@ -3,14 +3,17 @@
 VAGRANTFILE_API_VERSION = '2'
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.define 'centos62' do |c|
-    c.vm.box = 'jstoneham/rflow-centos62'
-  end
-  config.vm.define 'centos64' do |c|
-    c.vm.box = 'box-cutter/centos64'
-  end
-  config.vm.define 'centos65' do |c|
-    c.vm.box = 'chef/centos-6.5'
+#  config.vm.define 'centos62' do |c|
+#    c.vm.box = 'jstoneham/rflow-centos62'
+#  end
+#  config.vm.define 'centos64' do |c|
+#    c.vm.box = 'box-cutter/centos64'
+#  end
+#  config.vm.define 'centos65' do |c|
+#    c.vm.box = 'chef/centos-6.5'
+#  end
+  config.vm.define 'centos67' do |c|
+    c.vm.box = 'boxcutter/centos67'
   end
 
   config.vm.synced_folder '.', '/rflow'
@@ -25,14 +28,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # install RPM dependencies for rflow and zeromq
   config.vm.provision 'shell', privileged: true, inline: <<-EOS
-    curl -O https://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+    curl -OL https://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
     rpm -ivh epel-release-6-8.noarch.rpm
     yum -y install libyaml-devel patch libffi-devel glibc-headers autoconf gcc-c++ glibc-devel readline-devel zlib-devel openssl-devel automake libtool bison git sqlite-devel rpm-build libuuid-devel vim
   EOS
 
   # build zeromq as vagrant user
   config.vm.provision 'shell', privileged: false, inline: <<-EOS
-    curl -O http://download.zeromq.org/zeromq-3.2.4.tar.gz
+    curl -OL https://archive.org/download/zeromq_3.2.4/zeromq-3.2.4.tar.gz
     rpmbuild -tb zeromq-3.2.4.tar.gz
   EOS
 
@@ -44,6 +47,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # set up RVM and bundler
   config.vm.provision 'shell', privileged: false, inline: <<-EOS
     rm -f .profile
+    gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
     curl -sSL https://get.rvm.io | bash -s stable
     source .rvm/scripts/rvm
     rvm install `cat /rflow/.ruby-version`
