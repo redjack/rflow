@@ -3,11 +3,13 @@ require 'rflow/configuration/uuid_keyed'
 
 class RFlow
   class Configuration
+    # Represents a setting in the SQLite database.
     class Setting < ConfigurationItem
       include ActiveModel::Validations
 
       self.primary_key = 'name'
 
+      # Default settings.
       DEFAULTS = {
         'rflow.application_name'           => 'rflow',
         'rflow.application_directory_path' => '.',
@@ -18,6 +20,7 @@ class RFlow
         'rflow.log_level' => 'INFO',
       }
 
+      private
       DIRECTORY_PATHS = [
         'rflow.application_directory_path',
         'rflow.pid_directory_path',
@@ -52,6 +55,9 @@ class RFlow
         end
       end
 
+      public
+      # Look up a {Setting} by name from the SQLite database.
+      # @return [Setting]
       def self.[](name)
         Setting.find(name).value rescue nil
       end

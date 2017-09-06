@@ -1,11 +1,20 @@
 require 'fcntl'
 
 class RFlow
+  # Encapsulates a child process being managed by RFlow.
   class ChildProcess
-    attr_reader :pid, :name
+    # The PID of the child process.
+    # @return [Fixnum]
+    attr_reader :pid
+    # The name of the child process.
+    # @return [String]
+    attr_reader :name
 
+    # Symbolic constant for SIGINFO as this is only defined on BSD and not in Ruby.
     SIGINFO = 29
 
+    # @param name [String] process name
+    # @param role [String] role to be played by the process, for logging (Master, Broker, etc.)
     def initialize(name, role = name)
       @name = name
       @role = role
@@ -13,7 +22,12 @@ class RFlow
 
     # Launch another process to execute the child. The parent
     # process retains the original worker object (with pid and IPC
-    # pipe) to allow for process management
+    # pipe) to allow for process management. Parent will
+    # return once the child starts; child will update its process
+    # name, detach from the process group, set up signal handlers, and
+    # execute {run_child_process}; when that returns, it will
+    # exit with return code 0.
+    # @return [void]
     def spawn!
       establish_child_pipe
       drop_database_connections
@@ -26,6 +40,7 @@ class RFlow
       end
     end
 
+    protected
     def run_child_process
       @child_pipe_w.close
       register_logging_context
@@ -42,6 +57,11 @@ class RFlow
 
     def run_process; end
 
+    public
+    # Called when the child process needs to be shut down, before it dies.
+    # Clears signal handlers.
+    # @param signal [String] SIG*, whichever signal caused the shutdown
+    # @return [void]
     def shutdown!(signal)
       RFlow.logger.info "Shutting down due to #{signal}"
       unhandle_signals

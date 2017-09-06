@@ -9,11 +9,16 @@ require 'rflow/broker'
 require 'sys/filesystem'
 
 class RFlow
+  # Contains all connections classes.
   module Connections
+    # Represents a ZeroMQ connection.
     class ZMQConnection < RFlow::Connection
       class << self
+        # The ZeroMQ context object.
+        # @return [EM::ZeroMQ::Context]
         attr_accessor :zmq_context
 
+        # @!visibility private
         def create_zmq_context
           version = LibZMQ::version
           RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is #{version[:major]}.#{version[:minor]}.#{version[:patch]}" }
@@ -23,12 +28,13 @@ class RFlow
           EM::ZeroMQ::Context.new(1)
         end
 
-        # Returns the current ZeroMQ context object or creates it if it does not exist.
         def zmq_context
           @zmq_context ||= create_zmq_context
         end
       end
 
+      # The ZeroMQ context object.
+      # @return [EM::ZeroMQ::Context]
       def zmq_context; ZMQConnection.zmq_context; end
 
       private
@@ -41,6 +47,8 @@ class RFlow
         zmq_context # cause the ZMQ context to be created before the reactor is running
       end
 
+      # Hook up the input to the real ZeroMQ sockets.
+      # @return [void]
       def connect_input!
         RFlow.logger.debug "Connecting input #{uuid} with #{options.find_all {|k, v| k.to_s =~ /input/}}"
         check_address(options['input_address'])
@@ -65,6 +73,8 @@ class RFlow
         input_socket
       end
 
+      # Hook up the output to the real ZeroMQ sockets.
+      # @return [void]
       def connect_output!
         RFlow.logger.debug "Connecting output #{uuid} with #{options.find_all {|k, v| k.to_s =~ /output/}}"
         check_address(options['output_address'])
@@ -74,6 +84,8 @@ class RFlow
         output_socket
       end
 
+      # Send a message along the connection into ZeroMQ.
+      # @return [void]
       def send_message(message)
         RFlow.logger.debug "#{name}: Sending message of type '#{message.data_type_name.to_s}'"
 
@@ -123,6 +135,9 @@ class RFlow
       end
     end
 
+    # Subclass of {ZMQConnection} representing a brokered ZeroMQ connection
+    # (one where messages are sent to a separate process performing the
+    # many-to-many brokering function).
     class BrokeredZMQConnection < ZMQConnection
     end
 
@@ -139,6 +154,8 @@ class RFlow
         super("broker-#{connection.name}", 'Broker')
       end
 
+      # Start the broker process. Returns when things are shutting down.
+      # @return [void]
       def run_process
         version = LibZMQ::version
         RFlow.logger.debug { "Creating a new ZeroMQ context; ZeroMQ version is #{version[:major]}.#{version[:minor]}.#{version[:patch]}" }

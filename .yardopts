@@ -1,1 +1,1 @@
---output ./doc --main README.md --files schema/*.avsc lib/**/*.rb bin/*.rb - README.md LICENSE
+--output ./doc --main README.md --files schema/*.avsc lib/**/*.rb bin/*.rb --exclude lib/rflow/configuration/migrations --exclude lib/rflow/configuration/ruby_dsl.rb - README.md LICENSE

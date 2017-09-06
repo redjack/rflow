@@ -11,16 +11,31 @@ require 'rflow/components'
 require 'rflow/connections'
 require 'rflow/logger'
 
+# The RFlow application.
 class RFlow
   include Log4r
 
   class << self
+    # RFlow's logger, whose message will be routed to logs as specified in the configuration.
+    # @return [RFlow::Logger]
     attr_accessor :logger
-    attr_reader :configuration, :master
+
+    # RFlow's configuration.
+    # @return [RFlow::Configuration]
+    attr_reader :configuration
+
+    # RFlow's master node which oversees all the others.
+    # @return [RFlow::Master]
+    attr_reader :master
 
     RFlow.logger = RFlow::Logger.new({})
   end
 
+  # Start RFlow running. This is the main programmatic entry point to the application.
+  # Pulls in the configuration, sets up logging, and starts the master note.
+  #
+  # @param config_database_path [String] the path to the SQLite configuration database
+  # @param daemonize [boolean] true to fork and daemonize; false to run in the foreground
   def self.run!(config_database_path = nil, daemonize = false)
     @config_database_path = config_database_path
     @daemonize = daemonize

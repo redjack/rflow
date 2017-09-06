@@ -4,11 +4,20 @@ require 'avro'
 require 'rflow/configuration'
 
 class RFlow
+  # Utility methods for doing Avro encoding/decoding.
   class Avro
+    # Decode serialized Avro data.
+    # @param reader [::Avro::IO::DatumReader] reader preconfigured with schema
+    # @param bytes [String] byte string to decode
+    # @return decoded object
     def self.decode(reader, bytes)
       reader.read ::Avro::IO::BinaryDecoder.new(StringIO.new(bytes.force_encoding('BINARY')))
     end
 
+    # Encode data to serialized Avro.
+    # @param writer [::Avro::IO::DatumWriter] writer preconfigured with schema
+    # @param message [String]
+    # @return [String]
     def self.encode(writer, message)
       String.new.force_encoding('BINARY').tap do |result|
         writer.write message, ::Avro::IO::BinaryEncoder.new(StringIO.new(result, 'w'))
@@ -16,15 +25,21 @@ class RFlow
     end
   end
 
+  # A message to be sent around in the RFlow framework.
   class Message
     class << self
+      # @!visibility private
       def schema; @schema ||= ::Avro::Schema.parse(File.read(File.join(File.dirname(__FILE__), '..', '..', 'schema', 'message.avsc'))); end
+      # @!visibility private
       def message_reader; @message_reader ||= ::Avro::IO::DatumReader.new(schema, schema); end
+      # @!visibility private
       def message_writer; @message_writer ||= ::Avro::IO::DatumWriter.new(schema); end
+      # @!visibility private
       def encode(message); RFlow::Avro.encode(message_writer, message); end
 
       # Take in an Avro serialization of a message and return a new
       # Message object.  Assumes the org.rflow.Message Avro schema.
+      # @!visibility private
       def from_avro(bytes)
         message = RFlow::Avro.decode(message_reader, bytes)
         Message.new(message['data_type_name'], message['provenance'], message['properties'],
@@ -33,13 +48,26 @@ class RFlow
       end
     end
 
-    attr_accessor :provenance, :properties
-    attr_reader :data_type_name, :data
+    # The message's provenance information.
+    # @return [Array<ProcessingEvent>]
+    attr_accessor :provenance
+
+    # The message's properties information.
+    # @return [Hash]
+    attr_accessor :properties
+
+    # The data type name of the message.
+    # @return [String]
+    attr_reader :data_type_name
+
+    # The actual data string in the message.
+    # @return [String]
+    attr_reader :data
 
     # When creating a new message as a transformation of an existing
-    # message, its encouraged to copy the provenance and properties of
+    # message, it's encouraged to copy the provenance and properties of
     # the original message into the new message. This allows
-    # downstream components to potentially use these fields
+    # downstream components to potentially use these fields.
     def initialize(data_type_name, provenance = [], properties = {}, serialization_type = 'avro', schema = nil, serialized_data = nil)
       @data_type_name = data_type_name.to_s
 
@@ -86,7 +114,8 @@ class RFlow
     # org.rflow.Message Avro schema.  Note that we have to manually
     # set the encoding for Ruby 1.9, otherwise the stringio would use
     # UTF-8 by default, which would not work correctly, as a serialize
-    # avro string is BINARY, not UTF-8
+    # avro string is BINARY, not UTF-8.
+    # @return [String]
     def to_avro
       # stringify all the properties
       string_properties = Hash[properties.map { |k,v| [k.to_s, v.to_s] }]
@@ -99,9 +128,20 @@ class RFlow
                      'data' => data.to_avro)
     end
 
+    # One processing event in the message's provenance.
     class ProcessingEvent
-      attr_reader :component_instance_uuid, :started_at
-      attr_accessor :completed_at, :context
+      # The UUID of the component doing the processing.
+      # @return [String]
+      attr_reader :component_instance_uuid
+      # The time processing started, in XML schema format.
+      # @return [String]
+      attr_reader :started_at
+      # The time processing ended, in XML schema format.
+      # @return [String]
+      attr_accessor :completed_at
+      # Arbitrary context bytes.
+      # @return [String]
+      attr_accessor :context
 
       def initialize(component_instance_uuid, started_at = nil, completed_at = nil, context = nil)
         @component_instance_uuid = component_instance_uuid
@@ -116,6 +156,8 @@ class RFlow
         @context = context
       end
 
+      # Represent the processing event as a hash.
+      # @return [Hash]
       def to_hash
         {
           'component_instance_uuid' => component_instance_uuid.to_s,
@@ -126,11 +168,21 @@ class RFlow
       end
     end
 
-    # Should proxy most methods to data_object that we can serialize
-    # to avro using the schema.  Extensions should use 'extended' hook
+    # Should proxy most methods to {data_object} that we can serialize
+    # to Avro using the schema. Extensions should use +extended+ hook
     # to apply immediate changes.
     class Data
-      attr_reader :schema_string, :schema, :serialization_type
+      # The string form of the schema the data follows.
+      # @return [String]
+      attr_reader :schema_string
+      # Avro parsed version of the schema the data follows
+      # @return [::Avro::Schema]
+      attr_reader :schema
+      # Serialization type. Currently, always +avro+.
+      # @return [String]
+      attr_reader :serialization_type
+      # The data object for the message.
+      # @return [Object]
       attr_accessor :data_object
 
       def initialize(schema_string, serialization_type = 'avro', serialized_data = nil)
@@ -152,17 +204,22 @@ class RFlow
         end
       end
 
+      # Is the message valid per the Avro schema?
+      # @return [boolean]
       def valid?
         ::Avro::Schema.validate @schema, @data_object
       end
 
+      # Encode the message out to real Avro.
+      # @return [String]
       def to_avro
         RFlow::Avro.encode @writer, @data_object
       end
 
-      # Proxy methods down to the underlying data_object, probably a
+      # Proxy methods down to the underlying {data_object}, probably a
       # Hash.  Hopefully an extension will provide any additional
-      # functionality so this won't be called unless needed
+      # functionality so this won't be called unless needed.
+      # @return [void]
       def method_missing(method_sym, *args, &block)
         @data_object.send(method_sym, *args, &block)
       end

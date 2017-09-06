@@ -1,4 +1,5 @@
 class RFlow
+  # Represents a file on disk that contains RFlow's PID, for process management.
   class PIDFile
     private
     attr_reader :path
@@ -8,6 +9,8 @@ class RFlow
       @path = path
     end
 
+    # Read the pid file and get the PID from it.
+    # @return [Integer]
     def read
       return nil unless File.exist? path
       contents = File.read(path)
@@ -19,6 +22,8 @@ class RFlow
       end
     end
 
+    # Write a new PID out to the pid file.
+    # @return [Integer] the pid
     def write(pid = $$)
       return unless validate?
 
@@ -42,6 +47,8 @@ class RFlow
       pid
     end
 
+    # Determine if the application is running by checking the running PID and the pidfile.
+    # @return [boolean]
     def running?
       return false unless exist?
       pid = read
@@ -52,18 +59,22 @@ class RFlow
       nil
     end
 
-    # unlinks a PID file at given if it contains the current PID still
+    # Unlinks a PID file if it contains the current PID. Still
     # potentially racy without locking the directory (which is
     # non-portable and may interact badly with other programs), but the
-    # window for hitting the race condition is small
+    # window for hitting the race condition is small.
+    # @return [void]
     def safe_unlink
       (current_process? and unlink) rescue nil
     end
 
+    # Signal the process with the matching PID with a given signal.
+    # @return [void]
     def signal(sig)
       Process.kill(sig, read)
     end
 
+    # @!visibility private
     def to_s
       File.expand_path(path)
     end

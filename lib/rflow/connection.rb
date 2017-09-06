@@ -1,8 +1,11 @@
 require 'rflow/message'
 
 class RFlow
+  # Represents an RFlow connection from one component to another.
   class Connection
     class << self
+      # Build an appropriate subclass of {Connection} based on the configuration.
+      # @return [Connection]
       def build(config)
         case config.type
         when 'RFlow::Configuration::ZMQConnection'
@@ -15,7 +18,22 @@ class RFlow
       end
     end
 
-    attr_accessor :config, :uuid, :name, :options
+    # The reference to the connection's configuration.
+    # @return [Configuration::Connection]
+    attr_accessor :config
+
+    # The connection's UUID.
+    # @return [String]
+    attr_accessor :uuid
+
+    # The connection's name.
+    # @return [String]
+    attr_accessor :name
+
+    # The connection's options Hash.
+    # @return [Hash]
+    attr_accessor :options
+
     attr_writer :recv_callback
     protected
     attr_reader :recv_callback
@@ -28,44 +46,55 @@ class RFlow
       @options = config.options
     end
 
-    # Subclass and implement to be able to handle future 'recv'
+    # Subclass and implement to be able to handle future +recv+
     # methods.  Will only be called in the context of a running
-    # EventMachine reactor
+    # EventMachine reactor.
+    # @return [void]
     def connect_input!
       raise NotImplementedError, 'Raw connections do not support connect_input.  Please subclass and define a connect_input method.'
     end
 
-    # Subclass and implement to be able to handle future 'send'
+    # Subclass and implement to be able to handle future +send+
     # methods.  Will only be called in the context of a running
-    # EventMachine reactor
+    # EventMachine reactor.
+    # @return [void]
     def connect_output!
       raise NotImplementedError, 'Raw connections do not support connect_output.  Please subclass and define a connect_output method.'
     end
 
     # Subclass and implement to handle outgoing messages.  The message
-    # will be a RFlow::Message object and the subclasses are expected
+    # will be a {RFlow::Message} object and the subclasses are expected
     # to marshal it up into something that will be unmarshalled on the
-    # other side
+    # other side.
+    # @return [void]
     def send_message(message)
       raise NotImplementedError, 'Raw connections do not support send_message.  Please subclass and define a send_message method.'
     end
 
     # Parent component will set this attribute if it expects to
-    # recieve messages.  Connection subclass should call it
-    # (recv_callback.call(message)) when it gets a new message, which
+    # receive messages.  {Connection} subclass should call it
+    # (<tt>recv_callback.call(message)</tt>) when it gets a new message, which
     # will be transmitted back to the parent component's
-    # process_message method.  Sublcass is responsible for
-    # deserializing whatever was on the wire into a RFlow::Message object
+    # {Component#process_message} method.  Subclass is responsible for
+    # deserializing whatever was on the wire into a {RFlow::Message} object.
+    # @return [Proc]
     def recv_callback
       @recv_callback ||= Proc.new {|message|}
     end
 
+    # If we are connected to an {Component::InputPort} subport, the key for that subport.
+    # @return [String]
     def input_port_key; config.input_port_key; end
+
+    # If we are connected to an {Component::OutputPort} subport, the key for that subport.
+    # @return [String]
     def output_port_key; config.output_port_key; end
   end
 
   # Primarily for testing purposes. Captures whatever messages are sent on it.
   class MessageCollectingConnection < Connection
+    # The messages that were collected.
+    # @return [Array<RFlow::Message>]
     attr_accessor :messages
 
     def initialize
@@ -73,6 +102,8 @@ class RFlow
       @messages = []
     end
 
+    # Override of {send_message} which adds the message to {messages}.
+    # @return [void]
     def send_message(message)
       @messages << message
     end
@@ -88,6 +119,8 @@ class RFlow
       @target_port = target_port
     end
 
+    # Override of {send_message} which forwards the message to the target port.
+    # @return [void]
     def send_message(message)
       @target_port.send_message(message)
     end
@@ -104,6 +137,8 @@ class RFlow
       @target_port = target_port
     end
 
+    # Override of {send_message} which forwards the message to the target port.
+    # @return [void]
     def send_message(message)
       @receiver.process_message(@target_port, nil, self, message)
     end

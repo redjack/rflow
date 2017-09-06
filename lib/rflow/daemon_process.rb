@@ -1,7 +1,10 @@
 require 'rflow/pid_file'
 
 class RFlow
+  # Encapsulates a master process being managed by RFlow that can run in the foreground
+  # or daemonize.
   class DaemonProcess
+    # Symbolic constant for SIGINFO as this is only defined on BSD and not in Ruby.
     SIGINFO = 29
 
     def initialize(name, role = name, options = {})
@@ -10,6 +13,9 @@ class RFlow
       @pid_file = PIDFile.new(options[:pid_file_path]) if options[:pid_file_path]
     end
 
+    # Daemonize by forking and exiting the parent after handling
+    # IO streams and checking successful start of the new copy.
+    # @return [void]
     def daemonize!
       RFlow.logger.info "#{@name} daemonizing"
       establish_daemon_pipe
@@ -23,6 +29,11 @@ class RFlow
       end
     end
 
+    # Execute the master process. Writes out a pidfile and updates the process
+    # name, installs signal handlers, and spawns all the defined subprocesses.
+    # Finally executes {run_process}; when that returns, it will
+    # exit with the resulting return code.
+    # @return [void]
     def run!
       write_pid_file
       register_logging_context
@@ -38,9 +49,23 @@ class RFlow
       remove_pid_file
     end
 
+    # Default implementation. Subclasses should override to provide logic
+    # for actually spawning subprocesses.
+    # @return [void]
     def spawn_subprocesses; end
+
+    # Default implementation. Subclasses should override to provide logic
+    # for actually doing something useful.
+    # @return [void]
+    def run_process; end
+
+    # A list of {ChildProcess}es to start and signal.
+    # @return [Array<ChildProcess>]
     def subprocesses; []; end
 
+    # Shut down the application. Cleans up the pid file, removes
+    # signal handlers, and signals all child processes with +SIGQUIT+.
+    # @return [void]
     def shutdown!(reason)
       RFlow.logger.info "#{@name} shutting down due to #{reason}"
       remove_pid_file
