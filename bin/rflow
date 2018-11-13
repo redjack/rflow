@@ -205,7 +205,11 @@ options[:extensions_file_paths].each do |extensions_file_path|
   begin
     load extensions_file_path
   rescue Exception => e
-    RFlow.logger.fatal "Error running rflow: #{e.class}: #{e.message}, because: #{e.backtrace}"
+    if e.is_a?(ActiveRecord::RecordInvalid)
+      RFlow.logger.fatal "Error running rflow: It appears you may have passed a Ruby RFlow DSL file instead of an extensions file (which loads your application code) to rflow start -e #{extensions_file_path}. Please recheck your command arguments. (#{e.class}: #{e.message})"
+    else
+      RFlow.logger.fatal "Error running rflow: #{e.class}: #{e.message}, because: #{e.backtrace}"
+    end
     exit 1
   end
 end
