@@ -144,7 +144,11 @@ end
 begin
   config = RFlow::Configuration.new(options[:config_database_path])
 rescue Exception => e
-  RFlow.logger.fatal "Error loading config database: #{e.class} - #{e.message}"
+  if e.is_a?(ArgumentError) && e.message =~ /Invalid schema in configuration database/
+    RFlow.logger.fatal "RFlow configuration database appears to be empty. Perhaps you need to run 'rflow load -c <config file> -d <database file>'? (#{e.message})"
+  else
+    RFlow.logger.fatal "Error loading config database: #{e.class} - #{e.message}"
+  end
   exit 1
 end
 
