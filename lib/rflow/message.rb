@@ -1,6 +1,6 @@
 require 'stringio'
 require 'time'
-require 'avro'
+require 'avro-patches'
 require 'rflow/configuration'
 
 class RFlow

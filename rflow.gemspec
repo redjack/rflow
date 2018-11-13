@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'activerecord', '~> 4.0'
 
   s.add_dependency 'avro', '~> 1.8'
+  s.add_dependency 'avro-patches', '~> 0.4' # update patches to official avro
   s.add_dependency 'em-zeromq', '~> 0.5'
 
   s.add_development_dependency 'bundler', '~> 1.0'
