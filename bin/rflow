@@ -115,16 +115,15 @@ case command
 when 'load'
   # Load the database with the config file, if it exists.  Will
   # otherwise default values (not very useful)
-  if options[:config_file_path]
-    unless File.exist? options[:config_file_path]
-      RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not found\n#{option_parser.help}"
-      exit 1
-    end
 
-    unless File.readable? options[:config_file_path]
-      RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not readable\n#{option_parser.help}"
-      exit 1
-    end
+  unless File.exist? options[:config_file_path]
+    RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not found"
+    exit 1
+  end
+
+  unless File.readable? options[:config_file_path]
+    RFlow.logger.fatal "Config file '#{options[:config_file_path]}' not readable"
+    exit 1
   end
 
   if File.exist? options[:config_database_path]
