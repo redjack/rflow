@@ -126,7 +126,7 @@ when 'load'
     exit 1
   end
 
-  if File.exist? options[:config_database_path]
+  if File.exist?(options[:config_database_path]) && File.size(options[:config_database_path]) > 0
     RFlow.logger.fatal "Config database '#{options[:config_database_path]}' exists, exiting to prevent accidental overwrite from config file '#{options[:config_file_path]}'"
     exit 1
   end
