@@ -135,7 +135,7 @@ when 'load'
     exit 1
   end
 
-  RFlow.logger.warn "Successfully initialized database '#{options[:config_database_path]}' with '#{options[:config_file_path]}'"
+  RFlow.logger.info "Successfully initialized database '#{options[:config_database_path]}' with '#{options[:config_file_path]}'"
   RFlow.logger.debug config.to_s
   exit 0
 end
