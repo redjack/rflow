@@ -101,6 +101,11 @@ if options[:config_file_path] && command != 'load'
   exit 1
 end
 
+if !options[:config_file_path] && command == 'load'
+  RFlow.logger.fatal "Config file required for 'load' command"
+  exit 1
+end
+
 unless options[:config_database_path]
   RFlow.logger.warn "Config database not specified, using default 'config.sqlite'"
   options[:config_database_path] = File.expand_path(File.join(Dir.getwd, 'config.sqlite'))
