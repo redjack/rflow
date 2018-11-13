@@ -135,7 +135,7 @@ when 'load'
   begin
     config = RFlow::Configuration::initialize_database(options[:config_database_path], options[:config_file_path])
   rescue Exception => e
-    RFlow.logger.fatal "Error initializing configuration database: #{e.message}: #{e.backtrace.join "\n"}"
+    RFlow.logger.fatal "Error initializing configuration database #{options[:config_database_path]}: #{e.message}: #{e.backtrace.join "\n"}"
     exit 1
   end
 
@@ -149,7 +149,7 @@ begin
   config = RFlow::Configuration.new(options[:config_database_path])
 rescue Exception => e
   if e.is_a?(ArgumentError) && e.message =~ /Invalid schema in configuration database/
-    RFlow.logger.fatal "RFlow configuration database appears to be empty. Perhaps you need to run 'rflow load -c <config file> -d <database file>'? (#{e.message})"
+    RFlow.logger.fatal "RFlow configuration database #{options[:config_database_path]} appears to be empty or missing. Perhaps you need to run 'rflow load -c <config file> -d #{options[:config_database_path]}'? (#{e.message})"
   else
     RFlow.logger.fatal "Error loading config database: #{e.class} - #{e.message}"
   end
@@ -199,7 +199,7 @@ end
 options[:extensions_file_paths].each do |extensions_file_path|
   RFlow.logger.info "Loading #{extensions_file_path}"
   unless File.readable? extensions_file_path
-    RFlow.logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not readable\n#{option_parser.help}"
+    RFlow.logger.fatal "Extensions file ('#{Dir.getwd}') '#{extensions_file_path}' not readable"
     exit 1
   end
   begin
