@@ -1,6 +1,10 @@
 require 'stringio'
 require 'time'
-require 'avro-patches'
+if Gem::Version.create(RUBY_VERSION) >= Gem::Version.create('2.1')
+  require 'avro-patches'
+else
+  require 'avro'
+end
 require 'rflow/configuration'
 
 class RFlow
