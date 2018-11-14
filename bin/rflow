@@ -86,6 +86,13 @@ end
 # things, like the config database.  We want those log messages to go to the
 # startup log when setting up.  The running log will transition to what is
 # specified in the config database.
+if options[:startup_log_file_path] &&
+  File.exist?(options[:startup_log_file_path]) &&
+  !File.writable?(options[:startup_log_file_path])
+  STDERR.puts "Startup log file '#{options[:startup_log_file_path]}' not writable"
+  exit 1
+end
+
 RFlow.logger.reconfigure({'rflow.application_name' => 'startup',
                           'rflow.log_level' => options[:startup_log_level].to_s,
                           'rflow.log_file_path' => options[:startup_log_file_path]}, true)
