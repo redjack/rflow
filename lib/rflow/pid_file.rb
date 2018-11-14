@@ -35,6 +35,10 @@ class RFlow
       end
       pid_fp = begin
                  File.open(tmp_path, File::RDWR|File::CREAT|File::EXCL, 0644)
+               rescue Errno::ENOENT => e
+                 RFlow.logger.fatal "Error while writing temp PID file '#{tmp_path}'; containing directory may not exist?"
+                 RFlow.logger.fatal "Exception #{e.class}: #{e.message}"
+                 abort
                rescue Errno::EACCES => e
                  RFlow.logger.fatal "Access error while writing temp PID file '#{tmp_path}'"
                  RFlow.logger.fatal "Exception #{e.class}: #{e.message}"
