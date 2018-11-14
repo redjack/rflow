@@ -6,6 +6,8 @@ rvm:
   - 2.1.0
   - 2.2.0
   - 2.3.0
+  - 2.4.2
+  - 2.5.3
 
 before_install:
   - sudo apt-get install libtool autoconf automake uuid-dev build-essential
