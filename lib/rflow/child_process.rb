@@ -103,7 +103,7 @@ class RFlow
     def handle_signals
       Signal.trap 'SIGCHLD', 'DEFAULT' # make sure child process can run subshells
 
-      ['SIGTERM', 'SIGINT', 'SIGQUIT'].each do |signal|
+      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGHUP'].each do |signal|
         trap_signal(signal) do
           shutdown! signal
           exit! 0
@@ -124,7 +124,7 @@ class RFlow
     end
 
     def unhandle_signals
-      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGCHLD', 'SIGUSR1', 'SIGUSR2', SIGINFO].each do |signal|
+      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGHUP', 'SIGCHLD', 'SIGUSR1', 'SIGUSR2', SIGINFO].each do |signal|
         Signal.trap signal, 'DEFAULT'
       end
     end
