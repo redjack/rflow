@@ -135,7 +135,7 @@ class RFlow
         rescue Exception => e
           # at least output the failure to stderr
           internal_logger.add StderrOutputter.new('rflow_stderr', :formatter => LOG_PATTERN_FORMATTER)
-          raise ArgumentError, "Log file '#{File.expand_path log_file_path}' problem: #{e.message}\n#{e.backtrace.join("\n")}"
+          raise ArgumentError, "Log file '#{File.expand_path log_file_path}' problem: #{e.message}"
         end
       end
     end
