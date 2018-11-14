@@ -133,6 +133,8 @@ class RFlow
         begin
           internal_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
         rescue Exception => e
+          # at least output the failure to stderr
+          internal_logger.add StderrOutputter.new('rflow_stderr', :formatter => LOG_PATTERN_FORMATTER)
           raise ArgumentError, "Log file '#{File.expand_path log_file_path}' problem: #{e.message}\n#{e.backtrace.join("\n")}"
         end
       end
