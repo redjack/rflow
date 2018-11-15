@@ -10,12 +10,10 @@ class RFlow
     LOG_PATTERN_FORMAT = '%-5l [%d] %x (%-5p) - %M'
     # @!visibility private
     DATE_METHOD = 'xmlschema(6)'
-    # @!visibility private
-    LOG_PATTERN_FORMATTER = PatternFormatter.new :pattern => LOG_PATTERN_FORMAT, :date_method => DATE_METHOD
 
     private
     attr_accessor :internal_logger
-    attr_accessor :log_file_path, :log_level, :log_name
+    attr_accessor :log_file_path, :log_level, :log_name, :log_pattern_format
 
     public
     # For the current logging context, how wide the field is where we're going to write the context/process name.
@@ -42,6 +40,7 @@ class RFlow
       @log_name = if config['rflow.application_name']; config['rflow.application_name']
                   elsif log_file_path; File.basename(log_file_path)
                   else ''; end
+      @log_pattern_format = config['rflow.log_pattern_format'] || LOG_PATTERN_FORMAT
 
       establish_internal_logger
       hook_up_logfile
@@ -129,19 +128,21 @@ class RFlow
     end
 
     def hook_up_logfile
+      formatter = PatternFormatter.new :pattern => log_pattern_format, :date_method => DATE_METHOD
       if log_file_path
         begin
-          internal_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => LOG_PATTERN_FORMATTER)
+          internal_logger.add FileOutputter.new('rflow.log_file', :filename => log_file_path, :formatter => formatter)
         rescue Exception => e
           # at least output the failure to stderr
-          internal_logger.add StderrOutputter.new('rflow_stderr', :formatter => LOG_PATTERN_FORMATTER)
+          internal_logger.add StderrOutputter.new('rflow_stderr', :formatter => formatter)
           raise ArgumentError, "Log file '#{File.expand_path log_file_path}' problem: #{e.message}"
         end
       end
     end
 
     def hook_up_stdout
-      internal_logger.add StdoutOutputter.new('rflow_stdout', :formatter => LOG_PATTERN_FORMATTER)
+      formatter = PatternFormatter.new :pattern => log_pattern_format, :date_method => DATE_METHOD
+      internal_logger.add StdoutOutputter.new('rflow_stdout', :formatter => formatter)
     end
 
     def register_logging_context
