@@ -129,7 +129,7 @@ class RFlow
     end
 
     def handle_signals
-      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGHUP', 'SIGCHLD'].each do |signal|
+      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGABRT', 'SIGHUP', 'SIGCHLD'].each do |signal|
         trap_signal(signal) do |return_code|
           exit_status = if signal == 'SIGCHLD'
                           pid, status = Process.wait2
@@ -159,7 +159,7 @@ class RFlow
     end
 
     def unhandle_signals
-      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGCHLD', 'SIGHUP', 'SIGUSR1', 'SIGUSR2', SIGINFO].each do |signal|
+      ['SIGTERM', 'SIGINT', 'SIGQUIT', 'SIGABRT', 'SIGCHLD', 'SIGHUP', 'SIGUSR1', 'SIGUSR2', SIGINFO].each do |signal|
         Signal.trap signal, 'DEFAULT'
       end
     end
