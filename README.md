@@ -537,7 +537,7 @@ remote-style. The best way we've found so far is:
 1. Fire up `byebug -R localhost:<port>`. Voila.
 1. Leave byebug open when you're done with it, if you hit the breakpoint again it's going to assume it's still connected, and if it isn't, you can't seem to reconnect.
 
-   Copyright 2014 RedJack LLC
+   Copyright 2018 Redjack LLC
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
