@@ -526,6 +526,17 @@ subsequent `SIGUSR2` will toggle the log-level back to what was
 originally set. This allows for easy debugging of a running RFlow
 process.
 
+## Debugging
+
+Debugging is trickier than you'd like in RFlow 1.x because of the daemonization
+and forking of child processes. You lose access to the console and have to do it
+remote-style. The best way we've found so far is:
+
+1. Add `gem 'byebug'` to Gemfile
+1. When you want to set a debug point, run something like: `remote_byebug 'localhost', 8989 + worker.index` (`worker.index` is a quick and dirty attempt at making the port differ by process in case you have multiple workers on a shard wandering around; you probably also want to log the port you're using). You'll be stopped at a breakpoint.
+1. Fire up `byebug -R localhost:<port>`. Voila.
+1. Leave byebug open when you're done with it, if you hit the breakpoint again it's going to assume it's still connected, and if it isn't, you can't seem to reconnect.
+
    Copyright 2014 RedJack LLC
 
    Licensed under the Apache License, Version 2.0 (the "License");
